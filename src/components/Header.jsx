@@ -68,8 +68,13 @@ const Header = async ({ isAdminPage = false }) => {
             </SignInButton>
           </SignedOut>
           <SignedIn>
-            <UserButton />
-            <SignOutButton />
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "w-10 h-10",
+                },
+              }}
+            />
           </SignedIn>
         </div>
       </nav>
