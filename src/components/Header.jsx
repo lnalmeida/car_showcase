@@ -23,10 +23,10 @@ const Header = async ({ isAdminPage = false }) => {
       <nav className="mx-auto px-4 py-4 flex items-center justify-between">
         <Link href={isAdminPage ? "/admin" : "/"}>
           <Image
-            src="/logo.png"
+            src="/jf_veiculos_logo_resized.png"
             alt="logo"
-            width={200}
-            height={60}
+            width={40000}
+            height={120}
             className="h-12 w-auto object-contain"
           />
           {isAdminPage && (
