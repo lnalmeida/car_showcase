@@ -6,7 +6,6 @@ import CarCard from "@/components/CarCard";
 import { featuredCars, carMakes, bodyTypes } from "@/lib/data";
 import Link from "next/link";
 import Image from "next/image";
-import as from "../../.next/static/chunks/src_48892f._";
 import { SignedOut } from "@clerk/nextjs";
 
 export default function Home() {

@@ -1,0 +1,13 @@
+model UserSavedVehicle {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  savedAt   DateTime @default(now())
+
+  @@unique([userId, vehicleId]) // Unique constraint to prevent duplicate saved vehicles for the same user
+  @@index([userId]) // Index for faster lookups by user
+  @@index([vehicleId]) // Index for faster lookups by vehicle
+  @@map("user_saved_vehicles")
+}

@@ -1,0 +1,30 @@
+model VisitBooking {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealershipInfoId String
+  dealershipInfo   DealershipInfo @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
+  visitDate        DateTime       @db.Date // Date of the visit in YYYY-MM-DD format
+  startTime        String // Time of the visit in HH:mm format
+  endTime          String // End time of the visit in HH:mm format
+  status           BookingStatus  @default(PENDING) // Status of the booking
+  notes            String? // Optional notes for the booking
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  Vehicle          Vehicle?       @relation(fields: [vehicleId], references: [id])
+  vehicleId        String?
+
+  @@index([userId]) // Index for faster lookups by user
+  @@index([dealershipInfoId]) // Index for faster lookups by dealership
+  @@index([visitDate]) // Index for faster lookups by visit date
+  @@index([status]) // Index for faster lookups by booking status
+  @@map("visit_bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}

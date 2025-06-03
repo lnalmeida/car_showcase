@@ -1,0 +1,319 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model DealershipInfo {
+  id            String         @id @default(uuid())
+  name          String         @default("JF Veículos")
+  address       String         @default("Av. Leonel de Moura Brizola, nº 1990, Pilar, Duque de Caxias, RJ")
+  phone         String?        @default("+55 21 98217-4174")
+  email         String?        @default("contato@jfveiculospillar.com.br")
+  website       String?        @default("https://jfveiculospillar.com.br")
+  socialMedia   String?        @default("https://www.instagram.com/jfveiculospillar/")
+  logoUrl       String?        @default("https://jfveiculospillar.com.br/logo.png")
+  description   String?        @default("A JF Veículos é uma concessionária localizada em Pilar, Duque de Caxias, RJ, especializada na venda de carros e motos novos e seminovos. Oferecemos uma ampla gama de veículos de qualidade, com opções para todos os gostos e orçamentos. Nossa equipe está pronta para ajudar você a encontrar o veículo ideal.")
+  workingHours  WorkingHour[]
+  visitBookings VisitBooking[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  workingHourId String
+
+  @@map("dealership_info")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  clerkUserId  String             @unique
+  email        String             @unique
+  name         String?
+  imageUrl     String?
+  phone        String?
+  role         UserRole           @default(USER)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  savedCars    UserSavedVehicle[]
+  visitBooking VisitBooking[]
+
+  @@index([clerkUserId]) // Index for faster lookups by clerk user ID
+  @@index([email]) // Index for faster lookups by email
+  @@index([name]) // Index for faster lookups by name
+  @@index([phone]) // Index for faster lookups by phone
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model UserSavedVehicle {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  savedAt   DateTime @default(now())
+
+  @@unique([userId, vehicleId]) // Unique constraint to prevent duplicate saved vehicles for the same user
+  @@index([userId]) // Index for faster lookups by user
+  @@index([vehicleId]) // Index for faster lookups by vehicle
+  @@map("user_saved_vehicles")
+}
+
+model Vehicle {
+  id              String              @id @default(uuid())
+  category        VehicleCategory     @default(car) // car, motorcycle
+  carType         CarType? // hatch, sedan, suv, crossover, pickup, wagon, convertible, coupe, minivan, van, utility
+  motorcycleType  MotorcycleType? // street, sport, touring, scooter, trail, custom, offroad, naked
+  carBrand        CarBrand?
+  motorcycleBrand MotorcycleBrand? // Aprilia, Benelli, BMW, etc.
+  model           String
+  year            Int
+  price           Decimal             @db.Decimal(10, 2)
+  color           String
+  featured        Boolean             @default(false)
+  seats           Int?
+  doors           Int?
+  engineSize      Float
+  mileage         Int
+  fuelType        CarFuelType         @default(gasoline) // gasolina, alcool, flex, diesel, electric, hybrid
+  transmission    CatTransmissionType @default(manual) // manual, automatic, semi-automatic
+  description     String?
+  images          String[]
+  optinals        String[]
+  carStatus       CarStatus           @default(available) // available, sold, reserved
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Relationships
+  savedBy UserSavedVehicle[]
+  visits  VisitBooking[]
+
+  // ==========================================
+  // ÍNDICES ESSENCIAIS (Máxima Prioridade)
+  // ==========================================
+  @@index([carStatus]) // Filtrar disponíveis/vendidos/reservados
+  @@index([category]) // Separar carros de motos
+  @@index([featured]) // Veículos em destaque
+  @@index([price]) // Ordenar/filtrar por preço
+  // ==========================================
+  // ÍNDICES COMPOSTOS PARA FILTROS PRINCIPAIS
+  // ==========================================
+  @@index([category, carType, carBrand]) // "SUVs Toyota disponíveis"
+  @@index([category, motorcycleType, motorcycleBrand]) // "Motos esportivas Honda"
+  @@index([carStatus, category]) // "Carros disponíveis"
+  @@index([featured, category]) // "Carros em destaque"
+  // ==========================================
+  // ÍNDICES PARA BUSCAS ESPECÍFICAS
+  // ==========================================
+  @@index([carBrand, model]) // "Honda Civic"
+  @@index([motorcycleBrand, model]) // "Yamaha R1"
+  @@index([model]) // Busca geral por modelo
+  @@index([year]) // "Carros 2020+"
+  // ==========================================
+  // ÍNDICES PARA FILTROS TÉCNICOS
+  // ==========================================
+  @@index([fuelType]) // "Carros flex"
+  @@index([transmission]) // "Automáticos"
+  @@index([engineSize]) // "Motos 600cc+"
+  @@index([mileage]) // "Baixa quilometragem"
+  @@index([color]) // "Carros brancos"
+  // ==========================================
+  // ÍNDICES PARA ORDENAÇÃO E PERFORMANCE
+  // ==========================================
+  @@index([createdAt]) // "Mais recentes"
+  @@index([carStatus, price]) // "Disponíveis até R$ 50k"
+  @@index([category, year, price]) // "Carros 2020+ até R$ 80k"
+  @@index([featured, carStatus, category]) // "Destaques disponíveis por categoria"          // Ordenar por data (mais recentes)
+  @@map("vehicles")
+}
+
+enum CatTransmissionType {
+  manual
+  automatic
+  semiAutomatic
+  cvt // Continuously Variable Transmission
+  automatized // Automatized Manual Transmission
+  dct // Dual-Clutch Transmission     
+}
+
+enum CarFuelType {
+  gasoline
+  alchool
+  flex
+  diesel
+  electric
+  hibrid
+}
+
+enum CarStatus {
+  available
+  sold
+  reserved
+}
+
+enum VehicleCategory {
+  car
+  motorcycle
+}
+
+enum CarType {
+  hatch
+  sedan
+  suv
+  crossover
+  pickup
+  wagon
+  convertible
+  coupe
+  minivan
+  van
+  utility
+}
+
+enum MotorcycleType {
+  street
+  sport
+  touring
+  scooter
+  trail
+  custom
+  offroad
+  naked
+}
+
+enum CarBrand {
+  AUDI
+  BMW
+  BYD
+  CAOA_CHERY
+  CHEVROLET
+  CHRYSLER
+  CITROEN
+  FIAT
+  FORD
+  GREAT_WALL
+  HONDA
+  HYUNDAI
+  JAC
+  JAGUAR
+  JEEP
+  KIA
+  LAND_ROVER
+  LEXUS
+  MERCEDES_BENZ
+  MINI
+  MITSUBISHI
+  NISSAN
+  PEUGEOT
+  PORSCHE
+  RAM
+  RENAULT
+  SUBARU
+  SUZUKI
+  TOYOTA
+  VOLKSWAGEN
+  VOLVO
+}
+
+enum MotorcycleBrand {
+  APRILIA
+  BENELLI
+  BMW
+  BROS
+  CABALLERO
+  CALOI
+  CAN_AM
+  CF_MOTO
+  DAFRA
+  DUCATI
+  GAS_GAS
+  HARLEY_DAVIDSON
+  HONDA
+  HUSQVARNA
+  INDIAN
+  KAWASAKI
+  KTM
+  KYMCO
+  MOTO_GUZZI
+  PIAGGIO
+  ROYAL_ENFIELD
+  SHINERAY
+  SUZUKI
+  TRIUMPH
+  VESPA
+  YAMAHA
+  ZERO
+}
+
+model VisitBooking {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealershipInfoId String
+  dealershipInfo   DealershipInfo @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
+  visitDate        DateTime       @db.Date // Date of the visit in YYYY-MM-DD format
+  startTime        String // Time of the visit in HH:mm format
+  endTime          String // End time of the visit in HH:mm format
+  status           BookingStatus  @default(PENDING) // Status of the booking
+  notes            String? // Optional notes for the booking
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  Vehicle          Vehicle?       @relation(fields: [vehicleId], references: [id])
+  vehicleId        String?
+
+  @@index([userId]) // Index for faster lookups by user
+  @@index([dealershipInfoId]) // Index for faster lookups by dealership
+  @@index([visitDate]) // Index for faster lookups by visit date
+  @@index([status]) // Index for faster lookups by booking status
+  @@map("visit_bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model WorkingHour {
+  id               String         @id @default(uuid())
+  dealershipInfoId String
+  dealershipInfo   DealershipInfo @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
+  dayOfWeek        DayOfWeek
+  isOpen           Boolean        @default(true) // Indicates if the dealership is open on this day
+  openTime         String // Ex: "08:00"
+  closeTime        String // Ex: "18:00"
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([dealershipInfoId, dayOfWeek]) // Unique constraint to prevent duplicate working hours for the same day
+  @@index([dealershipInfoId]) // Index for faster lookups by dealership
+  @@index([dayOfWeek]) // Index for faster lookups by day of the week
+  @@index([isOpen]) // Index for faster lookups by open/close status
+  @@map("working_hours")
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}

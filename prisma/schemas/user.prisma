@@ -1,0 +1,24 @@
+model User {
+  id           String             @id @default(uuid())
+  clerkUserId  String             @unique
+  email        String             @unique
+  name         String?
+  imageUrl     String?
+  phone        String?
+  role         UserRole           @default(USER)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  savedCars    UserSavedVehicle[]
+  visitBooking VisitBooking[]
+
+  @@index([clerkUserId]) // Index for faster lookups by clerk user ID
+  @@index([email]) // Index for faster lookups by email
+  @@index([name]) // Index for faster lookups by name
+  @@index([phone]) // Index for faster lookups by phone
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}

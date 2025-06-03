@@ -11,10 +11,15 @@ import {
 import Image from "next/image";
 import { Button } from "./ui/button";
 import { ArrowLeft, CarFront, Heart, Layout } from "lucide-react";
+import { checkUser } from "@/lib/checkUser";
+import { is } from "../../.next/static/chunks/[root of the server]__31723f._";
 
 const Header = async ({ isAdminPage = false }) => {
-  const isAdmin = false;
-  isAdminPage = false;
+  const user = await checkUser();
+
+  const isAdmin = user?.role === "ADMIN";
+
+  // isAdminPage = isAdminPage || isAdmin;
   {
     console.log("isAdminPage", isAdminPage);
   }
