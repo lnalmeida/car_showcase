@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverComponentsHmrCache: false,
+  },
   images: {
-    domains: ["ucarecdn.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cqshaavtqfxsjjhzulbg.supabase.co",
+      },
+    ],
   },
 };
 

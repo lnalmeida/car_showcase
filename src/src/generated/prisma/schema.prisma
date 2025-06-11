@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model DealershipInfo {
+  id            String         @id @default(uuid())
+  name          String         @default("JF Veículos")
+  address       String         @default("Av. Leonel de Moura Brizola, nº 1990, Pilar, Duque de Caxias, RJ")
+  phone         String?        @default("+55 21 98217-4174")
+  email         String?        @default("contato@jfveiculospillar.com.br")
+  website       String?        @default("https://jfveiculospillar.com.br")
+  socialMedia   String?        @default("https://www.instagram.com/jfveiculospillar/")
+  logoUrl       String?        @default("https://jfveiculospillar.com.br/logo.png")
+  description   String?        @default("A JF Veículos é uma concessionária localizada em Pilar, Duque de Caxias, RJ, especializada na venda de carros e motos novos e seminovos. Oferecemos uma ampla gama de veículos de qualidade, com opções para todos os gostos e orçamentos. Nossa equipe está pronta para ajudar você a encontrar o veículo ideal.")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  workingHourId String
+  visitBookings VisitBooking[]
+  workingHours  WorkingHour[]
+
+  @@map("dealership_info")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  clerkUserId  String             @unique
+  email        String             @unique
+  name         String?
+  imageUrl     String?
+  phone        String?
+  role         UserRole           @default(USER)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  savedCars    UserSavedVehicle[]
+  visitBooking VisitBooking[]
+
+  @@index([clerkUserId])
+  @@index([email])
+  @@index([name])
+  @@index([phone])
+  @@map("users")
+}
+
+model UserSavedVehicle {
+  id        String   @id @default(uuid())
+  userId    String
+  vehicleId String
+  savedAt   DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vehicleId])
+  @@index([userId])
+  @@index([vehicleId])
+  @@map("user_saved_vehicles")
+}
+
+model Vehicle {
+  id           String             @id @default(uuid())
+  category     String             @default("Carro")
+  model        String
+  year         Int
+  price        Decimal            @db.Decimal(10, 2)
+  color        String
+  featured     Boolean            @default(false)
+  seats        Int?
+  doors        Int?
+  engineSize   String?
+  mileage      Int
+  description  String?
+  images       String[]
+  optionals    String[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  status       String             @default("Disponível")
+  fuelType     String             @default("Gasolina")
+  transmission String             @default("Manual")
+  vehicleBrand String?
+  vehicleType  String?
+  savedBy      UserSavedVehicle[]
+  visits       VisitBooking[]
+
+  @@index([status])
+  @@index([category])
+  @@index([featured])
+  @@index([price])
+  @@index([category, vehicleType, vehicleBrand])
+  @@index([status, category])
+  @@index([featured, category])
+  @@index([vehicleBrand, model])
+  @@index([model])
+  @@index([year])
+  @@index([fuelType])
+  @@index([transmission])
+  @@index([engineSize])
+  @@index([mileage])
+  @@index([color])
+  @@index([createdAt])
+  @@index([status, price])
+  @@index([category, year, price])
+  @@index([featured, status, category])
+  @@map("vehicles")
+}
+
+model VisitBooking {
+  id               String         @id @default(uuid())
+  userId           String
+  dealershipInfoId String
+  visitDate        DateTime       @db.Date
+  startTime        String
+  endTime          String
+  status           BookingStatus  @default(PENDING)
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  vehicleId        String?
+  dealershipInfo   DealershipInfo @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Vehicle          Vehicle?       @relation(fields: [vehicleId], references: [id])
+
+  @@index([userId])
+  @@index([dealershipInfoId])
+  @@index([visitDate])
+  @@index([status])
+  @@map("visit_bookings")
+}
+
+model WorkingHour {
+  id               String         @id @default(uuid())
+  dealershipInfoId String
+  dayOfWeek        DayOfWeek
+  isOpen           Boolean        @default(true)
+  openTime         String
+  closeTime        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  dealershipInfo   DealershipInfo @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
+
+  @@unique([dealershipInfoId, dayOfWeek])
+  @@index([dealershipInfoId])
+  @@index([dayOfWeek])
+  @@index([isOpen])
+  @@map("working_hours")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
