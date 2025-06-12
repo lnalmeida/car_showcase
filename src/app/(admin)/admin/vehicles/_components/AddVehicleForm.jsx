@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { useRouter } from "next/navigation";
+
 import {
   carBrandOptions,
   motorcycleBrandOptions,
@@ -47,16 +49,20 @@ import { vehicleDefaultValues, vehicleSchema } from "../_schemas/vehicleSchema";
 import { useDropzone } from "react-dropzone";
 
 import { toast } from "sonner";
-import { Upload, Trash, Loader2 } from "lucide-react";
+import { Upload, Trash, Loader2, Camera, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import useFetch from "@/hooks/useFetch";
-import { addVehicle } from "@/actions/vehicles";
+import { addVehicle, processVehicleImageWithAI } from "@/actions/vehicles";
 
 const AddVehicleForm = () => {
   const [activeTab, setActiveTab] = useState("ai");
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imageError, setImageError] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadedAiImage, setUploadedAiImage] = useState(null);
+
+  const router = useRouter();
 
   const vehiclesFormSchema = vehicleSchema;
 
@@ -149,6 +155,100 @@ const AddVehicleForm = () => {
     },
     multiple: true,
   });
+
+  const onAiDrop = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+
+    if (file) {
+      if (file.size > 1024 * 1024 * 5) {
+        toast.error("O arquivo deve ter menos de 5MB");
+        return;
+      }
+
+      setUploadedAiImage(file);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+        toast.success("Imagem carregada com sucesso!");
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const { getRootProps: getAiRootProps, getInputProps: getAiInputProps } =
+    useDropzone({
+      onDrop: onAiDrop,
+      accept: {
+        "image/*": [".jpeg", ".jpg", ".png", ".webp"],
+      },
+      maxFiles: 1,
+      multiple: false,
+    });
+
+  const {
+    loading: processImageLoading,
+    fn: processImageFn,
+    data: processImageResult,
+    error: processImageError,
+  } = useFetch(processVehicleImageWithAI);
+
+  const processWithAI = async () => {
+    if (!uploadedAiImage) {
+      toast.error("Por favor, selecione uma imagem antes de efetuar a busca");
+      return;
+    }
+    await processImageFn(uploadedAiImage);
+  };
+
+  useEffect(() => {
+    if (processImageError) {
+      toast.error(processImageError.message || "Erro ao processar a imagem");
+    }
+  }, [processImageError]);
+
+  useEffect(() => {
+    if (processImageResult?.success) {
+      const { data } = processImageResult;
+      setValue("category", data.category);
+      setValue("vehicleType", data.type);
+      setValue("vehicleBrand", data.brand);
+      setValue("model", data.model);
+      setValue("year", data.year);
+      setValue("price", data.price);
+      setValue("color", data.color);
+      setValue("seats", data.seats);
+      setValue("doors", data.doors);
+      setValue("engineSize", data.engineSize);
+      setValue("fuelType", data.fuelType);
+      setValue("transmission", data.transmission);
+      setValue("description", data.description);
+
+      // const reader = new FileReader();
+      // reader.onload = (e) => {
+      //   setUploadedAiImage((prev) => [...prev, e.target.result]);
+      // };
+      // reader.readAsDataURL(uploadedAiImage);
+
+      if (imagePreview) {
+        setUploadedImages((prevImages) => {
+          // Evita duplicatas
+          if (prevImages.includes(imagePreview)) {
+            return prevImages;
+          }
+          return [...prevImages, imagePreview];
+        });
+      }
+
+      toast.success("Informações extraídas com sucesso", {
+        description: `${data.vehicleBrand} ${data.model} ${
+          data.year
+        } detectado com ${Math.round(data.confidence * 100)}% de precisão. `,
+      });
+      setActiveTab("manual");
+    }
+  }, [processImageResult]);
 
   return (
     <div>
@@ -625,7 +725,125 @@ const AddVehicleForm = () => {
           </Card>
         </TabsContent>
         <TabsContent value="ai" className="mt-6">
-          Change your password here.
+          <Card>
+            <CardHeader>
+              <CardTitle>Detecção de detalhes de Veículo por imagem</CardTitle>
+              <CardDescription>
+                Envie uma imagem do carro e deixe a IA buscar os detalhes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="borde-2 border-dashed rounded-lg p-6 text-center">
+                  {imagePreview ? (
+                    <div className="flex flex-col items-center justify-center">
+                      <img
+                        src={imagePreview}
+                        alt="Imagem do carro"
+                        className="max-h-56 max-w-full object-contain mb-4"
+                      />
+                      <div className="flex justify-cente space-x-4">
+                        <Button
+                          className="flex items-center p-4"
+                          onClick={() => {
+                            setImagePreview("");
+                            setUploadedAiImage(null);
+                            toast.info("Imagem removida!");
+                          }}
+                        >
+                          <Trash2 size="icon" className="mr-2" />
+                          Remover imagem
+                        </Button>
+
+                        <Button
+                          className="flex items-center p-4"
+                          onClick={processWithAI}
+                          disabled={processImageLoading}
+                        >
+                          {processImageLoading ? (
+                            <>
+                              <Loader2
+                                size="icon"
+                                className="mr-2 animate-spin"
+                              />
+                              Processando...
+                            </>
+                          ) : (
+                            <>
+                              <Camera size="icon" className="mr-2" />
+                              Buscar detalhes do veículo
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="cursor-pointer hover:bg-gray-50 transition"
+                      {...getAiRootProps()}
+                    >
+                      <input {...getAiInputProps()} />
+                      <div className="flex flex-col items-center justify-center">
+                        <Camera className="h-12 w-12 text-gray-400 mb-2" />
+                        <p className="text-gray-600 text-sm">
+                          "Arraste e solte a imagem do carro aqui ou clique para
+                          buscar os detalhes."
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Somente arquivos JPEG, PNG, JPG ou WebP (Máx. 5MB).
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* {} */}
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="font-medium mb-2">
+                    Intruções de uso da busca por imagem:
+                  </h3>
+                  <ol className="spave-y-2 text-sm text-gray-600 list-decimal pl-4">
+                    <li>
+                      Carregue uma imagem limpa do carro, sem pessoas ou objetos
+                      intermediários ao fundo ou na frente.
+                    </li>
+                    <li>
+                      Clique em "Buscar detalhes do veículo" para processar a
+                      imagem.
+                    </li>
+                    <li>Revise as informações fornecidas pela IA.</li>
+                    <li>Complete as informações faltantes</li>
+                    <li>Salve o veículo.</li>
+                  </ol>
+                </div>
+
+                <div className="bg-amber-50 p-4 rounded-md">
+                  <h3 className="font-medium text-amber-800 mb-1">
+                    Dicas importantes:
+                  </h3>
+                  <ul className="space-y-1 text-sm text-amber-700">
+                    <li>
+                      &#x2022; Carregue uma imagem clara e bem iluminada do
+                      carro.
+                    </li>
+                    <li>&#x2022; Tente captirar o veículo por inteiro.</li>
+                    <li>
+                      &#x2022; Para modelos difíceis, use multiplos ângulos de
+                      foto.
+                    </li>
+                    <li>
+                      &#x2022;
+                      <strong> Evite fotos de veículos em movimento.</strong>
+                    </li>
+                    <li>
+                      &#x2022; <strong> Sempre</strong> revise as informações
+                      fornecidas pela IA.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
