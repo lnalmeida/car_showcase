@@ -14,8 +14,8 @@ export function getOptionsFromEnum(enumObj, labelsObj) {
 }
 
 export const formatCurrency = (value) => {
-  const cleanedValue = value.replace(/\D/g, "");
-  const parsedValue = parseFloat(cleanedValue);
+  const cleanedValue = value.toString().replace(/\D/g, "");
+  const parsedValue = !isNaN(cleanedValue) ? Number(cleanedValue) : 0;
   const formattedValue = parsedValue.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",

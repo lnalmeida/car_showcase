@@ -215,7 +215,7 @@ const AddVehicleForm = () => {
       setValue("vehicleType", data.type);
       setValue("vehicleBrand", data.brand);
       setValue("model", data.model);
-      setValue("year", data.year);
+      setValue("year", data.year.toString());
       setValue("price", data.price);
       setValue("color", data.color);
       setValue("seats", data.seats);
@@ -224,12 +224,6 @@ const AddVehicleForm = () => {
       setValue("fuelType", data.fuelType);
       setValue("transmission", data.transmission);
       setValue("description", data.description);
-
-      // const reader = new FileReader();
-      // reader.onload = (e) => {
-      //   setUploadedAiImage((prev) => [...prev, e.target.result]);
-      // };
-      // reader.readAsDataURL(uploadedAiImage);
 
       if (imagePreview) {
         setUploadedImages((prevImages) => {

@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="pt-BR">
+      <html lang="pt-BR" suppressHydrationWarning>
         <body className={`${inter.className}`}>
           <Header isAdminPage={false} />
           <main className="min-h-screen">{children}</main>
