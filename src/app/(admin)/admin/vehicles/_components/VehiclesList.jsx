@@ -115,6 +115,10 @@ const VehiclesList = () => {
     placeholderData: (previousData) => previousData,
   });
 
+  useEffect(() => {
+    setPageIndex(0);
+  }, [search, filterValue]);
+
   const vehiclesData = responseData?.data ?? [];
   const totalCount = responseData?.totalCount ?? 0;
 
@@ -343,7 +347,8 @@ const VehiclesList = () => {
       {totalCount > 0 && (
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            {pageSize} de {totalCount} veículo(s).
+            {pageIndex > 0 ? totalCount - pageSize : pageSize} de {totalCount}{" "}
+            veículo(s).
           </div>
 
           <div className="flex items-center gap-6">
