@@ -8,8 +8,6 @@ import { createClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
-import { use } from "react";
-import { toast } from "sonner";
 
 const fileToBase64 = async (file) => {
   const bytes = await file.arrayBuffer();
@@ -238,7 +236,7 @@ export const addVehicle = async (params) => {
   }
 };
 
-export const getVehicles = async (search = "", page = 0, size = 10) => {
+export const getVehicles = async (params = {}) => {
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
@@ -249,7 +247,16 @@ export const getVehicles = async (search = "", page = 0, size = 10) => {
 
     if (!user) throw new Error("User not found");
 
+    const { search, page = 0, limit = 10, filter, sortBy, order } = params;
+
     let where = {};
+
+    if (filter) {
+      where.category = {
+        equals: filter,
+        mode: "insensitive",
+      };
+    }
 
     if (search) {
       where.OR = [
@@ -286,14 +293,14 @@ export const getVehicles = async (search = "", page = 0, size = 10) => {
       ];
     }
 
+    const orderByClause = sortBy ? { [sortBy]: order } : { createdAt: "desc" };
+
     const [vehicles, totalCount] = await Promise.all([
       db.vehicle.findMany({
         where,
-        orderBy: {
-          createdAt: "desc",
-        },
-        skip: page * size,
-        take: size,
+        orderBy: orderByClause,
+        skip: page * limit,
+        take: limit,
       }),
       db.vehicle.count({
         where,
@@ -304,7 +311,7 @@ export const getVehicles = async (search = "", page = 0, size = 10) => {
       vehicles.map((v) => serializeVehicleData(v))
     );
 
-    console.log("Serialized vehicles data:", result);
+    // console.log("Serialized vehicles data:", result);
 
     return {
       success: true,
@@ -351,6 +358,7 @@ export const getVehicle = async (id) => {
 };
 
 export const updateVehicle = async (id, vehicleData) => {
+  console.log("Chama a função updateVehicle no backend");
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
@@ -360,67 +368,71 @@ export const updateVehicle = async (id, vehicleData) => {
     });
 
     if (!user) throw new Error("User not found");
-
     if (user.role !== "ADMIN") throw new Error("Unauthorized");
 
-    const vehicle = await db.vehicle.findUnique({
-      where: { id },
-    });
+    console.log("📥 [updateVehicle] Dados recebidos do cliente:", vehicleData);
 
-    if (!vehicle) throw new Error("Vehicle not found");
+    const dataForDB = {};
+
+    if (vehicleData.vehicleType !== undefined)
+      dataForDB.vehicleType = vehicleData.vehicleType;
+    if (vehicleData.vehicleBrand !== undefined)
+      dataForDB.vehicleBrand = vehicleData.vehicleBrand;
+    if (vehicleData.model !== undefined) dataForDB.model = vehicleData.model;
+    if (vehicleData.year !== undefined)
+      dataForDB.year = parseInt(vehicleData.year);
+    if (vehicleData.price !== undefined)
+      dataForDB.price = parseFloat(vehicleData.price);
+    if (vehicleData.color !== undefined) dataForDB.color = vehicleData.color;
+    if (vehicleData.status !== undefined) dataForDB.status = vehicleData.status;
+    if (vehicleData.mileage !== undefined)
+      dataForDB.mileage = parseInt(vehicleData.mileage);
+    if (vehicleData.fuelType !== undefined)
+      dataForDB.fuelType = vehicleData.fuelType;
+    if (vehicleData.optionals !== undefined)
+      dataForDB.optionals = vehicleData.optionals;
+
+    if (vehicleData.featured !== undefined) {
+      if (vehicleData.featured === true) {
+        const vehicle = await db.vehicle.findUnique({ where: { id } });
+        if (!vehicle) throw new Error("Vehicle not found");
+
+        if (vehicle.status !== "Disponível") {
+          throw new Error(
+            "Apenas veículos com status 'Disponível' podem ser destacados."
+          );
+        }
+      }
+
+      dataForDB.featured = vehicleData.featured;
+    }
+
+    if (Object.keys(dataForDB).length === 0) {
+      console.log(
+        "⚠️ [updateVehicle] Objeto de dados vazio. Nenhuma atualização será feita."
+      );
+
+      return { success: true, message: "Nenhuma informação foi alterada." };
+    }
+
+    console.log(
+      "📦 [updateVehicle] Objeto final para o banco de dados:",
+      dataForDB
+    );
 
     const updatedVehicle = await db.vehicle.update({
       where: { id },
-      data: {
-        ...(vehicleData.vehicleType !== undefined && {
-          vehicleType: vehicleData.vehicleType,
-        }),
-        ...(vehicleData.vehicleBrand !== undefined && {
-          vehicleBrand: vehicleData.vehicleBrand,
-        }),
-        ...(vehicleData.model !== undefined && { model: vehicleData.model }),
-        ...(vehicleData.year !== undefined && {
-          year: parseInt(vehicleData.year),
-        }),
-        ...(vehicleData.price !== undefined && {
-          price: parseFloat(vehicleData.price),
-        }),
-        ...(vehicleData.color !== undefined && {
-          color: vehicleData.color,
-        }),
-        ...(vehicleData.featured !== undefined &&
-          vehicleData.status === "Disponível" && {
-            featured: vehicleData.featured,
-          }),
-        ...(vehicleData.status !== undefined && {
-          status: vehicleData.status,
-        }),
-
-        ...(vehicleData.mileage !== undefined && {
-          mileage: parseInt(vehicleData.mileage),
-        }),
-        ...(vehicleData.fuelType !== undefined && {
-          fuelType: vehicleData.fuelType,
-        }),
-        ...(vehicleData.optionals !== undefined && {
-          optionals: vehicleData.optionals,
-        }),
-      },
+      data: dataForDB,
     });
 
-    console.log("Atualizou o veiculo com sucesso");
+    console.log("✅ Veículo atualizado com sucesso no banco de dados.");
 
     revalidatePath("/admin/vehicles");
 
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error("❌ Erro ao atualizar veiculo:", error);
-    return {
-      success: false,
-      error: error.message,
-    };
+    console.error("❌ Erro ao atualizar veiculo:", error.message);
+    return { success: false, error: error.message };
   }
 };
 
@@ -468,14 +480,19 @@ export const removeVehicle = async (id) => {
         .filter(Boolean);
 
       if (filePaths.length > 0) {
-        await supabase.storage.from("jf-veiculos-images").remove(filePaths);
-        if (error) {
-          console.error("❌ Erro ao deletar imagens:", error);
+        const res = await supabase.storage
+          .from("jf-veiculos-images")
+          .remove(filePaths);
+        if (res.error) {
+          console.error("❌ Erro ao deletar imagens:", res.error.message);
           //Caso falhe a deleção da imagem, continua o processo
         }
       }
     } catch (storageError) {
-      console.error("❌ Erro ao deletar imagens no Storage:", storageError);
+      console.error(
+        "❌ Erro ao deletar imagens no Storage:",
+        storageError.message
+      );
     }
 
     revalidatePath("/admin/vehicles");

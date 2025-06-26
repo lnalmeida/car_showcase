@@ -1,5 +1,7 @@
 import React from "react";
 
+export const dynamic = "force-dynamic";
+
 import VehiclesList from "./_components/VehiclesList";
 
 export const Metadata = {

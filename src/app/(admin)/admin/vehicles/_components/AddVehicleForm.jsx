@@ -215,7 +215,10 @@ const AddVehicleForm = () => {
       setValue("vehicleType", data.type);
       setValue("vehicleBrand", data.brand);
       setValue("model", data.model);
-      setValue("year", data.year.toString());
+      setValue(
+        "year",
+        data.year.toString() ?? new Date().getFullYear().toString()
+      );
       setValue("price", data.price);
       setValue("color", data.color);
       setValue("seats", data.seats);

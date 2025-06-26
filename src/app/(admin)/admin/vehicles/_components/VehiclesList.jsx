@@ -1,26 +1,43 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, use } from "react";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import {
+  ChevronDown,
   Plus,
   Search,
-  MoreHorizontal,
-  Star,
-  StarOff,
-  Loader2,
   Car,
-  Eye,
   Trash,
-  Pencil,
-  Stamp,
-  PencilOff,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogClose,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import {
   Select,
@@ -29,50 +46,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ChevronDown } from "lucide-react";
 
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuItem,
-  DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogClose,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
-
-import useFetch from "@/hooks/useFetch";
+import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import { getVehicles, removeVehicle, updateVehicle } from "@/actions/vehicles";
+import { DataTable } from "@/components/DataTable";
+import { getColumns } from "../_schemas/listVehicleTableColumnDef";
+import { ClerkLoaded } from "@clerk/nextjs";
+import { getPaginationRange } from "@/lib/helpers";
 
 const VehiclesList = () => {
   const [search, setSearch] = useState("");
@@ -81,118 +73,186 @@ const VehiclesList = () => {
 
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
   const [sorting, setSorting] = useState([]);
-
-  const [featured, setFeatured] = useState(null);
+  const [filterValue, setFilterValue] = useState("all");
 
   const [vehicleToDelete, setVehicleToDelete] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const setBadgeStatusColor = (status) => {
-    switch (status) {
-      case "Disponível":
-        return {
-          variant: "success",
-          badgeColor: "bg-green-500 font-semibold text-white",
-        };
-      case "Vendido":
-        return {
-          variant: "danger",
-          badgeColor: "bg-red-500 font-semibold text-white",
-        };
-      case "Reservado":
-        return {
-          variant: "warning",
-          badgeColor: "bg-yellow-500 font-semibold text-white ",
-        };
-    }
-  };
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const queryKey = [
+    "vehicles",
+    search,
+    pageIndex,
+    pageSize,
+    filterValue,
+    sorting,
+  ];
 
   const {
-    loading: loadingVehicles,
-    fn: fetchVehicles,
-    data: vehiclesData,
-    error: VehiclesError,
-  } = useFetch(getVehicles);
+    isLoading: loadingVehicles,
+    data: responseData,
+    error,
+  } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const params = {
+        search,
+        page: pageIndex,
+        limit: pageSize,
+        filter: filterValue === "all" ? null : filterValue,
+        sortBy: sorting.length > 0 ? sorting[0].id : null,
+        order: sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : null,
+      };
+      const res = await getVehicles(params);
+      return res;
+    },
+    placeholderData: (previousData) => previousData,
+  });
 
-  useEffect(() => console.log(vehiclesData), [vehiclesData]);
+  const vehiclesData = responseData?.data ?? [];
+  const totalCount = responseData?.totalCount ?? 0;
 
-  useEffect(() => {
-    fetchVehicles(search);
+  console.log(
+    "🔄 COMPONENTE RENDERIZADO - Estado atual de vehiclesData:",
+    vehiclesData
+  );
 
-    console.log("Vehicles data:", vehiclesData);
-  }, [search]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchVehicles(search)
-      .then((res) => {
-        console.log("Retorno da API:", res);
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar veículos:", err);
+  const updateFeaturedMutation = useMutation({
+    mutationFn: async (vehicle) => {
+      await updateVehicle(vehicle.id, { featured: !vehicle.featured });
+    },
+    onSuccess: () => {
+      toast.success("Destaque do veículo atualizado.");
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar destaque do veículo.");
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ vehicle, newStatus }) => {
+      if (vehicle.status === newStatus) return;
+      console.log(
+        "feita a veirificação de status \n / veiculo: " +
+          vehicle +
+          "\n / status: " +
+          newStatus
+      );
+      const toggleFeatured = newStatus === "Vendido" ? false : vehicle.featured;
+      const res = await updateVehicle(vehicle.id, {
+        status: newStatus,
+        featured: toggleFeatured,
       });
-  }, [search]);
 
-  const {
-    loading: deletingVehicle,
-    fn: deleteVehicle,
-    data: deleteResult,
-    error: deleteError,
-  } = useFetch(removeVehicle);
+      if (res.success) {
+        console.log("passamos na mutation");
+      }
 
-  const {
-    loading: updatingVehicle,
-    fn: updateVehicles,
-    data: updateResult,
-    error: updateError,
-  } = useFetch(updateVehicle);
+      if (!res.success) {
+        throw new Error(
+          `Erro ao atualizar status do veículo: ${res.error.message}`
+        );
+      }
+
+      console.log("passamos na mutation");
+      return res;
+    },
+    onSuccess: () => {
+      toast.success("Status do veículo atualizado.");
+      queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+    onError: () => {
+      toast.error(`Erro ao atualizar status do veículo: ${error.message}`);
+    },
+  });
+
+  const deleteVehicleMutation = useMutation({
+    mutationFn: (vehicleId) => removeVehicle(vehicleId),
+    onSuccess: () => {
+      toast.success("Veículo excluído com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      setDeleteDialogOpen(false);
+      setVehicleToDelete(null);
+    },
+    onError: () => {
+      toast.error("Erro ao excluir veículo.");
+    },
+  });
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // // API call
+    // // API call-
   };
 
-  const handleUpdateFeatured = async (data) => {
-    console.log("Chama afunção de alterar fetured no front");
-    const res = await updateVehicle(data.id, {
-      featured: !data.featured,
-      status: data.status,
-    });
-
-    if (res.success) {
-      fetchVehicles(search);
-    }
+  const handleUpdateFeatured = async (vehicle) => {
+    console.log("Chama a função handleUpdateFeatured no front");
+    updateFeaturedMutation.mutate(vehicle);
   };
 
-  const handleUpdateStatus = async (data, value) => {
-    console.log("Chama afunção de alterar status no front");
-    if (data.status === value) return;
-    const toggleFeatured = value === "Vendido" ? false : data.featured;
-    const res = await updateVehicle(data.id, {
-      status: value,
-      featured: toggleFeatured,
-    });
-
-    if (res.success) {
-      fetchVehicles(search);
-    }
+  const handleUpdateStatus = async (vehicle, newStatus) => {
+    console.log(
+      "Chama a função handleUpdateStatus no front",
+      vehicle,
+      newStatus
+    );
+    if (vehicle.status === newStatus) return;
+    updateStatusMutation.mutate({ vehicle, newStatus });
   };
 
   const handleConfirmDelete = async () => {
+    console.log("Chama a função handleConfirmDelete no front");
     if (!vehicleToDelete) return;
-
-    const res = await deleteVehicle(vehicleToDelete.id);
-    if (res.success) {
-      toast.success("Veículo excluído com sucesso!");
-      fetchVehicles(search);
-    } else {
-      toast.error("Erro ao excluir veículo.");
-    }
-
-    setDeleteDialogOpen(false);
-    setVehicleToDelete(null);
+    deleteVehicleMutation.mutate(vehicleToDelete.id);
   };
+
+  const columns = getColumns({
+    onUpdateFeatured: handleUpdateFeatured,
+    onUpdateStatus: handleUpdateStatus,
+    onDelete: (vehicle) => {
+      setVehicleToDelete(vehicle);
+      setDeleteDialogOpen(true);
+    },
+    isMounted,
+  });
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const paginationRange = getPaginationRange(totalPages, pageIndex + 1);
+
+  const table = useReactTable({
+    data: vehiclesData,
+    columns,
+    pageCount: totalPages,
+    manualPagination: true,
+    manualSorting: true,
+    state: {
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
+      sorting,
+    },
+
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
+      setPageIndex(next.pageIndex);
+      setPageSize(next.pageSize);
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   return (
     <div className="space-y-4">
@@ -217,208 +277,181 @@ const VehiclesList = () => {
           </div>
         </form>
       </div>
-      {/* Vehicles Table */}
+
+      {/* Filters */}
+
+      <Card className="flex items-center">
+        <CardContent className="flex flex-wrap w-full items-center justify-between space-x-4 py-2">
+          <RadioGroup
+            value={filterValue}
+            onValueChange={setFilterValue}
+            className="flex flex-wrap items-center gap-4"
+          >
+            <Label>Filtrar por tipo:</Label>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="all" id="all" />
+              <Label htmlFor="all">Todos</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Carro" id="car" />
+              <Label htmlFor="car">Carros</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Moto" id="motorcycle" />
+              <Label htmlFor="motorcycle">Motos</Label>
+            </div>
+          </RadioGroup>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Colunas <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {typeof column.columnDef.header === "function"
+                      ? column.id
+                      : column.columnDef.header}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardContent>
+      </Card>
+
+      {/* DataTable */}
 
       <Card className="mb-1 overflow-scroll-y">
         <CardContent>
-          {loadingVehicles && !vehiclesData ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
-            </div>
-          ) : vehiclesData?.success && vehiclesData?.data?.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="text-left">
-                  <TableRow className="space-x-10">
-                    <TableHead className="w-[150px]">Foto</TableHead>
-                    <TableHead className="w-[150px]">Marca</TableHead>
-                    <TableHead className="w-[150px]">Modelo</TableHead>
-                    <TableHead className="w-[150px]">Cor</TableHead>
-                    <TableHead className="w-[150px] text-center">Ano</TableHead>
-                    <TableHead className="text-right w-[100px]">
-                      Preço
-                    </TableHead>
-                    <TableHead className="w-[150px] text-center">
-                      Status
-                    </TableHead>
-                    <TableHead className="w-[150px] text-center px-4">
-                      Destaque?
-                    </TableHead>
-                    <TableHead className="w-[150px] text-right">
-                      Ações
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {vehiclesData?.success &&
-                    vehiclesData.data.map((vehicle) => (
-                      <TableRow key={vehicle.id}>
-                        <TableCell className="font-medium w-10 h-10 rounded-lg overflow-hidden">
-                          {vehicle.images.length > 0 ? (
-                            <img
-                              src={vehicle.images[0]}
-                              alt={`${vehicle.vehicleBrand} ${vehicle.model}`}
-                              className="h-14 w-14 rounded-lg"
-                            />
-                          ) : (
-                            <Car className="h-14 w-14 text-gray-400" />
-                          )}
-                        </TableCell>
-                        <TableCell>{vehicle.vehicleBrand}</TableCell>
-                        <TableCell>{vehicle.model}</TableCell>
-                        <TableCell className="text-left">
-                          {vehicle.color}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {vehicle.year}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(vehicle.price)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge
-                            variant={
-                              setBadgeStatusColor(vehicle.status).variant
-                            }
-                            className={
-                              setBadgeStatusColor(vehicle.status).badgeColor
-                            }
-                          >
-                            {vehicle.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center px-4">
-                          {vehicle.status === "Disponível" ? (
-                            vehicle.featured ? (
-                              <Star
-                                onClick={() => handleUpdateFeatured(vehicle)}
-                                className="inline-block h-4 w-4 cursor-pointer text-yellow-500 fill-current text-center"
-                              />
-                            ) : (
-                              <Star
-                                onClick={() => handleUpdateFeatured(vehicle)}
-                                className="inline-block h-4 w-4 cursor-pointer text-muted-300 text-center"
-                              />
-                            )
-                          ) : (
-                            <StarOff
-                              disabled
-                              className="cursor-not-allowed inline-block h-4 w-4  text-muted-300 text-center"
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Abrir menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel className="flex items-center gap-2">
-                                <Car className="h-6 w-6 mr-2" />
-                                Veículos
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator className="bg-gray-300" />
-
-                              <DropdownMenuItem
-                                className="cursor-pointer text-muted-200 font-semibold"
-                                onClick={() =>
-                                  router.push(`/admin/vehicles/${vehicle.id}`)
-                                }
-                              >
-                                <Eye className="h-5 w-5 mr-1 text-muted-200" />
-                                Visualizar
-                              </DropdownMenuItem>
-
-                              <DropdownMenuGroup>
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger
-                                    disabled={vehicle.status === "Vendido"}
-                                    className={
-                                      vehicle.status === "Vendido"
-                                        ? "cursor-not-allowed"
-                                        : "cursor-pointer"
-                                    }
-                                  >
-                                    <Stamp className="h-5 w-5 mr-1 text-muted-200" />
-                                    Status
-                                  </DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent>
-                                    <DropdownMenuItem
-                                      className="cursor-pointer"
-                                      onClick={() =>
-                                        handleUpdateStatus(
-                                          vehicle,
-                                          "Disponível"
-                                        )
-                                      }
-                                    >
-                                      Disponível
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      className="cursor-pointer"
-                                      onClick={() =>
-                                        handleUpdateStatus(vehicle, "Vendido")
-                                      }
-                                    >
-                                      Vendido
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      className="cursor-pointer"
-                                      onClick={() =>
-                                        handleUpdateStatus(vehicle, "Reservado")
-                                      }
-                                    >
-                                      Reservado
-                                    </DropdownMenuItem>
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                              </DropdownMenuGroup>
-
-                              <DropdownMenuItem
-                                className="cursor-pointer text-red-500 font-semibold"
-                                onClick={() => {
-                                  setVehicleToDelete(vehicle);
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash className="h-4 w-4 mr-1 text-red-500" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-center text-gray-400 font-medium">
-                <Car className="h-4 w-4 mr-2" />
-                Sem veículos para exibir
-              </p>
-            </div>
-          )}
+          <ClerkLoaded>
+            <DataTable table={table} loading={loadingVehicles} />
+          </ClerkLoaded>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="flex items-center justify-center gap-2 py-4 mt-2 w-full sticky ">
+
+      {/* Pagination */}
+
+      {totalCount > 0 && (
+        <div className="flex items-center justify-between space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            {vehiclesData?.success && (
-              <p>
-                Exibindo{" "}
-                <span className="font-bold">{vehiclesData.data.length}</span> de{" "}
-                <span className="font-bold">{vehiclesData.totalCount}</span>{" "}
-                veículos
-              </p>
-            )}
+            {pageSize} de {totalCount} veículo(s).
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">Registros por página</p>
+              <Select
+                value={`${pageSize}`}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPageIndex(0);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Pagination className=" mx-4 w-auto ">
+              <PaginationContent className="flex items-center gap-1 mr-4">
+                <PaginationItem>
+                  <Button
+                    href="#"
+                    variant="outline"
+                    className={`mx-1 ${
+                      pageIndex === 0 ? "cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPageIndex(pageIndex - 1);
+                    }}
+                    disabled={pageIndex === 0}
+                    aria-disabled={pageIndex === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                  </Button>
+                </PaginationItem>
+
+                {paginationRange.map((pageNumber, index) => {
+                  if (pageNumber === "...") {
+                    return (
+                      <PaginationItem key={`ellipsis-${index}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+
+                  const isActive = pageIndex + 1 === pageNumber;
+                  return (
+                    <PaginationItem
+                      key={pageNumber}
+                      className="cursor-pointer mx-1"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPageIndex(pageNumber - 1);
+                          }}
+                          isActive={isActive}
+                          className={
+                            isActive ? "border-gray-500 bg-gray-200" : ""
+                          }
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </div>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <Button
+                    href="#"
+                    className={`mx-1 ${
+                      pageIndex + 1 >= totalPages
+                        ? "cursor-not-allowed"
+                        : "cursor-pointer"
+                    }`}
+                    variant="outline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPageIndex(pageIndex + 1);
+                    }}
+                    disabled={pageIndex + 1 >= totalPages}
+                    aria-disabled={pageIndex + 1 >= totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm deletion dialog */}
+
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -439,10 +472,21 @@ const VehiclesList = () => {
 
             <Button
               variant="destructive"
+              className="flex items-center space-x-3"
               onClick={handleConfirmDelete}
-              disabled={!vehicleToDelete}
+              disabled={deleteVehicleMutation.isPending}
             >
-              Excluir
+              {deleteVehicleMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 animate-spin" />
+                  <span>Excluindo...</span>
+                </>
+              ) : (
+                <>
+                  <Trash className="mr-2" />
+                  <span>Excluir</span>
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
