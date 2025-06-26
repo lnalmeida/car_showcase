@@ -67,6 +67,7 @@ export const getColumns = ({
   {
     accessorKey: "images",
     header: "Foto",
+    displayName: "Foto",
     cell: ({ row }) => {
       const images = row.getValue("images");
       const src = Array.isArray(images) && images.length > 0 ? images[0] : null;
@@ -89,17 +90,21 @@ export const getColumns = ({
   {
     accessorKey: "vehicleType",
     header: "Tipo",
+    displayName: "Tipo",
   },
   {
     accessorKey: "vehicleBrand",
     header: "Marca",
+    displayName: "Marca",
   },
   {
     accessorKey: "model",
     header: "Modelo",
+    displayName: "Modelo",
   },
   {
     accessorKey: "year",
+    displayName: "Ano",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -112,6 +117,7 @@ export const getColumns = ({
   },
   {
     accessorKey: "price",
+    displayName: "Preço",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -131,27 +137,33 @@ export const getColumns = ({
   },
   {
     accessorKey: "color",
+    displayName: "Cor",
     header: "Cor",
   },
   {
     accessorKey: "engineSize",
+    displayName: "Motor",
     header: "Motor",
   },
   {
     accessorKey: "mileage",
+    displayName: "Odômetro",
     header: "Odômetro",
     cell: ({ row }) => `${row.getValue("mileage")} km`,
   },
   {
     accessorKey: "fuelType",
+    displayName: "Combustível",
     header: "Combustível",
   },
   {
     accessorKey: "transmission",
+    displayName: "Câmbio",
     header: "Câmbio",
   },
   {
     accessorKey: "status",
+    displayName: "Status",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -177,6 +189,7 @@ export const getColumns = ({
 
   {
     accessorKey: "featured",
+    displayName: "Destaque?",
     header: "Destaque?",
     cell: ({ row }) => {
       const vehicle = row.original;
@@ -202,6 +215,7 @@ export const getColumns = ({
 
   {
     id: "actions",
+    displayName: "Ações",
     header: "Ações",
     cell: ({ row }) => {
       const vehicle = row.original;
@@ -225,7 +239,7 @@ export const getColumns = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="flex items-center gap-2">
+              <DropdownMenuLabel className="flex items-center gap-2 cursor-none">
                 <Car className="h-6 w-6 mr-2" />
                 Veículos
               </DropdownMenuLabel>

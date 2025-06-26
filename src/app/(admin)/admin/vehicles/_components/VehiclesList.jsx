@@ -320,9 +320,7 @@ const VehiclesList = () => {
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {typeof column.columnDef.header === "function"
-                      ? column.id
-                      : column.columnDef.header}
+                    {column.columnDef.displayName || column.id}
                   </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
