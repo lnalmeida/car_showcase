@@ -258,6 +258,25 @@ const VehiclesList = () => {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const numberOfRecordsLabel = (() => {
+    if (totalCount === 0) {
+      return "Nenhum veículo";
+    }
+
+    const firstRecordIndex = pageIndex * pageSize + 1;
+
+    const lastRecordIndex = Math.min(
+      firstRecordIndex + pageSize - 1,
+      totalCount
+    );
+
+    if (lastRecordIndex === totalCount && firstRecordIndex === 1) {
+      return `${totalCount} de ${totalCount} veículos.`;
+    } else {
+      return `${firstRecordIndex}-${lastRecordIndex} de ${totalCount} veículos.`;
+    }
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -347,8 +366,7 @@ const VehiclesList = () => {
       {totalCount > 0 && (
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            {pageIndex > 0 ? totalCount - pageSize : pageSize} de {totalCount}{" "}
-            veículo(s).
+            {numberOfRecordsLabel}
           </div>
 
           <div className="flex items-center gap-6">
