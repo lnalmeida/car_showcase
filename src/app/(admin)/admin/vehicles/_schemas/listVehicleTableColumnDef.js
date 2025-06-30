@@ -282,6 +282,7 @@ export const getColumns = ({
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     <DropdownMenuItem
+                      disabled={vehicle.status === "Disponível"}
                       className="cursor-pointer
                       text-gray-500
                       font-normal
@@ -295,6 +296,7 @@ export const getColumns = ({
                       Disponível
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      disabled={vehicle.status === "Vendido"}
                       className="cursor-pointer
                       text-gray-500
                       font-normal
@@ -308,6 +310,7 @@ export const getColumns = ({
                       Vendido
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      disabled={vehicle.status === "Reservado"}
                       className="cursor-pointer
                       text-gray-500
                       font-normal

@@ -393,15 +393,12 @@ export const updateVehicle = async (id, vehicleData) => {
       dataForDB.optionals = vehicleData.optionals;
 
     if (vehicleData.featured !== undefined) {
-      if (vehicleData.featured === true) {
-        const vehicle = await db.vehicle.findUnique({ where: { id } });
-        if (!vehicle) throw new Error("Vehicle not found");
+      const vehicle = await db.vehicle.findUnique({ where: { id } });
 
-        if (vehicle.status !== "Disponível") {
-          throw new Error(
-            "Apenas veículos com status 'Disponível' podem ser destacados."
-          );
-        }
+      if (!vehicle) throw new Error("Vehicle not found");
+
+      if (vehicle.status === "Reservado" || vehicle.status === "Vendido") {
+        vehicleData.featured = false;
       }
 
       dataForDB.featured = vehicleData.featured;
