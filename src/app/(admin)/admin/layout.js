@@ -6,6 +6,7 @@ import { getAdmin } from "@/actions/admin";
 
 import Header from "@/components/Header";
 import Sidebar from "./_components/Sidebar";
+import { ClerkLoaded } from "@clerk/nextjs";
 
 const AdminLayout = async ({ children }) => {
   const admin = await getAdmin();
@@ -16,7 +17,9 @@ const AdminLayout = async ({ children }) => {
 
   return (
     <div className="h-full">
-      <Header isAdminPage={true} />
+      <ClerkLoaded>
+        <Header isAdminPage={true} />
+      </ClerkLoaded>
       <div className="flex h-full w-56 flex-col top-24 mt-2 fixed inset-y-0 z-50">
         <Sidebar />
       </div>

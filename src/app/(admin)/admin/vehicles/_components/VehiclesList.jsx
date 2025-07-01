@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, use } from "react";
+import React, { useState, useEffect } from "react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -16,7 +16,6 @@ import {
   ChevronDown,
   Plus,
   Search,
-  Car,
   Trash,
   Loader2,
   ChevronLeft,
@@ -53,8 +52,6 @@ import {
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 
 import { toast } from "sonner";

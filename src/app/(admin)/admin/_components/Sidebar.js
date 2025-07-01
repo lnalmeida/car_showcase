@@ -5,7 +5,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-import { Calendar, Car, Cog, LayoutDashboard, User } from "lucide-react";
+import { Calendar, Car, Cog, LayoutDashboard, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -27,13 +27,8 @@ const routes = [
   },
   {
     label: "Usuários",
-    icon: User,
+    icon: Users,
     href: "/admin/users",
-  },
-  {
-    label: "Configurações",
-    icon: Cog,
-    href: "/admin/settings",
   },
 ];
 const Sidebar = () => {
