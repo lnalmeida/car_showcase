@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Input } from "@/components/ui/input";
+
+import { toast } from "sonner";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -52,7 +54,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { getUsersData } from "@/actions/users";
+import {getUsersData, updateUserRole, removeUser} from "@/actions/users";
 import { getPaginationRange } from "@/lib/helpers";
 
 // const initialUsers = [
@@ -99,16 +101,14 @@ const UserList = () => {
   const [sorting, setSorting] = useState([]);
   const [filterValue, setFilterValue] = useState("all");
 
-  const [UserToDelete, setUserToDelete] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState("role");
+  const [search, setSearch] = useState("");
 
   const [isMounted, setIsMounted] = useState(false);
 
   const [users, setUsers] = useState([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState("role");
   const [selectedUser, setSelectedUser] = useState(null);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -137,6 +137,52 @@ const UserList = () => {
     placeholderData: (previousData) => previousData,
   });
 
+  const queryClient = useQueryClient();
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ id, newRole }) => {
+      console.log("antes da update");
+      const res = await updateUserRole({ id, role: newRole });
+      console.log("mutation");
+
+      if (!res.success) {
+        throw new Error(
+          `Erro ao atualizar a função do usuário: ${res.error.message}`
+        );
+      }
+
+      return res;
+    },
+    onSuccess: () => {
+      toast.success("Função do usuário atualizada.");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setDialogOpen(false);
+      setSelectedUser(null);
+    },
+    onError: () => {
+      toast.error(`Erro ao atualizar função do usuário: ${error.message}`);
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await removeUser(id);
+
+      if (!res.success) {
+        throw new Error(res.error || "Erro ao excluir usuário");
+      }
+    },
+    onSuccess: () => {
+      toast.success("usuário excluído com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setDialogOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir usuário: ${error.message}`);
+    },
+  });
+
   useEffect(() => {
     if (responseData?.success && responseData.data) {
       setUsers(responseData.data);
@@ -163,25 +209,15 @@ const UserList = () => {
   };
 
   const confirmRoleChange = () => {
-    if (selectedUser) {
-      setUsers(
-        users.map((user) =>
-          user.id === selectedUser.id
-            ? { ...user, role: user.role === "admin" ? "user" : "admin" }
-            : user
-        )
-      );
-    }
-    setDialogOpen(false);
-    setSelectedUser(null);
+    if (!selectedUser) return;
+    const currentRole = selectedUser.role;
+    const newRole = currentRole === "ADMIN" ? "USER" : "ADMIN";
+    updateRoleMutation.mutate({ id: selectedUser.id, newRole: newRole });
   };
 
-  const confirmDelete = () => {
-    if (selectedUser) {
-      setUsers(users.filter((user) => user.id !== selectedUser.id));
-    }
-    setDialogOpen(false);
-    setSelectedUser(null);
+  const confirmDelete = async () => {
+    if (!selectedUser) return;
+    deleteUserMutation.mutate(selectedUser.id);
   };
 
   const getInitials = (name) => {
@@ -283,12 +319,12 @@ const UserList = () => {
                       >
                         <KeySquare
                           className={`h-4 w-4 mr-2 ${
-                            user.role === "admin"
+                            user.role === "ADMIN"
                               ? "text-yellow-500 fill-current"
                               : ""
                           }`}
                         />
-                        {user.role === "admin"
+                        {user.role === "ADMIN"
                           ? "Remover Administrador"
                           : "Tornar Administrador"}
                       </Button>
@@ -435,13 +471,13 @@ const UserList = () => {
                   Tem certeza que deseja alterar a função de{" "}
                   <strong>{selectedUser?.name}</strong> de{" "}
                   <strong>
-                    {selectedUser?.role === "admin"
+                    {selectedUser?.role === "ADMIN"
                       ? "Administrador"
                       : "Usuário"}
                   </strong>{" "}
                   para{" "}
                   <strong>
-                    {selectedUser?.role === "admin"
+                    {selectedUser?.role === "ADMIN"
                       ? "Usuário"
                       : "Administrador"}
                   </strong>
