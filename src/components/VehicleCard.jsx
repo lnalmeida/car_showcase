@@ -10,8 +10,8 @@ import { CarIcon, Heart } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useRouter } from "next/navigation";
 
-const CarCard = ({ car }) => {
-  const [isSaved, setIsSaved] = useState(car.wishlisted);
+const CehicleCard = ({ vehicle }) => {
+  const [isSaved, setIsSaved] = useState(vehicle.wishlisted);
   const router = useRouter();
 
   const handleToggledSaved = async (e) => {
@@ -20,11 +20,11 @@ const CarCard = ({ car }) => {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition group py-0">
       <div className="relative h-60">
-        {car.images && car.images.length > 0 ? (
+        {vehicle.images && vehicle.images.length > 0 ? (
           <div className="relative w-full h-full">
             <Image
-              src={car.images[0]}
-              alt={`${car.make} ${car.model}`}
+              src={vehicle.images[0]}
+              alt={`${vehicle.make} ${vehicle.model}`}
               fill
               sizes="(max-width: 768px) 100vw, 320px"
               className="object-cover group-hover:scale-105 transition duration-300"
@@ -53,40 +53,40 @@ const CarCard = ({ car }) => {
       <CardContent className="p-4">
         <div className="flex flex-col mb-2">
           <h3 className="text-lg font-bold line-clamp-1">
-            {car.make} {car.model}
+            {vehicle.make} {vehicle.model}
           </h3>
           <span className="text-xl font-bold text-blue-600">
             {Intl.NumberFormat("pt-BRbr", {
               style: "currency",
               currency: "BRL",
-            }).format(car.price)}
+            }).format(vehicle.price)}
           </span>
         </div>
 
         <div className="text-gray-600 mb-2 flex items-center">
-          <span>{car.year}</span>
+          <span>{vehicle.year}</span>
           <span className="mx-2">•</span>
-          <span>{car.transmission}</span>
+          <span>{vehicle.transmission}</span>
           <span className="mx-2">•</span>
-          <span>{car.fuelType}</span>
+          <span>{vehicle.fuelType}</span>
         </div>
 
         <div className="flex flex-wrap gap-1 mb-4">
           <Badge variant="outline" className="bg-gray-100">
-            {car.bodyType}
+            {vehicle.vehicleType}
           </Badge>
           <Badge variant="outline" className="bg-gray-100">
-            {car.mileage.toLocaleString().replace(",", ".")} km
+            {vehicle.mileage.toLocaleString().replace(",", ".")} km
           </Badge>
           <Badge variant="outline" className="bg-gray-100">
-            {car.color}
+            {vehicle.color}
           </Badge>
         </div>
 
         <div className="flex justify-between">
           <Button
             className="flex-1"
-            onClick={() => router.push(`/car/${car.id}`)}
+            onClick={() => router.push(`/car/${vehicle.id}`)}
           >
             Ver carro
           </Button>
@@ -96,4 +96,4 @@ const CarCard = ({ car }) => {
   );
 };
 
-export default CarCard;
+export default CehicleCard;
