@@ -15,7 +15,9 @@ import {
   Search,
   MapPin,
   Star,
+  ListFilter,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -343,6 +345,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
 
   // Filtros ativos para exibição
   const [activeFilters, setActiveFilters] = useState([]);
+
+  //Estado pra controle  de exibição de menu mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  //Prevenir Scroll do body enquanto o menu mobile estiver aberto
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    //Cleanup
+    return () => (document.body.style.overflow = "unset");
+  }, [isMobileMenuOpen]);
 
   // Inicializar filtros baseados na URL quando o componente monta
   useEffect(() => {
@@ -1013,11 +1028,6 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
           alt={`${vehicle.vehicleBrand} ${vehicle.model}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        {/* <div className="absolute top-2 right-3">
-          <Badge variant="secondary" className="bg-white/90 text-gray-700">
-            {vehicle.category}
-          </Badge>
-        </div> */}
         {vehicle.featured && (
           <div className="absolute top-3 left-3">
             <Badge className="text-yellow-600 text-md bg-gray-200 hover:bg-gray-300">
@@ -1081,646 +1091,697 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
   );
 
   return (
-    <div className={cn("flex py-4 gap-6", className)}>
-      {/* Sidebar com filtros */}
-      <div className="w-full lg:w-[25%] lg:max-w-[320px] lg:min-w-[280px] bg-white border border-gray-200 rounded-lg shadow-sm lg:sticky lg:top-4 h-fit">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
-            {activeFilters.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearAllFilters}
-                className="h-8 px-2"
-              >
-                <X className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Limpar</span>
-              </Button>
-            )}
-          </div>
-
-          {activeFilters.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {activeFilters.map((filter, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="text-xs flex items-center gap-1 cursor-pointer hover:bg-gray-200"
-                  onClick={() => removeFilter(filter.type)}
-                >
-                  {filter.label}
-                  <X className="h-3 w-3" />
-                </Badge>
-              ))}
-            </div>
+    <>
+      {/*Backdrop overlay para mobile*/}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      {/* Botão menu hamburguer mobile */}
+      {!isMobileMenuOpen && (
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="sticky mt2left-4 z-40 lg:hidden bg-white rounded-md p-2 border"
+        >
+          <ListFilter className="h-5 w-5 text-gray-600" />
+        </button>
+      )}
+      <div className={cn("flex py-4 gap-6", className)}>
+        {/* Sidebar com filtros */}
+        <div
+          className={cn(
+            //Desktop Sidebar
+            "hidden lg:block lg:w-[25%] lg:max-w-[320px] lg:min-w-[280px] bg-white border border-gray-200 rounded-lg shadow-sm lg:sticky lg:top-4 h-fit",
+            //Mobile overlay aberto
+            isMobileMenuOpen &&
+              "fixed top-0 left-0 right-0 bottom-0 z-50 block bg-white overflow-y-auto",
+            className
           )}
-        </div>
-
-        {/* Search Input */}
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nome, marca ou modelo..."
-              value={filters.searchText}
-              onChange={(e) => updateFilters({ searchText: e.target.value })}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-            {filters.searchText && (
-              <button
-                onClick={() => updateFilters({ searchText: "" })}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="max-h-[calc(100vh-280px)] overflow-auto">
-          <Accordion
-            type="multiple"
-            defaultValue={["category"]}
-            className="p-4"
-          >
-            {/* Categoria */}
-            <AccordionItem value="category">
-              <AccordionTrigger
-                className={cn(
-                  "text-base font-medium",
-                  hasActiveFilter("category") && "text-blue-600 font-semibold"
-                )}
-              >
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div
+              className={cn(
+                "flex items-center mb-3 justify-between"
+                // mobile aberto, centralizar rótulo
+              )}
+            >
+              <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+              {/* Fechar menu mobile */}
+              {isMobileMenuOpen && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-8 w-8 p-9 z-40 lg:hidden"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+              {/* Botões quando o menu mobile está fechado */}
+              {!isMobileMenuOpen && (
                 <div className="flex items-center gap-2">
-                  <Car
-                    className={cn(
-                      "h-4 w-4",
-                      hasActiveFilter("category") && "text-blue-600"
-                    )}
-                  />
-                  <span>Categoria</span>
-                  {hasActiveFilter("category") && (
-                    <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                  {/* botão limpar fica oculto no mobile */}
+                  {activeFilters.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="h-8 px-2 hidden lg:flex"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Limpar</span>
+                    </Button>
                   )}
                 </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-1">
-                  {filterConfig.categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => handleCategoryChange(category)}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.category === category
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      {category === filterConfig.categories[0]
-                        ? "Todos"
-                        : category.charAt(0).toUpperCase() + category.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+              )}
+            </div>
 
-            {/* Tipo de Veículo */}
-            {availableVehicleTypes.length > 0 && (
-              <AccordionItem value="vehicle-type">
+            {activeFilters.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {activeFilters.map((filter, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="text-xs flex items-center gap-1 cursor-pointer hover:bg-gray-200"
+                    onClick={() => removeFilter(filter.type)}
+                  >
+                    {filter.label}
+                    <X className="h-3 w-3" />
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Search Input */}
+          <div className="px-4 py-3 border-b border-gray-200">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nome, marca ou modelo..."
+                value={filters.searchText}
+                onChange={(e) => updateFilters({ searchText: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+              {filters.searchText && (
+                <button
+                  onClick={() => updateFilters({ searchText: "" })}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="max-h-[calc(100vh-280px)] overflow-auto">
+            <Accordion
+              type="multiple"
+              defaultValue={["category"]}
+              className="p-4"
+            >
+              {/* Categoria */}
+              <AccordionItem value="category">
                 <AccordionTrigger
                   className={cn(
                     "text-base font-medium",
-                    hasActiveFilter("vehicle-type") &&
-                      "text-blue-600 font-semibold"
+                    hasActiveFilter("category") && "text-blue-600 font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <CarFront
+                    <Car
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("vehicle-type") && "text-blue-600"
+                        hasActiveFilter("category") && "text-blue-600"
                       )}
                     />
-                    <span>Tipo</span>
-                    {hasActiveFilter("vehicle-type") && (
+                    <span>Categoria</span>
+                    {hasActiveFilter("category") && (
                       <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-1">
-                    <button
-                      onClick={() =>
-                        updateFilters({ vehicleType: "all-types" })
-                      }
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.vehicleType === "all-types"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      Todos os tipos
-                    </button>
-                    {availableVehicleTypes.map((type) => (
+                    {filterConfig.categories.map((category) => (
                       <button
-                        key={type}
-                        onClick={() => updateFilters({ vehicleType: type })}
+                        key={category}
+                        onClick={() => handleCategoryChange(category)}
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          filters.vehicleType === type
+                          filters.category === category
                             ? "bg-blue-500 text-white hover:bg-blue-600"
                             : "hover:bg-gray-100"
                         )}
                       >
-                        {type}
+                        {category === filterConfig.categories[0]
+                          ? "Todos"
+                          : category.charAt(0).toUpperCase() +
+                            category.slice(1)}
                       </button>
                     ))}
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            )}
 
-            {/* Preço */}
-            <AccordionItem value="price-range">
-              <AccordionTrigger
-                className={cn(
-                  "text-base font-medium",
-                  hasActiveFilter("price-range") &&
-                    "text-blue-600 font-semibold"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <DollarSign
+              {/* Tipo de Veículo */}
+              {availableVehicleTypes.length > 0 && (
+                <AccordionItem value="vehicle-type">
+                  <AccordionTrigger
                     className={cn(
-                      "h-4 w-4",
-                      hasActiveFilter("price-range") && "text-blue-600"
+                      "text-base font-medium",
+                      hasActiveFilter("vehicle-type") &&
+                        "text-blue-600 font-semibold"
                     )}
-                  />
-                  <span>Preço</span>
-                  {hasActiveFilter("price-range") && (
-                    <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-600">
-                    Até R$ {filters.priceRange[1].toLocaleString()}
-                  </div>
-                  <Slider
-                    value={[filters.priceRange[1]]}
-                    onValueChange={(value) =>
-                      updateFilters({
-                        priceRange: [filterConfig.priceRange.min, value[0]],
-                      })
-                    }
-                    min={filterConfig.priceRange.min}
-                    max={filterConfig.priceRange.max}
-                    step={filterConfig.priceRange.step}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>
-                      R$ {filterConfig.priceRange.min.toLocaleString()}
-                    </span>
-                    <span>
-                      R$ {filterConfig.priceRange.max.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Ano */}
-            <AccordionItem value="year-range">
-              <AccordionTrigger
-                className={cn(
-                  "text-base font-medium",
-                  hasActiveFilter("year-range") && "text-blue-600 font-semibold"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Calendar
-                    className={cn(
-                      "h-4 w-4",
-                      hasActiveFilter("year-range") && "text-blue-600"
-                    )}
-                  />
-                  <span>Ano</span>
-                  {hasActiveFilter("year-range") && (
-                    <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-600">
-                    {filters.yearRange[0]} - {filters.yearRange[1]}
-                  </div>
-                  <Slider
-                    value={filters.yearRange}
-                    onValueChange={(value) =>
-                      updateFilters({ yearRange: value })
-                    }
-                    min={filterConfig.yearRange.min}
-                    max={filterConfig.yearRange.max}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>{filterConfig.yearRange.min}</span>
-                    <span>{filterConfig.yearRange.max}</span>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Quilometragem */}
-            <AccordionItem value="odometer-range">
-              <AccordionTrigger
-                className={cn(
-                  "text-base font-medium",
-                  hasActiveFilter("odometer-range") &&
-                    "text-blue-600 font-semibold"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <MapPin
-                    className={cn(
-                      "h-4 w-4",
-                      hasActiveFilter("odometer-range") && "text-blue-600"
-                    )}
-                  />
-                  <span>Quilometragem</span>
-                  {hasActiveFilter("odometer-range") && (
-                    <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-600">
-                    Até {filters.odometerRange[1].toLocaleString()} km
-                  </div>
-                  <Slider
-                    value={[filters.odometerRange[1]]}
-                    onValueChange={(value) =>
-                      updateFilters({ odometerRange: [0, value[0]] })
-                    }
-                    min={0}
-                    max={250000}
-                    step={5000}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>0 km</span>
-                    <span>250.000 km</span>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Marca */}
-            {availableBrands.length > 0 && (
-              <AccordionItem value="brand">
-                <AccordionTrigger
-                  className={cn(
-                    "text-base font-medium",
-                    hasActiveFilter("brand") && "text-blue-600 font-semibold"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Tag
-                      className={cn(
-                        "h-4 w-4",
-                        hasActiveFilter("brand") && "text-blue-600"
+                  >
+                    <div className="flex items-center gap-2">
+                      <CarFront
+                        className={cn(
+                          "h-4 w-4",
+                          hasActiveFilter("vehicle-type") && "text-blue-600"
+                        )}
+                      />
+                      <span>Tipo</span>
+                      {hasActiveFilter("vehicle-type") && (
+                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
                       )}
-                    />
-                    <span>Marca</span>
-                    {hasActiveFilter("brand") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    <button
-                      onClick={() =>
-                        updateFilters({
-                          brand: "all-brands",
-                          model: "all-models",
-                        })
-                      }
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.brand === "all-brands"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      Todas as marcas
-                    </button>
-                    {availableBrands.map((brand) => (
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-1">
                       <button
-                        key={brand}
                         onClick={() =>
-                          updateFilters({ brand, model: "all-models" })
+                          updateFilters({ vehicleType: "all-types" })
                         }
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          filters.brand === brand
+                          filters.vehicleType === "all-types"
                             ? "bg-blue-500 text-white hover:bg-blue-600"
                             : "hover:bg-gray-100"
                         )}
                       >
-                        {brand}
+                        Todos os tipos
                       </button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
+                      {availableVehicleTypes.map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => updateFilters({ vehicleType: type })}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                            filters.vehicleType === type
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "hover:bg-gray-100"
+                          )}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-            {/* Modelo */}
-            {availableModels.length > 0 && (
-              <AccordionItem value="model">
+              {/* Preço */}
+              <AccordionItem value="price-range">
                 <AccordionTrigger
                   className={cn(
                     "text-base font-medium",
-                    hasActiveFilter("model") && "text-blue-600 font-semibold"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Package
-                      className={cn(
-                        "h-4 w-4",
-                        hasActiveFilter("model") && "text-blue-600"
-                      )}
-                    />
-                    <span>Modelo</span>
-                    {hasActiveFilter("model") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    <button
-                      onClick={() => updateFilters({ model: "all-models" })}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.model === "all-models"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      Todos os modelos
-                    </button>
-                    {availableModels.map((model) => (
-                      <button
-                        key={model}
-                        onClick={() => updateFilters({ model })}
-                        className={cn(
-                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          filters.model === model
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                            : "hover:bg-gray-100"
-                        )}
-                      >
-                        {model}
-                      </button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* Motorização */}
-            {availableEngines.length > 0 && (
-              <AccordionItem value="engine">
-                <AccordionTrigger
-                  className={cn(
-                    "text-base font-medium",
-                    hasActiveFilter("engine") && "text-blue-600 font-semibold"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <MotorizationEngine
-                      className={cn(
-                        "h-4 w-4",
-                        hasActiveFilter("engine") && "text-blue-600"
-                      )}
-                    />
-                    <span>Motorização</span>
-                    {hasActiveFilter("engine") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    <button
-                      onClick={() => updateFilters({ engine: "all-engines" })}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.engine === "all-engines"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      Todas as motorizações
-                    </button>
-                    {availableEngines.map((engine) => (
-                      <button
-                        key={engine}
-                        onClick={() => updateFilters({ engine })}
-                        className={cn(
-                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          filters.engine === engine
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                            : "hover:bg-gray-100"
-                        )}
-                      >
-                        {engine}
-                      </button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* Câmbio */}
-            {availableTransmissions.length > 0 && (
-              <AccordionItem value="transmission">
-                <AccordionTrigger
-                  className={cn(
-                    "text-base font-medium",
-                    hasActiveFilter("transmission") &&
+                    hasActiveFilter("price-range") &&
                       "text-blue-600 font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <ManualTransmissions
+                    <DollarSign
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("transmission") && "text-blue-600"
+                        hasActiveFilter("price-range") && "text-blue-600"
                       )}
                     />
-                    <span>Câmbio</span>
-                    {hasActiveFilter("transmission") && (
+                    <span>Preço</span>
+                    {hasActiveFilter("price-range") && (
                       <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() =>
-                        updateFilters({ transmission: "all-transmissions" })
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">
+                      Até R$ {filters.priceRange[1].toLocaleString()}
+                    </div>
+                    <Slider
+                      value={[filters.priceRange[1]]}
+                      onValueChange={(value) =>
+                        updateFilters({
+                          priceRange: [filterConfig.priceRange.min, value[0]],
+                        })
                       }
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.transmission === "all-transmissions"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      Todos os câmbios
-                    </button>
-                    {availableTransmissions.map((transmission) => (
-                      <button
-                        key={transmission}
-                        onClick={() => updateFilters({ transmission })}
-                        className={cn(
-                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          filters.transmission === transmission
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                            : "hover:bg-gray-100"
-                        )}
-                      >
-                        {transmission}
-                      </button>
-                    ))}
+                      min={filterConfig.priceRange.min}
+                      max={filterConfig.priceRange.max}
+                      step={filterConfig.priceRange.step}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>
+                        R$ {filterConfig.priceRange.min.toLocaleString()}
+                      </span>
+                      <span>
+                        R$ {filterConfig.priceRange.max.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            )}
 
-            {/* Combustível */}
-            {availableFuels.length > 0 && (
-              <AccordionItem value="fuel">
+              {/* Ano */}
+              <AccordionItem value="year-range">
                 <AccordionTrigger
                   className={cn(
                     "text-base font-medium",
-                    hasActiveFilter("fuel") && "text-blue-600 font-semibold"
+                    hasActiveFilter("year-range") &&
+                      "text-blue-600 font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <Fuel
+                    <Calendar
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("fuel") && "text-blue-600"
+                        hasActiveFilter("year-range") && "text-blue-600"
                       )}
                     />
-                    <span>Combustível</span>
-                    {hasActiveFilter("fuel") && (
+                    <span>Ano</span>
+                    {hasActiveFilter("year-range") && (
                       <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => updateFilters({ fuel: "all-fuels" })}
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">
+                      {filters.yearRange[0]} - {filters.yearRange[1]}
+                    </div>
+                    <Slider
+                      value={filters.yearRange}
+                      onValueChange={(value) =>
+                        updateFilters({ yearRange: value })
+                      }
+                      min={filterConfig.yearRange.min}
+                      max={filterConfig.yearRange.max}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{filterConfig.yearRange.min}</span>
+                      <span>{filterConfig.yearRange.max}</span>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Quilometragem */}
+              <AccordionItem value="odometer-range">
+                <AccordionTrigger
+                  className={cn(
+                    "text-base font-medium",
+                    hasActiveFilter("odometer-range") &&
+                      "text-blue-600 font-semibold"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <MapPin
                       className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                        filters.fuel === "all-fuels"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "hover:bg-gray-100"
+                        "h-4 w-4",
+                        hasActiveFilter("odometer-range") && "text-blue-600"
                       )}
-                    >
-                      Todos os combustíveis
-                    </button>
-                    {availableFuels.map((fuel) => (
+                    />
+                    <span>Quilometragem</span>
+                    {hasActiveFilter("odometer-range") && (
+                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600">
+                      Até {filters.odometerRange[1].toLocaleString()} km
+                    </div>
+                    <Slider
+                      value={[filters.odometerRange[1]]}
+                      onValueChange={(value) =>
+                        updateFilters({ odometerRange: [0, value[0]] })
+                      }
+                      min={0}
+                      max={250000}
+                      step={5000}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>0 km</span>
+                      <span>250.000 km</span>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Marca */}
+              {availableBrands.length > 0 && (
+                <AccordionItem value="brand">
+                  <AccordionTrigger
+                    className={cn(
+                      "text-base font-medium",
+                      hasActiveFilter("brand") && "text-blue-600 font-semibold"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Tag
+                        className={cn(
+                          "h-4 w-4",
+                          hasActiveFilter("brand") && "text-blue-600"
+                        )}
+                      />
+                      <span>Marca</span>
+                      {hasActiveFilter("brand") && (
+                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
                       <button
-                        key={fuel}
-                        onClick={() => updateFilters({ fuel })}
+                        onClick={() =>
+                          updateFilters({
+                            brand: "all-brands",
+                            model: "all-models",
+                          })
+                        }
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          filters.fuel === fuel
+                          filters.brand === "all-brands"
                             ? "bg-blue-500 text-white hover:bg-blue-600"
                             : "hover:bg-gray-100"
                         )}
                       >
-                        {fuel}
+                        Todas as marcas
                       </button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </Accordion>
-        </div>
-      </div>
+                      {availableBrands.map((brand) => (
+                        <button
+                          key={brand}
+                          onClick={() =>
+                            updateFilters({ brand, model: "all-models" })
+                          }
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                            filters.brand === brand
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "hover:bg-gray-100"
+                          )}
+                        >
+                          {brand}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-      {/* Grid de veículos */}
-      <div className="flex-1 mr-4">
-        {/* Header da seção */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Veículos Disponíveis
-          </h2>
-          <p className="text-sm text-gray-600">
-            {filteredVehicles.length} veículo
-            {filteredVehicles.length !== 1 ? "s" : ""} encontrado
-            {filteredVehicles.length !== 1 ? "s" : ""}
-          </p>
-        </div>
+              {/* Modelo */}
+              {availableModels.length > 0 && (
+                <AccordionItem value="model">
+                  <AccordionTrigger
+                    className={cn(
+                      "text-base font-medium",
+                      hasActiveFilter("model") && "text-blue-600 font-semibold"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Package
+                        className={cn(
+                          "h-4 w-4",
+                          hasActiveFilter("model") && "text-blue-600"
+                        )}
+                      />
+                      <span>Modelo</span>
+                      {hasActiveFilter("model") && (
+                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      <button
+                        onClick={() => updateFilters({ model: "all-models" })}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                          filters.model === "all-models"
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "hover:bg-gray-100"
+                        )}
+                      >
+                        Todos os modelos
+                      </button>
+                      {availableModels.map((model) => (
+                        <button
+                          key={model}
+                          onClick={() => updateFilters({ model })}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                            filters.model === model
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "hover:bg-gray-100"
+                          )}
+                        >
+                          {model}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-        {/* Grid de cards */}
-        {filteredVehicles.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredVehicles.map((vehicle) =>
-              CardComponent ? (
-                <CardComponent key={vehicle.id} vehicle={vehicle} />
-              ) : (
-                <DefaultVehicleCard key={vehicle.id} vehicle={vehicle} />
-              )
-            )}
+              {/* Motorização */}
+              {availableEngines.length > 0 && (
+                <AccordionItem value="engine">
+                  <AccordionTrigger
+                    className={cn(
+                      "text-base font-medium",
+                      hasActiveFilter("engine") && "text-blue-600 font-semibold"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <MotorizationEngine
+                        className={cn(
+                          "h-4 w-4",
+                          hasActiveFilter("engine") && "text-blue-600"
+                        )}
+                      />
+                      <span>Motorização</span>
+                      {hasActiveFilter("engine") && (
+                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      <button
+                        onClick={() => updateFilters({ engine: "all-engines" })}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                          filters.engine === "all-engines"
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "hover:bg-gray-100"
+                        )}
+                      >
+                        Todas as motorizações
+                      </button>
+                      {availableEngines.map((engine) => (
+                        <button
+                          key={engine}
+                          onClick={() => updateFilters({ engine })}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                            filters.engine === engine
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "hover:bg-gray-100"
+                          )}
+                        >
+                          {engine}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* Câmbio */}
+              {availableTransmissions.length > 0 && (
+                <AccordionItem value="transmission">
+                  <AccordionTrigger
+                    className={cn(
+                      "text-base font-medium",
+                      hasActiveFilter("transmission") &&
+                        "text-blue-600 font-semibold"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ManualTransmissions
+                        className={cn(
+                          "h-4 w-4",
+                          hasActiveFilter("transmission") && "text-blue-600"
+                        )}
+                      />
+                      <span>Câmbio</span>
+                      {hasActiveFilter("transmission") && (
+                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-1">
+                      <button
+                        onClick={() =>
+                          updateFilters({ transmission: "all-transmissions" })
+                        }
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                          filters.transmission === "all-transmissions"
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "hover:bg-gray-100"
+                        )}
+                      >
+                        Todos os câmbios
+                      </button>
+                      {availableTransmissions.map((transmission) => (
+                        <button
+                          key={transmission}
+                          onClick={() => updateFilters({ transmission })}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                            filters.transmission === transmission
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "hover:bg-gray-100"
+                          )}
+                        >
+                          {transmission}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* Combustível */}
+              {availableFuels.length > 0 && (
+                <AccordionItem value="fuel">
+                  <AccordionTrigger
+                    className={cn(
+                      "text-base font-medium",
+                      hasActiveFilter("fuel") && "text-blue-600 font-semibold"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Fuel
+                        className={cn(
+                          "h-4 w-4",
+                          hasActiveFilter("fuel") && "text-blue-600"
+                        )}
+                      />
+                      <span>Combustível</span>
+                      {hasActiveFilter("fuel") && (
+                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => updateFilters({ fuel: "all-fuels" })}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                          filters.fuel === "all-fuels"
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "hover:bg-gray-100"
+                        )}
+                      >
+                        Todos os combustíveis
+                      </button>
+                      {availableFuels.map((fuel) => (
+                        <button
+                          key={fuel}
+                          onClick={() => updateFilters({ fuel })}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                            filters.fuel === fuel
+                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              : "hover:bg-gray-100"
+                          )}
+                        >
+                          {fuel}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="text-gray-400 mb-4">
-              <Search className="h-12 w-12 mx-auto" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhum veículo encontrado
-            </h3>
-            <p className="text-gray-600">
-              Tente ajustar os filtros para encontrar mais opções
+        </div>
+
+        {/* Grid de veículos */}
+        <div className="flex-1 ml-4 mr-4">
+          {/* Header da seção */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Veículos Disponíveis
+            </h2>
+            <p className="text-sm text-gray-600">
+              {filteredVehicles.length} veículo
+              {filteredVehicles.length !== 1 ? "s" : ""} encontrado
+              {filteredVehicles.length !== 1 ? "s" : ""}
             </p>
           </div>
-        )}
-        {activeFilters.length > 0 && (
-          <div className="min-w-full mt-8">
-            <Button
-              variant="ghost"
-              className="min-w-full py-4 text-lg"
-              onClick={clearAllFilters}
-            >
-              Ou talvez voce queira ver todos os veículos...
-            </Button>
-          </div>
-        )}
+
+          {/* Grid de cards */}
+          {filteredVehicles.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredVehicles.map((vehicle) =>
+                CardComponent ? (
+                  <CardComponent key={vehicle.id} vehicle={vehicle} />
+                ) : (
+                  <DefaultVehicleCard key={vehicle.id} vehicle={vehicle} />
+                )
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+              <div className="text-gray-400 mb-4">
+                <Search className="h-12 w-12 mx-auto" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhum veículo encontrado
+              </h3>
+              <p className="text-gray-600">
+                Tente ajustar os filtros para encontrar mais opções
+              </p>
+            </div>
+          )}
+          {activeFilters.length > 0 && (
+            <div className="min-w-full mt-8">
+              <Button
+                variant="ghost"
+                className="min-w-full py-4 text-lg"
+                onClick={clearAllFilters}
+              >
+                Ou talvez voce queira ver todos os veículos...
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -1,13 +1,13 @@
 "use client";
 
-import React, {useState} from "react";
-import {Input} from "./ui/input";
-import {Camera, Trash2, Upload} from "lucide-react";
-import {Button} from "./ui/button";
-import {useDropzone} from "react-dropzone";
-import {toast} from "sonner";
-import {useRouter} from "next/navigation";
-import {useVehicleSearch} from "@/hooks/useVehiclesSearch"; // Importa a função de busca de veículos
+import React, { useState } from "react";
+import { Input } from "./ui/input";
+import { Camera, Trash2, Upload } from "lucide-react";
+import { Button } from "./ui/button";
+import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useVehicleSearch } from "@/hooks/useVehiclesSearch"; // Importa a função de busca de veículos
 
 const HomeSearch = () => {
   const [isImageSearchActive, setIsImageSearchActive] = useState(false);
@@ -52,13 +52,13 @@ const HomeSearch = () => {
 
         const queryParams = new URLSearchParams();
 
-        queryParams.append("fromImage", "true")
+        queryParams.append("fromImage", "true");
         // Mapear os campos corretamente
         if (data.category) queryParams.append("category", data.category);
         if (data.type) queryParams.append("type", data.type);
         if (data.brand) queryParams.append("brand", data.brand); // brand, não vehicleBrand
 
-        console.log( "dados: "+data);
+        console.log("dados: " + data);
 
         const queryString = queryParams.toString();
         console.log("🔗 Query string:", queryString); // Debug
@@ -107,7 +107,7 @@ const HomeSearch = () => {
     }
   };
 
-  const {getRootProps, getInputProps, isDragActive, isDragReject} =
+  const { getRootProps, getInputProps, isDragActive, isDragReject } =
     useDropzone({
       onDrop,
       accept: {
@@ -122,7 +122,7 @@ const HomeSearch = () => {
         <div className="relative flex items-center">
           <Input
             type="text"
-            placeholder="Busque por marca, modelo, ou use uma imagem e a IA irá encontrar carros semelhantes"
+            placeholder="Busque por texto ou clique"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-12 py-6 w-full rounded-full border-gray-300 bg-white/95 backdrop-blur-sm"
@@ -173,7 +173,7 @@ const HomeSearch = () => {
                 <div {...getRootProps()}>
                   <input {...getInputProps()} />
                   <div className="flex flex-col items-center">
-                    <Upload className="h-12 w-12 text-gray-400 mb-2"/>
+                    <Upload className="h-12 w-12 text-gray-400 mb-2" />
                     <p className="text-gray-400">
                       {isDragActive && !isDragReject
                         ? "Solte o arquivo aqui para enviar"
@@ -201,8 +201,8 @@ const HomeSearch = () => {
                 {isUploading
                   ? "Carregando..."
                   : loadingImage
-                    ? "Analizando imagem..."
-                    : "Buscar carro usando a imagem"}
+                  ? "Analizando imagem..."
+                  : "Buscar carro usando a imagem"}
               </Button>
             )}
           </form>

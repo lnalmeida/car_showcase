@@ -72,12 +72,12 @@ export default function Home() {
       {/*<Hero />*/}
 
       <section className="relative py-16 md:py-28 dotted-background">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center px-4">
           <div className="mb-8">
             <h1 className="text-5xl md:text-8xl mb-4 gradient-title">
               Seu carro ideal está na JF Veículos
             </h1>
-            <p className="text-xl text-gray-500 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-500 mb-8 max-w-2xl mx-auto">
               Pesquisa avançada de carros usando IA e agendamento de visitas e
               test-drive para nossos veículos.
             </p>
