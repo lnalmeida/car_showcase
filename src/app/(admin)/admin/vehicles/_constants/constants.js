@@ -90,29 +90,44 @@ export const motorcycleBrandOptions = [
 
 export const categoryOptions = ["Carro", "Moto"];
 
-export const transmissionTypeOptions = [
+export const carTransmissionTypeOptions = [
   "Manual",
   "Automático",
-  "Semi-Automático",
-  "CVT (Transmissão Variável Contínua)",
-  "Automatizada (Manual Automatizada)",
-  "DCT (Dupla Embreagem)",
+  "Semiautomático",
+  "CVT",
+  "DCT",
 ];
 
-export const fuelTypeOptions = [
+export const motorcycleTransmissionTypeOptions = [
+  "Manual ",
+  "Automático",
+  "Semiautomático",
+  "CVT",
+  "Quickshifter",
+  "Sequencial",
+];
+
+export const carFuelTypeOptions = [
   "Gasolina",
-  "Álcool", // cuidado: no enum está com erro de digitação, o correto seria "alcohol"
+  "Álcool",
   "Flex",
   "Diesel",
   "Elétrico",
-  "Híbrido", // também aqui: o correto seria "hybrid"
+  "Híbrido",
+];
+
+export const motorcycleFuelTypeOptions = [
+  "Gasolina",
+  "Álcool",
+  "Flex",
+  "Elétrico",
 ];
 
 export const statusOptions = ["Disponível", "Vendido", "Reservado"];
 
 export const carTypeOptions = [
   "Hatch",
-  "Sedã",
+  "Sedan",
   "SUV",
   "Crossover",
   "Picape",

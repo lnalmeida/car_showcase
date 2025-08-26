@@ -2,6 +2,9 @@
 const nextConfig = {
   experimental: {
     serverComponentsHmrCache: false,
+    serverActions: {
+      bodySizeLimit: '5mb',
+    },
   },
   images: {
     remotePatterns: [
@@ -17,6 +20,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "imgs.search.brave.com",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com"
+      }
     ],
   },
 };

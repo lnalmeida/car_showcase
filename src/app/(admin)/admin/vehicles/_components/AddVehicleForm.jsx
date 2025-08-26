@@ -12,9 +12,11 @@ import {
   motorcycleBrandOptions,
   carTypeOptions,
   motorcycleTypeOptions,
-  fuelTypeOptions,
+  carFuelTypeOptions,
+  motorcycleFuelTypeOptions,
+  carTransmissionTypeOptions,
+  motorcycleTransmissionTypeOptions,
   statusOptions,
-  transmissionTypeOptions,
 } from "../_constants/constants";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -93,7 +95,6 @@ const AddVehicleForm = () => {
   }, [addVehicleResult?.success, addVehicleLoading]);
 
   const onSubmit = async (data) => {
-    // console.log("data is:", data);
     if (uploadedImages.length === 0) {
       setImageError("Por favor, selecione ao menos uma imagem");
       return;
@@ -278,7 +279,9 @@ const AddVehicleForm = () => {
                       <RadioGroup
                         defaultValue="Carro"
                         value={watch("category")}
-                        onValueChange={(value) => setValue("category", value)}
+                        onValueChange={(value) => {
+                          setValue("category", value);
+                        }}
                         className="flex text-gray-700 mb-2"
                       >
                         <div className="flex items-center space-x-2">
@@ -481,11 +484,19 @@ const AddVehicleForm = () => {
                           <SelectValue placeholder="Transmissão" />
                         </SelectTrigger>
                         <SelectContent>
-                          {transmissionTypeOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
+                          {watch("category") === "Carro"
+                            ? carTransmissionTypeOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))
+                            : motorcycleTransmissionTypeOptions.map(
+                                (option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                )
+                              )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -503,11 +514,17 @@ const AddVehicleForm = () => {
                           <SelectValue placeholder="Combustível" />
                         </SelectTrigger>
                         <SelectContent>
-                          {fuelTypeOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
+                          {watch("category") === "Carro"
+                            ? carFuelTypeOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))
+                            : motorcycleFuelTypeOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
                         </SelectContent>
                       </Select>
                     </div>

@@ -1,21 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
-import { Input } from "./ui/input";
-import { Camera, Trash2, Upload } from "lucide-react";
-import { Button } from "./ui/button";
-import { useDropzone } from "react-dropzone";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import React, {useState} from "react";
+import {Input} from "./ui/input";
+import {Camera, Trash2, Upload} from "lucide-react";
+import {Button} from "./ui/button";
+import {useDropzone} from "react-dropzone";
+import {toast} from "sonner";
+import {useRouter} from "next/navigation";
+import {useVehicleSearch} from "@/hooks/useVehiclesSearch"; // Importa a função de busca de veículos
 
 const HomeSearch = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [isImageSearchActive, setIsImageSearchActive] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
   const [searchImage, setSearchImage] = useState(null);
   const [isUploading, setUploading] = useState(false);
 
   const router = useRouter();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    imageFile,
+    setImageFile,
+    searchByImage,
+    loadingImage,
+    filters,
+  } = useVehicleSearch();
 
   const handleTextSubmit = async (e) => {
     e.preventDefault();
@@ -25,17 +35,48 @@ const HomeSearch = () => {
       );
       return;
     }
-
-    router.push(`/cars?search=${encodeURIComponent(searchTerm)}`);
+    router.push(`/vehicles?search=${encodeURIComponent(searchTerm)}`);
   };
+
   const handleImageSearch = async (e) => {
     e.preventDefault();
-    if (!searchImage) {
+    console.log("🚀 Iniciando busca por imagem");
+    if (!imageFile) {
       toast.error("Por favor, selecione uma imagem");
       return;
     }
 
-    // Logica da IA
+    searchByImage(imageFile, {
+      onSuccess: (data) => {
+        console.log("🎨 Dados da IA no HomeSearch onSuccess:", data); // Debug
+
+        const queryParams = new URLSearchParams();
+
+        queryParams.append("fromImage", "true")
+        // Mapear os campos corretamente
+        if (data.category) queryParams.append("category", data.category);
+        if (data.type) queryParams.append("type", data.type);
+        if (data.brand) queryParams.append("brand", data.brand); // brand, não vehicleBrand
+
+        console.log( "dados: "+data);
+
+        const queryString = queryParams.toString();
+        console.log("🔗 Query string:", queryString); // Debug
+
+        if (queryString) {
+          router.push(`/vehicles?${queryString}`);
+        } else {
+          toast.error(
+            "Não foi possível identificar características claras da imagem."
+          );
+        }
+      },
+      onError: (error) => {
+        toast.error(
+          `Erro ao processar imagem: ${error?.message || "Erro desconhecido"}`
+        );
+      },
+    });
   };
 
   const onDrop = (acceptedFiles) => {
@@ -48,7 +89,7 @@ const HomeSearch = () => {
       }
 
       setUploading(true);
-      setSearchImage(file);
+      setImageFile(file);
 
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -66,7 +107,7 @@ const HomeSearch = () => {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive, isDragReject } =
+  const {getRootProps, getInputProps, isDragActive, isDragReject} =
     useDropzone({
       onDrop,
       accept: {
@@ -121,7 +162,7 @@ const HomeSearch = () => {
                       size={30}
                       onClick={() => {
                         setImagePreview("");
-                        setSearchImage(null);
+                        setImageFile(null);
                         toast.info("Imagem removida!");
                       }}
                       className="cursor-pointer bg-transparent p-1.5 text-gray-500 rounded-full hover:text-red-500 bg-gray-200  transition duration-300"
@@ -132,7 +173,7 @@ const HomeSearch = () => {
                 <div {...getRootProps()}>
                   <input {...getInputProps()} />
                   <div className="flex flex-col items-center">
-                    <Upload className="h-12 w-12 text-gray-400 mb-2" />
+                    <Upload className="h-12 w-12 text-gray-400 mb-2"/>
                     <p className="text-gray-400">
                       {isDragActive && !isDragReject
                         ? "Solte o arquivo aqui para enviar"
@@ -157,7 +198,11 @@ const HomeSearch = () => {
                 className="w-50 mt-4 p-6 rounded-md"
                 disabled={isUploading}
               >
-                {isUploading ? "Carregando..." : "Buscar carro usando a imagem"}
+                {isUploading
+                  ? "Carregando..."
+                  : loadingImage
+                    ? "Analizando imagem..."
+                    : "Buscar carro usando a imagem"}
               </Button>
             )}
           </form>
@@ -166,4 +211,5 @@ const HomeSearch = () => {
     </div>
   );
 };
+
 export default HomeSearch;

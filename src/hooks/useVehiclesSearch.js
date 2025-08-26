@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { getAllVehicles } from "@/actions/vehicleCatalog";
 import { processImageSearch } from "@/actions/home";
 import { toast } from "sonner";
@@ -10,65 +10,269 @@ export function useVehicleSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [filters, setFilters] = useState({});
+  const [isImageSearch, setIsImageSearch] = useState(false);
 
   // Busca todos os veículos do banco
   const {
     data: vehicleData,
     isFetching: loadingVehicles,
-    refetch,
+    refetch: refetchVehicles,
   } = useQuery({
     queryKey: ["allVehicles"],
-    queryFn: getAllVehicles,
+    queryFn: async () => {
+      const response = await getAllVehicles();
+      if (!response.success) {
+        toast.error(
+          "Erro ao buscar veículos: GetAllVehicles: " + response.message
+        );
+        console.error("Erro ao buscar veículos:", response.message);
+        throw new Error(response.message || "Erro ao buscar veículos");
+      }
+      return response.data;
+    },
     staleTime: 1000 * 60 * 5,
+    onError: (error) => {
+      toast.error("Erro ao buscar veículos: Falha no hook: " + error.message);
+      console.error("Erro ao buscar veículos: falha no hook", error.message);
+    },
   });
 
-  // Filtrar os veículos em memória com base nos filtros atuais
-  const filteredVehicles = vehicleData?.success
-    ? vehicleData.data.filter((vehicle) => {
-      if (!filters || Object.keys(filters).length === 0) return true;
+  // Função para aplicar filtros progressivos (só para busca por imagem)
+  const applyProgressiveFilters = useCallback((vehicles, filters) => {
+    const { category, vehicleType, vehicleBrand, model, type } = filters;
+    const typeToSearch = vehicleType || type;
 
-      return Object.entries(filters).every(([key, value]) => {
-        if (!value) return true;
-        return (
-          vehicle[key] &&
-          vehicle[key].toLowerCase().includes(value.toLowerCase())
+    console.log("🔄 Iniciando busca progressiva com filtros:", filters);
+
+    // 1️⃣ Primeiro: Tentar com todos os filtros (categoria + tipo + marca + modelo)
+    let results = [...vehicles];
+
+    // Filtrar por categoria (sempre obrigatório)
+    if (category) {
+      results = results.filter(
+        (v) => v.category?.toLowerCase() === category.toLowerCase()
+      );
+      console.log(`  Após categoria (${category}): ${results.length} veículos`);
+    }
+
+    // Filtrar por tipo
+    if (typeToSearch) {
+      results = results.filter((v) =>
+        v.vehicleType?.toLowerCase().includes(typeToSearch.toLowerCase())
+      );
+      console.log(`  Após tipo (${typeToSearch}): ${results.length} veículos`);
+    }
+
+    // Se temos resultados só com categoria e tipo, vamos tentar adicionar marca
+    if (
+      results.length > 0 &&
+      vehicleBrand &&
+      vehicleBrand !== "Não identificado"
+    ) {
+      const withBrand = results.filter((v) =>
+        v.vehicleBrand?.toLowerCase().includes(vehicleBrand.toLowerCase())
+      );
+
+      if (withBrand.length > 0) {
+        results = withBrand;
+        console.log(
+          `  ✅ Com marca (${vehicleBrand}): ${results.length} veículos`
         );
+
+        // Se temos resultados com marca, tentar adicionar modelo
+        if (model) {
+          const withModel = results.filter((v) =>
+            v.model?.toLowerCase().includes(model.toLowerCase())
+          );
+
+          if (withModel.length > 0) {
+            results = withModel;
+            console.log(
+              `  ✅ Com modelo (${model}): ${results.length} veículos`
+            );
+          } else {
+            console.log(
+              `  ⚠️ Modelo '${model}' não encontrado, mantendo só marca`
+            );
+          }
+        }
+      } else {
+        console.log(
+          `  ⚠️ Marca '${vehicleBrand}' não encontrada, ignorando marca e modelo`
+        );
+        // Manter results sem filtro de marca
+      }
+    }
+
+    // Se não encontrou nada até agora, tentar só categoria
+    if (results.length === 0 && category) {
+      results = vehicles.filter(
+        (v) => v.category?.toLowerCase() === category.toLowerCase()
+      );
+      console.log(
+        `  🔄 Fallback: Apenas categoria (${category}): ${results.length} veículos`
+      );
+    }
+
+    console.log(
+      `📊 Busca progressiva finalizada: ${results.length} veículos encontrados`
+    );
+    return results;
+  }, []);
+
+  // Filtrar os veículos em memória
+  const filteredVehicles = useMemo(() => {
+    if (!vehicleData) return [];
+
+    let vehicles = [...vehicleData];
+
+    // Log para debug
+    console.log("📊 Total inicial de veículos:", vehicles.length);
+    console.log("🔍 SearchTerm atual:", searchTerm);
+    console.log("🎯 Filtros ativos:", filters);
+    console.log("🖼️ É busca por imagem?", isImageSearch);
+
+    if (isImageSearch && filters && Object.keys(filters).length > 0) {
+      return applyProgressiveFilters(vehicles, filters);
+    }
+
+    // 1️⃣ PRIMEIRO: Aplicar filtros se existirem
+    if (filters && Object.keys(filters).length > 0) {
+      const { category, vehicleType, vehicleBrand, model, type } = filters;
+
+      if (category) {
+        vehicles = vehicles.filter(
+          (v) => v.category?.toLowerCase() === category.toLowerCase()
+        );
+        console.log(`✅ Após filtro category (${category}):`, vehicles.length);
+      }
+
+      // Tratar tanto vehicleType quanto type (da IA)
+      if (vehicleType || type) {
+        const typeToSearch = (vehicleType || type).toLowerCase();
+        vehicles = vehicles.filter((v) =>
+          v.vehicleType?.toLowerCase().includes(typeToSearch)
+        );
+        console.log(`✅ Após filtro type (${typeToSearch}):`, vehicles.length);
+      }
+
+      if (vehicleBrand) {
+        vehicles = vehicles.filter((v) =>
+          v.vehicleBrand?.toLowerCase().includes(vehicleBrand.toLowerCase())
+        );
+        console.log(`✅ Após filtro brand (${vehicleBrand}):`, vehicles.length);
+      }
+
+      if (model) {
+        vehicles = vehicles.filter((v) =>
+          v.model?.toLowerCase().includes(model.toLowerCase())
+        );
+        console.log(`✅ Após filtro model (${model}):`, vehicles.length);
+      }
+    }
+
+    // 2️⃣ DEPOIS: Aplicar busca por texto se existir
+    if (searchTerm && searchTerm.trim() !== "") {
+      const search = searchTerm.toLowerCase().trim();
+
+      vehicles = vehicles.filter((v) => {
+        const matchFound =
+          v.model?.toLowerCase().includes(search) ||
+          v.vehicleBrand?.toLowerCase().includes(search) ||
+          v.category?.toLowerCase().includes(search) ||
+          v.vehicleType?.toLowerCase().includes(search) ||
+          v.description?.toLowerCase().includes(search) ||
+          v.color?.toLowerCase().includes(search) ||
+          v.fuelType?.toLowerCase().includes(search) ||
+          v.transmission?.toLowerCase().includes(search) ||
+          v.year?.toString().includes(search) ||
+          `${v.vehicleBrand} ${v.model}`.toLowerCase().includes(search);
+
+        return matchFound;
       });
-    })
-    : [];
+
+      console.log(`✅ Após busca por texto (${search}):`, vehicles.length);
+    }
+
+    console.log("📦 Total final filtrado:", vehicles.length);
+    return vehicles;
+  }, [
+    vehicleData,
+    filters,
+    searchTerm,
+    isImageSearch,
+    applyProgressiveFilters,
+  ]);
 
   // Busca por imagem (IA) e gera filtros
-  const imageSearch = useMutation({
+  const imageSearchMutation = useMutation({
     mutationFn: async (file) => {
       const result = await processImageSearch(file);
+      console.log("🔄 Resultado do processImageSearch:", result);
+
       if (!result.success) throw new Error(result.message);
       return result.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (iaData) => {
+      console.log("🤖 Dados recebidos da IA:", iaData);
       toast.success("Características identificadas pela imagem!");
-      setFilters(data);
+      // Limpar busca por texto
+      setSearchTerm("");
+
+      // Montar filtros baseados na resposta da IA
+      const newFilters = {};
+
+      // IMPORTANTE: A IA retorna "brand", não "vehicleBrand"
+      if (iaData.category) {
+        newFilters.category = iaData.category;
+        console.log("  ✓ Adicionando category:", iaData.category);
+      }
+      if (iaData.brand) {
+        newFilters.vehicleBrand = iaData.brand; // Mapear brand -> vehicleBrand
+        console.log("  ✓ Adicionando vehicleBrand:", iaData.brand);
+      }
+      if (iaData.type) {
+        newFilters.type = iaData.type; // Será tratado como vehicleType no filtro
+        console.log("  ✓ Adicionando type:", iaData.type);
+      }
+
+      console.log("🎯 Filtros finais a serem aplicados:", newFilters);
+      setFilters(newFilters);
+      setIsImageSearch(true);
+      console.log("🎯 Filtros aplicados da IA:", newFilters);
+
+      setTimeout(() => {
+        console.log("🔍 Filtros após 100ms:", filters);
+      }, 100);
     },
     onError: (err) => {
-      toast.error("Erro ao processar imagem: " + err.message);
+      toast.error("Erro ao processar imagem: erro na mutation: " + err.message);
+      setFilters({});
+      setIsImageSearch(false);
     },
   });
 
-  // Aplicar filtro manual por texto
-  const applyTextSearch = () => {
-    if (!searchTerm.trim()) {
-      toast.error("Digite algo para buscar");
-      return;
-    }
+  const clearFilters = useCallback(() => {
+    setFilters({});
+    setSearchTerm("");
+    setImageFile(null);
+    setIsImageSearch(false);
+    console.log("🧹 Todos os filtros limpos");
+  }, []);
 
-    // Vamos tentar aplicar o texto ao brand, model, type ou color
-    const term = searchTerm.trim().toLowerCase();
-    setFilters({
-      vehicleBrand: term,
-      model: term,
-      type: term,
-      color: term,
-    });
-  };
+  const searchByImage = useCallback(
+    (file, options) => {
+      imageSearchMutation.mutate(file, options);
+    },
+    [imageSearchMutation]
+  );
+
+  const applyManualFilter = useCallback((newFilters) => {
+    setFilters(newFilters);
+    setSearchTerm("");
+    setIsImageSearch(false);
+    console.log("🎯 Filtros manuais aplicados:", newFilters);
+  }, []);
 
   return {
     searchTerm,
@@ -77,11 +281,13 @@ export function useVehicleSearch() {
     setImageFile,
     filters,
     setFilters,
-    applyTextSearch,
-    searchByImage: imageSearch.mutate,
-    loadingImage: imageSearch.isLoading,
+    clearFilters,
+    applyManualFilter,
+    searchByImage,
+    loadingImage: imageSearchMutation.isPending,
     loadingVehicles,
     filteredVehicles,
-    refetchVehicles: refetch,
+    refetchVehicles,
+    setIsImageSearch,
   };
 }

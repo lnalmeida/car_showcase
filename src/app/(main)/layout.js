@@ -1,7 +1,7 @@
 import React from "react";
 
 const MainLayout = ({ children }) => {
-  return <div className="container mx-auto my-32">{children}</div>;
+  return <div className="mt-[4.7rem] mb=[8rem]">{children}</div>;
 };
 
 export default MainLayout;

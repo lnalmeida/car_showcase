@@ -1,8 +1,11 @@
-import { currentUser } from "@clerk/nextjs/server";
+"use server";
+import {auth, currentUser} from "@clerk/nextjs/server";
 import { db } from "./prisma";
 
 export const checkUser = async () => {
-  const user = await currentUser();
+  const user =  await currentUser();
+
+  // console.log("id: "+user.id);
 
   if (!user) return null;
 
@@ -28,5 +31,6 @@ export const checkUser = async () => {
     return newUser;
   } catch (error) {
     console.log(error.message);
+    return null;
   }
 };

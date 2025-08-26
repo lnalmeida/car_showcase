@@ -3,18 +3,19 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { serializeVehicleData } from "@/lib/helpers";
+import { fileToBase64 } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
+import { v2 as cloudinary } from "cloudinary";
 
-const fileToBase64 = async (file) => {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const base64 = buffer.toString("base64");
-  return base64;
-};
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+});
 
 export const processVehicleImageWithAI = async (file) => {
   console.log("🚀 Iniciando análise de imagem do veículo..."); // Debug log
@@ -168,41 +169,29 @@ export const addVehicle = async (params) => {
         continue;
       }
 
-      //extracting the base64 part(remove the data:image/png;base64, prefix)
-      const base64 = base64Data.split(",")[1];
-      const imageBuffer = Buffer.from(base64, "base64");
+      console.log("🔄 Enviando para Cloudinary...");
 
-      //determinating file extension from the data URL
-      const mimeMatch = base64Data.match(/data:image\/([a-zA-Z0-9]+);/);
-      const fileExtension = mimeMatch ? mimeMatch[1] : "jpeg";
+      const uploadResult = await cloudinary.uploader.upload(base64Data, {
+        folder: `vehicles/${vehicleData.category}/${vehicleId}`,
+        public_id: `image-${Date.now()}-${i}`,
+        transformation: [
+          { width: 1200, height: 1200, crop: "limit" },
+          { quality: 85, format: "webp" },
+        ],
+        tags: [`vehicle-${vehicleId}`, vehicleData.category],
+      });
 
-      //creating the filename
-      const fileName = `image-${Date.now()}-${i}.${fileExtension}`;
-      const filePath = `${folderPath}/${fileName}`;
+      const publicUrl = uploadResult.secure_url;
 
-      //uploading to supabase
-
-      const { data, error } = await supabase.storage
-        .from("jf-veiculos-images")
-        .upload(filePath, imageBuffer, {
-          contentType: `image/${fileExtension}`,
-        });
-
-      if (error) {
-        console.error("❌ Error uploading image:", error);
-        throw new Error(`Failed to uploading image: ${error.message}`);
-      }
-
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/jf-veiculos-images/${filePath}`;
       console.log("Public URL:", publicUrl);
-
       imageUrls.push(publicUrl);
       console.log("Image URLs:", imageUrls);
-
-      if (imageUrls.length === 0) {
-        throw new Error("No images uploaded");
-      }
     }
+
+    if (imageUrls.length === 0) {
+      throw new Error("No images uploaded");
+    }
+
     const vehicle = await db.vehicle.create({
       data: {
         category: vehicleData.category,
@@ -211,7 +200,7 @@ export const addVehicle = async (params) => {
         model: vehicleData.model,
         year: parseInt(vehicleData.year),
         price: parseFloat(vehicleData.price) ?? 0,
-        color: vehicleData.color,
+        color: vehicleData.color.split("")[0],
         featured: vehicleData.featured,
         seats: parseInt(vehicleData.seats) ?? 5,
         doors: parseInt(vehicleData.doors) ?? 2,

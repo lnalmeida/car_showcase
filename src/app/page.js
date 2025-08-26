@@ -1,14 +1,72 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Car, Calendar, Shield } from "lucide-react";
+import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 
 import HomeSearch from "@/components/HomeSearch";
-import CarCard from "@/components/CarCard";
-import { featuredCars, carMakes, bodyTypes } from "@/lib/data";
+import VehicleCard from "@/components/VehicleCard";
+import { bodyTypes, carMakes, featuredCars } from "@/lib/data";
 import Link from "next/link";
 import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { getFeaturedVehicles } from "@/actions/home";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function Home() {
+  const [featuredCarsInDB, setFeaturedCarsInDB] = useState([]);
+
+  const {
+    isLoading: loadingFeaturedVehicles,
+    data: featuredVehiclesResponse,
+    error: featuredVehiclesError,
+  } = useQuery({
+    queryKey: ["featuredVehicles"],
+    queryFn: async () => {
+      const res = await getFeaturedVehicles(8);
+      if (!res.success) {
+        if (res.message === "Não há veículos em destaque") {
+          return { success: true, data: [] }; // Retorna um array vazio se não houver veículos em destaque
+        }
+        toast.error(`Falha ao carregar veículos em destaque: ${res.message}`);
+      }
+      setFeaturedCarsInDB(res.data);
+      return res.data || [];
+    },
+    staleTime: 100 * 60 * 5,
+    refetchOnWindowFocus: false,
+    onError: (error) => {
+      toast.error(
+        `Falha ao carregar veículos em destaque no UseQuery: ${res.message}`
+      );
+      console.error("Erro ao no useQuery featuredVehicles:", error);
+    },
+  });
+
+  useEffect(() => {
+    if (featuredVehiclesResponse) {
+      console.log(
+        "Dados de veículos em destaque recebidos no navegador:",
+        featuredVehiclesResponse
+      );
+      // Aqui você deveria ver o array de objetos completo no console do navegador.
+    }
+    if (loadingFeaturedVehicles) {
+      console.log("Carregando veículos em destaque no navegador...");
+    }
+    if (featuredVehiclesError) {
+      console.error(
+        "Erro ao carregar veículos em destaque no navegador:",
+        featuredVehiclesError
+      );
+    }
+  }, [
+    featuredVehiclesResponse,
+    loadingFeaturedVehicles,
+    featuredVehiclesError,
+  ]);
+
   return (
     <div className="pt-20 flex flex-col">
       {/*<Hero />*/}
@@ -17,7 +75,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-8">
             <h1 className="text-5xl md:text-8xl mb-4 gradient-title">
-              Seu novo carro está na JF Veículos
+              Seu carro ideal está na JF Veículos
             </h1>
             <p className="text-xl text-gray-500 mb-8 max-w-2xl mx-auto">
               Pesquisa avançada de carros usando IA e agendamento de visitas e
@@ -33,15 +91,15 @@ export default function Home() {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">Novidades</h2>
             <Button variant="ghost" className="flex items-center" asChild>
-              <Link href="/cars">
+              <Link href="/vehicles">
                 Ver Todos <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
-            {featuredCars.map((car) => (
-              <CarCard key={car.id} car={car} />
+            {featuredCarsInDB?.map((vehicle) => (
+              <VehicleCard key={vehicle.id} vehicle={vehicle} />
             ))}
           </div>
         </div>
@@ -52,7 +110,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">Fabricantes</h2>
             <Button variant="ghost" className="flex items-center" asChild>
-              <Link href="/cars">
+              <Link href="/vehicles">
                 Ver Todos <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
@@ -63,7 +121,7 @@ export default function Home() {
               return (
                 <Link
                   key={make.name}
-                  href={`/cars/?make=${make.name}`}
+                  href={`/vehicles/?make=${make.name}`}
                   className="bg-white rounded-lg shadow p-4 text-center hover:shadow-md transition cursor-pointer"
                 >
                   <div className="h-16 w-auto mx-auto mb-2 relative">
@@ -140,7 +198,7 @@ export default function Home() {
               return (
                 <Link
                   key={type.id}
-                  href={`/cars/?type=${type.name}`}
+                  href={`/vehicles/?type=${type.name}`}
                   className="relative group cursor-pointer"
                 >
                   <div className="overflow-hidden rounded-lg flex justify-end h-28 mb-4 relative">
