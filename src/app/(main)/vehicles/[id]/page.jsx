@@ -1,8 +1,9 @@
+import VehicleDetail from "@/components/VehicleDetail";
 import React from "react";
 
-const CarPage = async ({ params }) => {
+const VehicleDetailPage = async ({ params }) => {
   const { id } = await params;
-  return <div>Carro id: {id}</div>;
+  return <VehicleDetail id={id} />;
 };
 
-export default CarPage;
+export default VehicleDetailPage;

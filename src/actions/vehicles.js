@@ -44,7 +44,7 @@ export const processVehicleImageWithAI = async (file) => {
         3.  Tipo (SUV, Sedan, Hatch, Street, Naked, Custom, etc)
         4.  Modelo
         5.  Ano (aproximadamente)
-        6.  Cor
+        6.  Cor (caso haja uma cor composta(ex: preto e branco), preencha esse campo como "preto", ou seja, use a cor predominante)
         7.  Assentos
         8.  Portas
         9.  Tipo de Combustível
@@ -200,7 +200,7 @@ export const addVehicle = async (params) => {
         model: vehicleData.model,
         year: parseInt(vehicleData.year),
         price: parseFloat(vehicleData.price) ?? 0,
-        color: vehicleData.color.split("")[0],
+        color: vehicleData.color,
         featured: vehicleData.featured,
         seats: parseInt(vehicleData.seats) ?? 5,
         doors: parseInt(vehicleData.doors) ?? 2,
@@ -318,24 +318,26 @@ export const getVehicles = async (params = {}) => {
 
 export const getVehicle = async (id) => {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
+    // const { userId } = await auth();
+    // if (!userId) throw new Error("Unauthorized");
 
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
+    // const user = await db.user.findUnique({
+    //   where: { clerkUserId: userId },
+    // });
 
-    if (!user) throw new Error("User not found");
+    // if (!user) throw new Error("User not found");
 
     const vehicle = await db.vehicle.findUnique({
       where: { id },
     });
 
+    const result = serializeVehicleData(vehicle);
+
     if (!vehicle) throw new Error("Vehicle not found");
 
     return {
       success: true,
-      data: serializeVehicleData(vehicle),
+      data: result,
     };
   } catch (error) {
     console.error("❌ Erro ao buscar veículo:", error);

@@ -11,7 +11,7 @@ export const getAllVehicles = async () => {
     const result = await Promise.all(
       vehicles.map((v) => serializeVehicleData(v))
     );
-    console.log("Serialized vehicles data:", result);
+    // console.log("Serialized vehicles data:", result);
     return {
       success: true,
       data: result,
@@ -98,7 +98,7 @@ export const getSearchedVehicles = async (params = {}) => {
       vehicles.map((v) => serializeVehicleData(v))
     );
 
-    console.log("Serialized vehicles data:", result);
+    // console.log("Serialized vehicles data:", result);
 
     return {
       success: true,
@@ -111,5 +111,36 @@ export const getSearchedVehicles = async (params = {}) => {
       success: false,
       error: error.message,
     };
+  }
+};
+
+export const getRelatedVehicles = async (type) => {
+  try {
+    const relatedVehicles = await db.vehicle.findMany({
+      where: {
+        vehicleType: type,
+        status: "Disponível",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!relatedVehicles.length) {
+      return { success: false, message: "Não há veículos em destaque" };
+    }
+
+    const serializedRelatedVehicles = await Promise.all(
+      relatedVehicles.map((rv) => serializeVehicleData(rv))
+    );
+
+    console.log(
+      "veículos relacionados: \n" +
+        JSON.stringify(serializedRelatedVehicles, null, 2)
+    );
+    return { success: true, data: serializedRelatedVehicles };
+  } catch (error) {
+    console.error("Erro ao buscar veículos relacionados:", error.message);
+    return { success: false, message: "Erro ao buscar veículos relacionados" };
   }
 };
