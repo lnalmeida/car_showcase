@@ -38,8 +38,9 @@ const VehicleCard = ({ vehicle }) => {
         vehicle.wishListed = true;
         toast.success("Veículo salvo nos favoritos!");
         setIsSaved(true);
-        // Invalidar cache dos veículos salvos para recarregar
+        // Invalidar cache dos veículos salvos e em destaque para recarregar
         queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
+        queryClient.invalidateQueries({ queryKey: ["featuredVehicles"] });
       } else {
         toast.info(data.message || "Veículo já está nos favoritos");
       }
@@ -63,8 +64,9 @@ const VehicleCard = ({ vehicle }) => {
         vehicle.wishListed = false;
         toast.success("Veículo removido dos favoritos!");
         setIsSaved(false);
-        // Invalidar cache dos veículos salvos para recarregar
+        // Invalidar cache dos veículos salvos e em destaque para recarregar
         queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
+        queryClient.invalidateQueries({ queryKey: ["featuredVehicles"] });
       } else {
         toast.warning(data.error || "Veículo não estava nos favoritos");
       }

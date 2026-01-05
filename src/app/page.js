@@ -6,67 +6,18 @@ import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import HomeSearch from "@/components/HomeSearch";
 import VehicleCard from "@/components/VehicleCard";
 import VehicleTypesCarousel from "@/components/VehicleTypesCarousel";
-import { carBodyTypes, motorcycleBodyTypes, carMakes, featuredCars } from "@/lib/data";
+import { carBodyTypes, motorcycleBodyTypes, carMakes } from "@/lib/data";
 import Link from "next/link";
 import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { getFeaturedVehicles } from "@/actions/home";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { revalidatePath } from "next/cache";
+import { useFeaturedVehicles } from "@/hooks/useFeaturedVehicles";
 
 export default function Home() {
-  const [featuredCarsInDB, setFeaturedCarsInDB] = useState([]);
-
   const {
-    isLoading: loadingFeaturedVehicles,
-    data: featuredVehiclesResponse,
-    error: featuredVehiclesError,
-  } = useQuery({
-    queryKey: ["featuredVehicles"],
-    queryFn: async () => {
-      const res = await getFeaturedVehicles(8);
-      if (!res.success) {
-        if (res.message === "Não há veículos em destaque") {
-          return { success: true, data: [] }; // Retorna um array vazio se não houver veículos em destaque
-        }
-        toast.error(`Falha ao carregar veículos em destaque: ${res.message}`);
-      }
-      setFeaturedCarsInDB(res.data);
-      return res.data || [];
-    },
-    staleTime: 100 * 60 * 5,
-    refetchOnWindowFocus: false,
-    onError: (error) => {
-      toast.error(
-        `Falha ao carregar veículos em destaque no UseQuery: ${res.message}`
-      );
-      console.error("Erro ao no useQuery featuredVehicles:", error);
-    },
-  });
-
-  useEffect(() => {
-    if (featuredVehiclesResponse) {
-      console.log(
-        "Dados de veículos em destaque recebidos no navegador:",
-        featuredVehiclesResponse
-      );
-    }
-    if (loadingFeaturedVehicles) {
-      console.log("Carregando veículos em destaque no navegador...");
-    }
-    if (featuredVehiclesError) {
-      console.error(
-        "Erro ao carregar veículos em destaque no navegador:",
-        featuredVehiclesError
-      );
-    }
-  }, [
-    featuredVehiclesResponse,
+    featuredVehicles,
     loadingFeaturedVehicles,
     featuredVehiclesError,
-  ]);
+  } = useFeaturedVehicles(8);
 
   return (
     <div className="pt-20 flex flex-col">
@@ -99,9 +50,26 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
-            {featuredCarsInDB?.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
+            {loadingFeaturedVehicles ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-md border animate-pulse">
+                  <div className="aspect-video bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              featuredVehicles?.map((vehicle) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+              ))
+            )}
           </div>
         </div>
       </section>

@@ -8,7 +8,7 @@ import aj from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 
 //Busca os veículos em destaque
-export const getFeaturedVehicles = async (limit = 3) => {
+export const getFeaturedVehicles = async (limit = 3, userId = null) => {
   try {
     const featuredVehicles = await db.vehicle.findMany({
       where: {
@@ -25,8 +25,23 @@ export const getFeaturedVehicles = async (limit = 3) => {
       return { success: false, message: "Não há veículos em destaque" };
     }
 
+    // Se há um usuário logado, buscar veículos salvos
+    let savedVehicleIds = new Set();
+    if (userId) {
+      try {
+        const savedVehicles = await db.userSavedVehicle.findMany({
+          where: { userId },
+          select: { vehicleId: true }
+        });
+        savedVehicleIds = new Set(savedVehicles.map(sv => sv.vehicleId));
+      } catch (error) {
+        console.error("Erro ao buscar veículos salvos:", error.message);
+        // Continua sem os dados de salvos em caso de erro
+      }
+    }
+
     const serializedFeaturedVehicles = await Promise.all(
-      featuredVehicles.map((fv) => serializeVehicleData(fv))
+      featuredVehicles.map((fv) => serializeVehicleData(fv, savedVehicleIds.has(fv.id)))
     );
 
     return { success: true, data: serializedFeaturedVehicles };

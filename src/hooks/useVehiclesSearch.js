@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getAllVehicles, getUserSavedVehicles } from "@/actions/vehicleCatalog";
 import { processImageSearch } from "@/actions/home";
@@ -12,6 +12,16 @@ export function useVehicleSearch() {
   const [imageFile, setImageFile] = useState(null);
   const [filters, setFilters] = useState({});
   const [isImageSearch, setIsImageSearch] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Verificar usuário atual
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const user = await checkUser();
+      setCurrentUser(user);
+    };
+    getCurrentUser();
+  }, []);
 
   // Busca todos os veículos do banco
   const {
@@ -44,12 +54,11 @@ export function useVehicleSearch() {
     refetch: refetchSavedVehicles,
     isLoading: loadingSavedVehicles,
   } = useQuery({
-    queryKey: ["savedVehicles"],
+    queryKey: ["savedVehicles", currentUser?.id],
     queryFn: async () => {
-      const user = await checkUser();
-      if (!user) return [];
+      if (!currentUser) return [];
       
-      const response = await getUserSavedVehicles(user.id);
+      const response = await getUserSavedVehicles(currentUser.id);
       if (!response.success) {
         console.error("Erro ao buscar veículos salvos:", response.message);
         return [];
@@ -57,6 +66,7 @@ export function useVehicleSearch() {
       console.log("🔄 Veículos salvos carregados:", response.data?.length || 0);
       return response.data || [];
     },
+    enabled: !!currentUser, // Só executa se há usuário
     staleTime: 1000 * 60 * 1, // Cache por 1 minuto (reduzido para melhor sincronização)
     refetchOnWindowFocus: true, // Recarregar quando a janela ganhar foco
     onError: (error) => {
