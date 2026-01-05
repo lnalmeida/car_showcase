@@ -49,7 +49,7 @@ const Waitlist = () => {
                 width={200}
                 height={60}
                 src="/logo.png"
-                alt="JF Veículos Logo"
+                alt="JFA Veículos Logo"
                 className="h-12 w-auto"
               />
             </div>

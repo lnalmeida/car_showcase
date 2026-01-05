@@ -5,7 +5,8 @@ import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 
 import HomeSearch from "@/components/HomeSearch";
 import VehicleCard from "@/components/VehicleCard";
-import { bodyTypes, carMakes, featuredCars } from "@/lib/data";
+import VehicleTypesCarousel from "@/components/VehicleTypesCarousel";
+import { carBodyTypes, motorcycleBodyTypes, carMakes, featuredCars } from "@/lib/data";
 import Link from "next/link";
 import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
@@ -13,6 +14,7 @@ import { useEffect, useState } from "react";
 import { getFeaturedVehicles } from "@/actions/home";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { revalidatePath } from "next/cache";
 
 export default function Home() {
   const [featuredCarsInDB, setFeaturedCarsInDB] = useState([]);
@@ -50,7 +52,6 @@ export default function Home() {
         "Dados de veículos em destaque recebidos no navegador:",
         featuredVehiclesResponse
       );
-      // Aqui você deveria ver o array de objetos completo no console do navegador.
     }
     if (loadingFeaturedVehicles) {
       console.log("Carregando veículos em destaque no navegador...");
@@ -75,7 +76,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center px-4">
           <div className="mb-8">
             <h1 className="text-5xl md:text-8xl mb-4 gradient-title">
-              Seu carro ideal está na JF Veículos
+              Seu carro ideal está na JFA Veículos
             </h1>
             <p className="text-lg sm:text-xl text-gray-500 mb-8 max-w-2xl mx-auto">
               Pesquisa avançada de carros usando IA e agendamento de visitas e
@@ -121,7 +122,7 @@ export default function Home() {
               return (
                 <Link
                   key={make.name}
-                  href={`/vehicles/?make=${make.name}`}
+                  href={`/vehicles/?brand=${make.name}`}
                   className="bg-white rounded-lg shadow p-4 text-center hover:shadow-md transition cursor-pointer"
                 >
                   <div className="h-16 w-auto mx-auto mb-2 relative">
@@ -143,7 +144,7 @@ export default function Home() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
-            Porque escolher a JF Veículos
+            Porque escolher a JFA Veículos
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -185,41 +186,31 @@ export default function Home() {
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">Modelos</h2>
+            <h2 className="text-2xl font-bold">Carros</h2>
             <Button variant="ghost" className="flex items-center" asChild>
-              <Link href="/cars">
+              <Link href="/vehicles?category=carro">
                 Ver Todos <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-6">
-            {bodyTypes.map((type) => {
-              return (
-                <Link
-                  key={type.id}
-                  href={`/vehicles/?type=${type.name}`}
-                  className="relative group cursor-pointer"
-                >
-                  <div className="overflow-hidden rounded-lg flex justify-end h-28 mb-4 relative">
-                    <Image
-                      src={type.image}
-                      alt={type.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-lg flex items-end">
-                    <h3 className="text-white font-bold pl-4 pb-2">
-                      {type.name}
-                    </h3>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <VehicleTypesCarousel bodyTypes={carBodyTypes} />
         </div>
       </section>
+
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold">Motos</h2>
+            <Button variant="ghost" className="flex items-center" asChild>
+              <Link href="/vehicles?category=moto">
+                Ver Todas <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          <VehicleTypesCarousel bodyTypes={motorcycleBodyTypes} />
+        </div>
+      </section>
+  
 
       <section className="py-16 dotted-background text-white">
         <div className="container mx-auto px-4 text-center">
@@ -228,11 +219,11 @@ export default function Home() {
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Junte-se a diversos outros clientes satisfeitos, encontrando o
-            veículo perfeito pra você na JF Veículos.
+            veículo perfeito pra você na JFA Veículos.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/cars"> Ver veículos</Link>
+              <Link href="/vehicles"> Ver veículos</Link>
             </Button>
             <SignedOut>
               <Button size="lg" asChild>

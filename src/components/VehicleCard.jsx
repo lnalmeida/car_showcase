@@ -4,23 +4,75 @@ import React from "react";
 import { useState } from "react";
 
 import { Calendar, Gauge, Star } from "lucide-react";
-import { ManualTransmissions, MotorizationEngine } from "@/assets/icons/icons";
+import { MotorizationEngine } from "@/assets/icons/icons";
 
-import Image from "next/image";
-import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
-import { CarIcon, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Badge } from "./ui/badge";
-import { useRouter } from "next/navigation";
+import { saveUserVehicles, unsaveUserVehicles } from "@/actions/vehicleCatalog";
 import Link from "next/link";
+import { checkUser } from "@/lib/checkUser";
+import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+
 
 const VehicleCard = ({ vehicle }) => {
   const [isSaved, setIsSaved] = useState(vehicle.wishlisted);
-  const router = useRouter();
 
-  const handleToggledSaved = async (e) => {
-    setIsSaved(!isSaved);
+
+  const favoriteVehicleMutation = useMutation({
+    gcTime: 0,
+    mutationFn: async ({idUser, idVehicle}) => {
+      const res = await saveUserVehicles(idUser, idVehicle);
+      console.log(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`)
+      return res;
+    },
+    onSuccess: () => {
+      vehicle.wishlisted = true;
+      toast.success("Veículo salvo nos favoritos!");
+      setIsSaved(true);   
+    },
+    onError: (error) => {
+      toast.error(`Falha ao salvar o veículo: ${error.message}`);
+      console.error(error); // Loga o erro no console do navegador
+    }
+  });
+
+  const unfavoriteVehicleMutation = useMutation({
+    gcTime: 0,
+    mutationFn: async ({idUser, idVehicle}) => {
+      const res = await unsaveUserVehicles(idUser, idVehicle);
+      console.log(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`)
+      return res;
+    },
+    onSuccess: () => {
+      vehicle.wishlisted = false;
+      toast.success("Veículo removido dos favoritos!");
+      setIsSaved(false);
+    },
+    onError: (error) => {
+      toast.error(`Falha ao remover o veículo: ${error.message}`);
+      console.error(error); // Loga o erro no console do navegador
+    }
+  });
+  
+  const handleToggledSaved = async () => {
+    const user = await checkUser();
+    if(!user) {
+      toast.error("É necessário se cadastrar e autenticar para salvar seus veículos favoritos.");
+      console.error("Usuário não autenticado. Ação de salvar cancelada.");
+      return; 
+    }
+    
+    if(!isSaved) {
+        favoriteVehicleMutation.mutate({idUser: user.id, idVehicle: vehicle.id});
+    } else {
+        unfavoriteVehicleMutation.mutate({idUser: user.id, idVehicle: vehicle.id});
+    };
   };
+
+  
+
   return (
     <div className="bg-white rounded-lg shadow-md border hover:shadow-md transition-shadow duration-300 overflow-hidden group">
       {/* Imagem */}
@@ -39,6 +91,7 @@ const VehicleCard = ({ vehicle }) => {
           <Button
             variant="ghost"
             size="icon"
+            // disabled={!hasUser}
             className={`rounded-full opacity-[0.5] bg-gray-100 text-red-600 absolute right-2 p-1.5 ${
               isSaved
                 ? "text-red-500 hover:text-red-600 hover:opacity-100 transition-opacity"
@@ -105,9 +158,11 @@ const VehicleCard = ({ vehicle }) => {
         </div>
 
         {/* Botão */}
-        <Button className="w-full py-6 text-md" size="sm">
-          Ver Detalhes
-        </Button>
+        <Link href={`/vehicles/${vehicle.id}`}>
+          <Button className="w-full py-6 text-md" size="sm">
+            Ver Detalhes
+          </Button>
+        </Link>
       </div>
     </div>
   );

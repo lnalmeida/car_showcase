@@ -1,40 +1,57 @@
-import {Inter} from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 import Header from "@/components/Header";
-import {ClerkLoaded, ClerkProvider} from "@clerk/nextjs";
-import {Toaster} from "sonner";
-import {QueryProvider} from "@/components/providers/QueryProvider";
-import {ptBR} from "@clerk/localizations";
+import { ClerkLoaded, ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { ptBR } from "@clerk/localizations";
+import { Facebook, Instagram } from "lucide-react";
 
-const inter = Inter({subsets: ["latin"]});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Car Showcase",
   description: "A simple car showcase to improve my NextJS skills",
 };
 
-export default function RootLayout({children}) {
+export default function RootLayout({ children }) {
   return (
     <ClerkProvider localization={ptBR}>
       <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.className}`}>
-      <ClerkLoaded>
-        <Header isAdminPage={false}/>
-      </ClerkLoaded>
-      <main className="min-h-screen">
-        <QueryProvider>{children}</QueryProvider>
-      </main>
-      <Toaster richColors/>
-      <footer className="p-12 bg-blue-50">
-        <div className="container mx-auto px-4 text-center text-gray-600">
-          <p>
-            Criado por <strong>LNDev&#174;</strong> -{" "}
-            {new Date().getFullYear()}.
-          </p>
-        </div>
-      </footer>
-      </body>
+        <body className={`${inter.className}`}>
+          <ClerkLoaded>
+            <Header isAdminPage={false} />
+          </ClerkLoaded>
+          <main className="min-h-screen">
+            <QueryProvider>{children}</QueryProvider>
+          </main>
+          <Toaster richColors />
+          <footer className="p-12 flex bg-blue-50">
+            <div className="flex space-x-8 items-center text-gray-500">
+              <a
+                href="http://www.instagram.com"
+                target="_blank"
+                className="hover:text-blue-500 transition-colors duration-300"
+              >
+                <Instagram className="h-8 w-8" />
+              </a>
+              <a
+                href="http://www.facebook.com"
+                target="_blank"
+                className="hover:text-blue-500 transition-colors duration-300"
+              >
+                <Facebook className="h-8 w-8" />
+              </a>
+            </div>
+            <div className="mx-auto px-4 text-center text-gray-600">
+              <p>
+                Criado por <strong>LNDev&#174;</strong> -{" "}
+                {new Date().getFullYear()}.
+              </p>
+            </div>
+          </footer>
+        </body>
       </html>
     </ClerkProvider>
   );
