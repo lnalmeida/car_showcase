@@ -29,10 +29,6 @@ export const getFeaturedVehicles = async (limit = 3) => {
       featuredVehicles.map((fv) => serializeVehicleData(fv))
     );
 
-    // console.log(
-    //   "veículos em destaque: \n" +
-    //     JSON.stringify(serializedFeaturedVehicles, null, 2)
-    // );
     return { success: true, data: serializedFeaturedVehicles };
   } catch (error) {
     console.error("Erro ao buscar veículos em destaque:", error.message);
