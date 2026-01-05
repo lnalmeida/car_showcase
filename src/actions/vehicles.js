@@ -424,6 +424,97 @@ export const updateVehicle = async (id, vehicleData) => {
   }
 };
 
+export const updateVehicleComplete = async (params) => {
+  console.log("🚀 Chamou função updateVehicleComplete");
+
+  const { vehicleId, vehicleData, images } = params;
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+    if (user.role !== "ADMIN") throw new Error("Unauthorized");
+
+    // Verificar se o veículo existe
+    const existingVehicle = await db.vehicle.findUnique({
+      where: { id: vehicleId },
+    });
+
+    if (!existingVehicle) throw new Error("Vehicle not found");
+
+    let imageUrls = [...images]; // Começar com as imagens existentes
+
+    // Processar novas imagens (base64)
+    const newImages = images.filter(img => img.startsWith("data:image/"));
+    
+    if (newImages.length > 0) {
+      console.log("🔄 Processando novas imagens...");
+      
+      for (let i = 0; i < newImages.length; i++) {
+        const base64Data = newImages[i];
+
+        console.log("🔄 Enviando para Cloudinary...");
+
+        const uploadResult = await cloudinary.uploader.upload(base64Data, {
+          folder: `vehicles/${vehicleData.category}/${vehicleId}`,
+          public_id: `image-${Date.now()}-${i}`,
+          transformation: [
+            { width: 1200, height: 1200, crop: "limit" },
+            { quality: 85, format: "webp" },
+          ],
+          tags: [`vehicle-${vehicleId}`, vehicleData.category],
+        });
+
+        const publicUrl = uploadResult.secure_url;
+        
+        // Substituir a imagem base64 pela URL do Cloudinary
+        const index = imageUrls.indexOf(base64Data);
+        if (index !== -1) {
+          imageUrls[index] = publicUrl;
+        }
+      }
+    }
+
+    // Atualizar o veículo no banco
+    const updatedVehicle = await db.vehicle.update({
+      where: { id: vehicleId },
+      data: {
+        category: vehicleData.category,
+        vehicleType: vehicleData.vehicleType ?? null,
+        vehicleBrand: vehicleData.vehicleBrand ?? null,
+        model: vehicleData.model,
+        year: parseInt(vehicleData.year),
+        price: parseFloat(vehicleData.price) ?? 0,
+        color: vehicleData.color,
+        featured: vehicleData.featured,
+        seats: parseInt(vehicleData.seats) ?? 5,
+        doors: parseInt(vehicleData.doors) ?? 2,
+        engineSize: vehicleData.engineSize,
+        mileage: parseInt(vehicleData.mileage) || 0,
+        fuelType: vehicleData.fuelType,
+        transmission: vehicleData.transmission,
+        description: vehicleData.description,
+        optionals: vehicleData.optionals,
+        status: vehicleData.vehicleStatus,
+        images: imageUrls,
+      },
+    });
+
+    revalidatePath("/admin/vehicles");
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("❌ Error updating vehicle:", error);
+    throw new Error(`Failed to update vehicle: ${error.message}`);
+  }
+};
+
 export const removeVehicle = async (id) => {
   try {
     const { userId } = await auth();
