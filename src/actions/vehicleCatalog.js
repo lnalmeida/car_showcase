@@ -147,32 +147,11 @@ export const getRelatedVehicles = async (type) => {
 
 export const saveUserVehicles = async (userId, vehicleId) => {
   if(!userId || !vehicleId) return {success: false};
-  
+  console.log("🔄 Tentando salvar veículo:", { userId, vehicleId });
   
   try {
-    await  db.userSavedVehicle.create({
-      data: {
-        userId,
-        vehicleId,
-      }
-    });
-
-    console.log("SUCESSO: Veículo salvo no banco de dados.");
-    return {success: true};
-
-  } catch (error) {
-    console.error("❌ Erro ao salvar veículo:", error.message);
-    throw new Error(`Failed to save vehicle: ${error.message}.`);
-  }
-
-};
-
-export const unsaveUserVehicles = async (userId, vehicleId) => {
-  if(!userId || !vehicleId) return {success: false};
-  console.log("userId: " + userId + " vehicleId: " + vehicleId);
-
-  try {
-    await  db.userSavedVehicle.delete({
+    // Verificar se já existe para evitar duplicatas
+    const existingRecord = await db.userSavedVehicle.findUnique({
       where: {
         userId_vehicleId: {
           userId,
@@ -181,12 +160,67 @@ export const unsaveUserVehicles = async (userId, vehicleId) => {
       },
     });
 
-    console.log("SUCESSO: Veículo removido do banco de dados.");
+    if (existingRecord) {
+      console.log("⚠️ Veículo já está nos favoritos");
+      return { success: true, message: "Veículo já está nos favoritos" };
+    }
+
+    await db.userSavedVehicle.create({
+      data: {
+        userId,
+        vehicleId,
+      }
+    });
+
+    console.log("✅ SUCESSO: Veículo salvo no banco de dados.");
+    return {success: true};
+
+  } catch (error) {
+    console.error("❌ Erro ao salvar veículo:", error.message);
+    console.error("❌ Stack trace:", error.stack);
+    return { success: false, error: error.message };
+  }
+
+};
+
+export const unsaveUserVehicles = async (userId, vehicleId) => {
+  if(!userId || !vehicleId) return {success: false};
+  console.log("🔄 Tentando remover veículo:", { userId, vehicleId });
+
+  try {
+    // Primeiro, verificar se o registro existe
+    const existingRecord = await db.userSavedVehicle.findUnique({
+      where: {
+        userId_vehicleId: {
+          userId,
+          vehicleId,
+        },
+      },
+    });
+
+    if (!existingRecord) {
+      console.log("⚠️ Registro não encontrado para remoção");
+      return { success: false, error: "Veículo não está nos favoritos" };
+    }
+
+    console.log("✅ Registro encontrado, removendo:", existingRecord.id);
+
+    await db.userSavedVehicle.delete({
+      where: {
+        userId_vehicleId: {
+          userId,
+          vehicleId,
+        },
+      },
+    });
+
+    console.log("✅ SUCESSO: Veículo removido do banco de dados.");
     return {success: true};
 
   } catch (error) {
     console.error("❌ Erro ao remover veículo:", error.message);
-    throw new Error(`Failed to remove vehicle: ${error.message}.`);
+    console.error("❌ Stack trace:", error.stack);
+    return { success: false, error: error.message };
   }
 
 };
@@ -199,20 +233,14 @@ export const getUserSavedVehicles = async (userId) => {
       where: {
         userId,
       },
-      select: {
-        vehicle: {
-          id: true,
-        },
+      include: {
+        vehicle: true, // Incluir todos os dados do veículo
       },
     });
 
     const serializedSavedVehicles = await Promise.all(
-      savedVehicles.map((sv) => serializeVehicleData(sv.vehicle))
+      savedVehicles.map((sv) => serializeVehicleData(sv.vehicle, true))
     );
-
-    serializedSavedVehicles.forEach((v) => {
-      v.wishListed = true;
-    });
 
     console.log("SUCESSO: Veículos salvos do usuário recuperados.");
     return {success: true, data: serializedSavedVehicles};

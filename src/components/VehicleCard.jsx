@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Calendar, Gauge, Star } from "lucide-react";
 import { MotorizationEngine } from "@/assets/icons/icons";
@@ -13,28 +13,41 @@ import { saveUserVehicles, unsaveUserVehicles } from "@/actions/vehicleCatalog";
 import Link from "next/link";
 import { checkUser } from "@/lib/checkUser";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 
 const VehicleCard = ({ vehicle }) => {
-  const [isSaved, setIsSaved] = useState(vehicle.wishlisted);
+  const [isSaved, setIsSaved] = useState(vehicle.wishListed);
+  const queryClient = useQueryClient();
+
+  // Sincronizar estado local com prop quando ela mudar
+  useEffect(() => {
+    setIsSaved(vehicle.wishListed);
+  }, [vehicle.wishListed]);
 
 
   const favoriteVehicleMutation = useMutation({
     gcTime: 0,
     mutationFn: async ({idUser, idVehicle}) => {
       const res = await saveUserVehicles(idUser, idVehicle);
-      console.log(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`)
+      console.log(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
     },
-    onSuccess: () => {
-      vehicle.wishlisted = true;
-      toast.success("Veículo salvo nos favoritos!");
-      setIsSaved(true);   
+    onSuccess: (data) => {
+      if (data.success) {
+        vehicle.wishListed = true;
+        toast.success("Veículo salvo nos favoritos!");
+        setIsSaved(true);
+        // Invalidar cache dos veículos salvos para recarregar
+        queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
+      } else {
+        toast.info(data.message || "Veículo já está nos favoritos");
+      }
     },
     onError: (error) => {
       toast.error(`Falha ao salvar o veículo: ${error.message}`);
-      console.error(error); // Loga o erro no console do navegador
+      console.error("Erro ao favoritar:", error);
+      setIsSaved(false); // Reverter estado em caso de erro
     }
   });
 
@@ -42,17 +55,24 @@ const VehicleCard = ({ vehicle }) => {
     gcTime: 0,
     mutationFn: async ({idUser, idVehicle}) => {
       const res = await unsaveUserVehicles(idUser, idVehicle);
-      console.log(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`)
+      console.log(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
     },
-    onSuccess: () => {
-      vehicle.wishlisted = false;
-      toast.success("Veículo removido dos favoritos!");
-      setIsSaved(false);
+    onSuccess: (data) => {
+      if (data.success) {
+        vehicle.wishListed = false;
+        toast.success("Veículo removido dos favoritos!");
+        setIsSaved(false);
+        // Invalidar cache dos veículos salvos para recarregar
+        queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
+      } else {
+        toast.warning(data.error || "Veículo não estava nos favoritos");
+      }
     },
     onError: (error) => {
       toast.error(`Falha ao remover o veículo: ${error.message}`);
-      console.error(error); // Loga o erro no console do navegador
+      console.error("Erro ao desfavoritar:", error);
+      setIsSaved(true); // Reverter estado em caso de erro
     }
   });
   
@@ -64,7 +84,11 @@ const VehicleCard = ({ vehicle }) => {
       return; 
     }
     
-    if(!isSaved) {
+    // Atualizar estado otimisticamente
+    const newSavedState = !isSaved;
+    setIsSaved(newSavedState);
+    
+    if(newSavedState) {
         favoriteVehicleMutation.mutate({idUser: user.id, idVehicle: vehicle.id});
     } else {
         unfavoriteVehicleMutation.mutate({idUser: user.id, idVehicle: vehicle.id});

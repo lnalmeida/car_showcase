@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getAllVehicles } from "@/actions/vehicleCatalog";
+import { getAllVehicles, getUserSavedVehicles } from "@/actions/vehicleCatalog";
 import { processImageSearch } from "@/actions/home";
 import { toast } from "sonner";
+import { checkUser } from "@/lib/checkUser";
 
 export function useVehicleSearch() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,6 +37,52 @@ export function useVehicleSearch() {
       console.error("Erro ao buscar veículos: falha no hook", error.message);
     },
   });
+
+  // Busca veículos salvos do usuário
+  const {
+    data: savedVehiclesData,
+    refetch: refetchSavedVehicles,
+    isLoading: loadingSavedVehicles,
+  } = useQuery({
+    queryKey: ["savedVehicles"],
+    queryFn: async () => {
+      const user = await checkUser();
+      if (!user) return [];
+      
+      const response = await getUserSavedVehicles(user.id);
+      if (!response.success) {
+        console.error("Erro ao buscar veículos salvos:", response.message);
+        return [];
+      }
+      console.log("🔄 Veículos salvos carregados:", response.data?.length || 0);
+      return response.data || [];
+    },
+    staleTime: 1000 * 60 * 1, // Cache por 1 minuto (reduzido para melhor sincronização)
+    refetchOnWindowFocus: true, // Recarregar quando a janela ganhar foco
+    onError: (error) => {
+      console.error("Erro ao buscar veículos salvos:", error.message);
+    },
+  });
+
+  // Combinar dados dos veículos com informações de salvos
+  const vehiclesWithSavedStatus = useMemo(() => {
+    if (!vehicleData) return [];
+    
+    const savedVehicleIds = new Set(
+      savedVehiclesData?.map(sv => sv.id) || []
+    );
+    
+    console.log("🔄 Sincronizando status de favoritos:", {
+      totalVehicles: vehicleData.length,
+      savedVehicleIds: Array.from(savedVehicleIds),
+      loadingSavedVehicles
+    });
+    
+    return vehicleData.map(vehicle => ({
+      ...vehicle,
+      wishListed: savedVehicleIds.has(vehicle.id)
+    }));
+  }, [vehicleData, savedVehiclesData, loadingSavedVehicles]);
 
   // Função para aplicar filtros progressivos (só para busca por imagem)
   const applyProgressiveFilters = useCallback((vehicles, filters) => {
@@ -122,9 +169,9 @@ export function useVehicleSearch() {
 
   // Filtrar os veículos em memória
   const filteredVehicles = useMemo(() => {
-    if (!vehicleData) return [];
+    if (!vehiclesWithSavedStatus) return [];
 
-    let vehicles = [...vehicleData];
+    let vehicles = [...vehiclesWithSavedStatus];
 
     // Log para debug
     console.log("📊 Total inicial de veículos:", vehicles.length);
@@ -197,7 +244,7 @@ export function useVehicleSearch() {
     console.log("📦 Total final filtrado:", vehicles.length);
     return vehicles;
   }, [
-    vehicleData,
+    vehiclesWithSavedStatus,
     filters,
     searchTerm,
     isImageSearch,
@@ -288,6 +335,7 @@ export function useVehicleSearch() {
     loadingVehicles,
     filteredVehicles,
     refetchVehicles,
+    refetchSavedVehicles,
     setIsImageSearch,
   };
 }

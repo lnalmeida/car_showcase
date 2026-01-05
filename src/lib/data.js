@@ -11,7 +11,7 @@ export const featuredCars = [
     bodyType: "Sedan",
     mileage: 15000,
     color: "White",
-    wishlisted: false,
+    wishListed: false,
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ export const featuredCars = [
     bodyType: "Sedan",
     mileage: 12000,
     color: "Blue",
-    wishlisted: true,
+    wishListed: true,
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ export const featuredCars = [
     bodyType: "Sedan",
     mileage: 8000,
     color: "Red",
-    wishlisted: false,
+    wishListed: false,
   },
   {
     id: 4,
@@ -53,7 +53,7 @@ export const featuredCars = [
     bodyType: "Truck",
     mileage: 22000,
     color: "Gray",
-    wishlisted: false,
+    wishListed: false,
   },
   {
     id: 5,
@@ -67,7 +67,7 @@ export const featuredCars = [
     bodyType: "SUV",
     mileage: 9000,
     color: "White",
-    wishlisted: true,
+    wishListed: true,
   },
   {
     id: 6,
@@ -81,7 +81,7 @@ export const featuredCars = [
     bodyType: "Coupe",
     mileage: 3000,
     color: "Yellow",
-    wishlisted: false,
+    wishListed: false,
   },
 ];
 
