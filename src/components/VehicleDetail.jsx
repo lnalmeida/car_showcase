@@ -164,7 +164,7 @@ export default function VehicleDetail({ id }) {
             <div className="flex items-center justify-between h-16">
               <div className="flex-1 flex flex-col items-center justify-center py-3">
                 <h1 className="text-2xl mt-3 font-bold text-white">
-                  JF Veículos - Seu veículo ideal está aqui!
+                  JFA Veículos - Seu veículo ideal está aqui!
                 </h1>
               </div>
             </div>
@@ -357,7 +357,7 @@ export default function VehicleDetail({ id }) {
                   <div className="flex gap-3">
                     <Button
                       className="flex-1"
-                      // onClick={() => navigate(`/vehicles/${vehicle.id}/edit`)}
+                      onClick={() => router.push(`/admin/vehicles/${vehicle.id}/edit`)}
                     >
                       <Edit className="h-4 w-4 mr-2" /> Editar
                     </Button>
@@ -446,7 +446,7 @@ export default function VehicleDetail({ id }) {
                         <div className="absolute top-2 rigth-2">
                           <Badge
                             variant="secondary"
-                            className="bg-white/90 text-gray-700"
+                            className="bg-white/90 text-gray-700 ml-2"
                           >
                             {v.vehicleType || v.category}
                           </Badge>
@@ -597,7 +597,7 @@ export default function VehicleDetail({ id }) {
             <div className="flex items-center justify-between h-16">
               <div className="flex-1 flex flex-col items-center justify-center">
                 <h1 className="text-2xl font-bold text-gray-900 py-3">
-                  Seu veículo ideal está na JF Veículos!
+                  Seu veículo ideal está na JFA Veículos!
                 </h1>
               </div>
             </div>

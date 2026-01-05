@@ -36,6 +36,7 @@ import {
 import { getVehicles, removeVehicle, updateVehicle } from "@/actions/vehicles";
 
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 const setBadgeStatusColor = (status) => {
   switch (status) {
@@ -255,8 +256,26 @@ export const getColumns = ({
                 hover:text-gray-700
                 hover:font-semibold"
               >
-                <Eye className="h-5 w-5 mr-1 text-muted-200" />
-                Visualizar
+                <Link href={`/vehicles/${vehicle.id}`}>
+                  <Eye className="h-5 w-5 mr-1 text-muted-200" />
+                  Visualizar
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className="cursor-pointer
+                text-blue-500
+                font-normal
+                focus:bg-blue-100
+                focus:text-blue-700
+                hover:bg-blue-100
+                hover:text-blue-700
+                hover:font-semibold"
+              >
+                <Link href={`/admin/vehicles/${vehicle.id}/edit`}>
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Editar
+                </Link>
               </DropdownMenuItem>
 
               <DropdownMenuGroup>
