@@ -7,7 +7,9 @@ import { getUserSavedVehicles } from "@/actions/vehicleCatalog";
 import { checkUser } from "@/lib/checkUser";
 import VehicleCard from "@/components/VehicleCard";
 import { toast } from "sonner";
-import { Heart, Car } from "lucide-react";
+import { Heart, Car, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function SavedCarsPage() {
   // Buscar veículos salvos do usuário
@@ -44,6 +46,14 @@ export default function SavedCarsPage() {
       <div className="min-h-screen bg-gray-50">
         <section className="relative py-4 md:py-7 dotted-background">
           <div className="px-12 py-8">
+            <div className="flex items-center justify-center mb-4">
+              <Link href="/vehicles">
+                <Button variant="ghost" className="text-white hover:text-white hover:bg-white/20 mr-4">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar aos Veículos
+                </Button>
+              </Link>
+            </div>
             <h1 className="text-5xl text-white font-bold text-center mb-2">
               Meus Veículos Favoritos
             </h1>
@@ -67,6 +77,14 @@ export default function SavedCarsPage() {
       <div className="min-h-screen bg-gray-50">
         <section className="relative py-4 md:py-7 dotted-background">
           <div className="px-12 py-8">
+            <div className="flex items-center justify-center mb-4">
+              <Link href="/vehicles">
+                <Button variant="ghost" className="text-white hover:text-white hover:bg-white/20 mr-4">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar aos Veículos
+                </Button>
+              </Link>
+            </div>
             <h1 className="text-5xl text-white font-bold text-center mb-2">
               Meus Veículos Favoritos
             </h1>
@@ -83,12 +101,19 @@ export default function SavedCarsPage() {
               <p className="text-gray-600 mb-4">
                 Não foi possível carregar seus veículos favoritos.
               </p>
-              <button
-                onClick={() => refetch()}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-              >
-                Tentar novamente
-              </button>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => refetch()}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                >
+                  Tentar novamente
+                </button>
+                <Link href="/vehicles">
+                  <Button variant="outline">
+                    Explorar Veículos
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -100,6 +125,14 @@ export default function SavedCarsPage() {
     <div className="min-h-screen bg-gray-50">
       <section className="relative py-4 md:py-7 dotted-background">
         <div className="px-12 py-8">
+          <div className="flex items-center justify-center mb-4">
+            <Link href="/vehicles">
+              <Button variant="ghost" className="text-white hover:text-white hover:bg-white/20 mr-4">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar aos Veículos
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-5xl text-white font-bold text-center mb-2">
             Meus Veículos Favoritos
           </h1>
@@ -120,12 +153,11 @@ export default function SavedCarsPage() {
               <p className="text-gray-600 mb-4">
                 Você ainda não salvou nenhum veículo como favorito.
               </p>
-              <a
-                href="/vehicles"
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors inline-block"
-              >
-                Explorar Veículos
-              </a>
+              <Link href="/vehicles">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Explorar Veículos
+                </Button>
+              </Link>
             </div>
           </div>
         ) : (
