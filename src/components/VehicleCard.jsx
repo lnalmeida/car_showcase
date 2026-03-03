@@ -28,7 +28,7 @@ const VehicleCard = ({ vehicle }) => {
 
   const favoriteVehicleMutation = useMutation({
     gcTime: 0,
-    mutationFn: async ({idUser, idVehicle}) => {
+    mutationFn: async ({ idUser, idVehicle }) => {
       const res = await saveUserVehicles(idUser, idVehicle);
       console.log(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
@@ -54,7 +54,7 @@ const VehicleCard = ({ vehicle }) => {
 
   const unfavoriteVehicleMutation = useMutation({
     gcTime: 0,
-    mutationFn: async ({idUser, idVehicle}) => {
+    mutationFn: async ({ idUser, idVehicle }) => {
       const res = await unsaveUserVehicles(idUser, idVehicle);
       console.log(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
@@ -77,65 +77,74 @@ const VehicleCard = ({ vehicle }) => {
       setIsSaved(true); // Reverter estado em caso de erro
     }
   });
-  
+
   const handleToggledSaved = async () => {
     const user = await checkUser();
-    if(!user) {
+    if (!user) {
       toast.error("É necessário se cadastrar e autenticar para salvar seus veículos favoritos.");
       console.error("Usuário não autenticado. Ação de salvar cancelada.");
-      return; 
+      return;
     }
-    
+
     // Atualizar estado otimisticamente
     const newSavedState = !isSaved;
     setIsSaved(newSavedState);
-    
-    if(newSavedState) {
-        favoriteVehicleMutation.mutate({idUser: user.id, idVehicle: vehicle.id});
+
+    if (newSavedState) {
+      favoriteVehicleMutation.mutate({ idUser: user.id, idVehicle: vehicle.id });
     } else {
-        unfavoriteVehicleMutation.mutate({idUser: user.id, idVehicle: vehicle.id});
+      unfavoriteVehicleMutation.mutate({ idUser: user.id, idVehicle: vehicle.id });
     };
   };
 
-  
+
+
+  // Check if vehicle is sold
+  const isSold = vehicle.status === "Vendido";
 
   return (
-    <div className="bg-white rounded-lg shadow-md border hover:shadow-md transition-shadow duration-300 overflow-hidden group">
+    <div className={`bg-white rounded-lg shadow-md border overflow-hidden group ${isSold ? "opacity-75" : "hover:shadow-lg transition-shadow duration-300"}`}>
       {/* Imagem */}
       <div className="aspect-video bg-gray-200 relative overflow-hidden">
-        <Link href={`/vehicles/${vehicle.id}`}>
+        <Link href={`/vehicles/${vehicle.id}`} className={isSold ? "pointer-events-none" : ""}>
           <img
             src={
               vehicle.images?.[0] ||
               `https://via.placeholder.com/400x240/e2e8f0/64748b?text=${vehicle.vehicleBrand}+${vehicle.model}`
             }
             alt={`${vehicle.vehicleBrand} ${vehicle.model}`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className={`w-full h-full object-cover transition-transform duration-300 ${!isSold && "group-hover:scale-105"} ${isSold && "grayscale-[50%]"}`}
           />
         </Link>
-        <div className="absolute top-2 right-3">
+        <div className="absolute top-2 right-3 z-10">
           <Button
             variant="ghost"
             size="icon"
-            // disabled={!hasUser}
-            className={`rounded-full opacity-[0.5] bg-gray-100 text-red-600 absolute right-2 p-1.5 ${
-              isSaved
-                ? "text-red-500 hover:text-red-600 hover:opacity-100 transition-opacity"
-                : "text-gray-600 hover:text-gray-900 hover:opacity-100 transition-opacity"
-            }`}
+            className={`rounded-full shadow-sm bg-white/80 backdrop-blur-sm p-1.5 ${isSaved
+              ? "text-red-500 hover:text-red-600 hover:bg-white transition-colors"
+              : "text-gray-400 hover:text-red-500 hover:bg-white transition-colors"
+              }`}
             onClick={handleToggledSaved}
           >
-            <Heart className={isSaved ? "fill-red-600" : ""} size={20} />
+            <Heart className={isSaved ? "fill-red-500" : ""} size={20} />
           </Button>
         </div>
-        {vehicle.featured && (
-          <div className="absolute top-3 left-3">
-            <Badge className="text-yellow-600 text-md bg-gray-200 hover:bg-gray-300">
-              <Star className="text-yellow-600 mr-4 fill-current" size={16} />
-              Destaque
+
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2 pointer-events-none">
+          {isSold ? (
+            <Badge className="bg-red-600 text-white hover:bg-red-700 text-xs font-bold px-2 py-1 uppercase tracking-wider shadow-md">
+              Vendido
             </Badge>
-          </div>
-        )}
+          ) : (
+            vehicle.featured && (
+              <Badge className="text-yellow-700 text-xs font-medium bg-yellow-100/90 backdrop-blur-sm hover:bg-yellow-200 shadow-sm border-0">
+                <Star className="text-yellow-600 mr-1.5 fill-current" size={12} />
+                Destaque
+              </Badge>
+            )
+          )}
+        </div>
       </div>
 
       {/* Conteúdo do card */}
@@ -184,9 +193,13 @@ const VehicleCard = ({ vehicle }) => {
         </div>
 
         {/* Botão */}
-        <Link href={`/vehicles/${vehicle.id}`}>
-          <Button className="w-full py-6 text-md" size="sm">
-            Ver Detalhes
+        <Link href={`/vehicles/${vehicle.id}`} className={isSold ? "pointer-events-none" : ""}>
+          <Button
+            className={`w-full py-6 text-md ${isSold ? "bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300" : ""}`}
+            size="sm"
+            disabled={isSold}
+          >
+            {isSold ? "Indisponível" : "Ver Detalhes"}
           </Button>
         </Link>
       </div>
