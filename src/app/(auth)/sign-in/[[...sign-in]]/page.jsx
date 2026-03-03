@@ -1,10 +1,10 @@
 import React from "react";
 import { SignIn } from "@clerk/nextjs";
-import AuthhLayout from "../../AuthLayout";
+import AuthLayout from "../../AuthLayout";
 
 const SignInPage = () => {
   return (
-    <AuthhLayout>
+    <AuthLayout>
       <div className="p-6 rounded-2xl shadow-xl bg-white max-w-md w-full">
         <div className="flex justify-center mb-6">
           <img
@@ -22,13 +22,13 @@ const SignInPage = () => {
             elements: {
               card: "p-6 shadow-none bg-transparent",
               formButtonPrimary:
-                "bg-red-600 hover:bg-orange-600 text-white rounded-md mt-4 p-4",
+                "bg-blue-600 hover:bg-blue-700 text-white rounded-md mt-4 p-4",
               socialButtonsBlockButton:
-                "bg-black text-white hover:bg-red-700 w-full mt-4 p-4",
+                "bg-black text-white hover:bg-blue-800 w-full mt-4 p-4",
               footerAction: "text-sm text-gray-500 text-center mt-6",
             },
             variables: {
-              colorPrimary: "#e60000",
+              colorPrimary: "#2563eb", /* blue-600 */
               colorText: "#000000",
               colorBackground: "#ffffff",
             },
@@ -68,7 +68,7 @@ const SignInPage = () => {
           }}
         />
       </div>
-    </AuthhLayout>
+    </AuthLayout>
   );
 };
 
