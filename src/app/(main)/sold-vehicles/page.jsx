@@ -2,8 +2,14 @@ import React from "react";
 import { getSoldVehicles, getUserSavedVehicles } from "@/actions/vehicleCatalog";
 import VehicleCard from "@/components/VehicleCard";
 import { checkUser } from "@/lib/checkUser";
+import { redirect } from "next/navigation";
 
 export default async function SoldVehiclesPage({ searchParams }) {
+    const user = await checkUser();
+    if (!user || user.role !== "ADMIN") {
+        redirect("/");
+    }
+
     const params = await searchParams;
     const pageNum = parseInt(params?.page) || 0;
 
@@ -13,7 +19,6 @@ export default async function SoldVehiclesPage({ searchParams }) {
 
     // Pega o usuário logado para saber quais veículos estão favoritados
     let savedVehicleIds = new Set();
-    const user = await checkUser();
     if (user) {
         const savedResponse = await getUserSavedVehicles(user.id);
         if (savedResponse.success) {
