@@ -8,10 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 
 import {
-  carBrandOptions,
-  motorcycleBrandOptions,
-  carTypeOptions,
-  motorcycleTypeOptions,
   carFuelTypeOptions,
   motorcycleFuelTypeOptions,
   carTransmissionTypeOptions,
@@ -38,12 +34,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
-import { CustomSelect } from "@/components/CustomSelect";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { TagsInput } from "@/components/TagInput";
 import { vehicleSchema } from "../_schemas/vehicleSchema";
@@ -56,11 +50,29 @@ import Image from "next/image";
 import useFetch from "@/hooks/useFetch";
 import { getVehicle, updateVehicleComplete } from "@/actions/vehicles";
 import { useQuery } from "@tanstack/react-query";
+import { getCategories } from "@/actions/categories";
+import { getBrands } from "@/actions/brands";
+import { getVehicleTypes } from "@/actions/vehicleTypes";
 
 const EditVehicleForm = ({ vehicleId }) => {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imageError, setImageError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [dbCategories, setDbCategories] = useState([]);
+  const [dbBrands, setDbBrands] = useState([]);
+  const [dbTypes, setDbTypes] = useState([]);
+
+  useEffect(() => {
+    async function fetchOptions() {
+      const [catRes, brandRes, typeRes] = await Promise.all([
+        getCategories(), getBrands(), getVehicleTypes()
+      ]);
+      if (catRes.success) setDbCategories(catRes.data);
+      if (brandRes.success) setDbBrands(brandRes.data);
+      if (typeRes.success) setDbTypes(typeRes.data);
+    }
+    fetchOptions();
+  }, []);
 
   const router = useRouter();
 
@@ -100,9 +112,9 @@ const EditVehicleForm = ({ vehicleId }) => {
   useEffect(() => {
     if (vehicleData) {
       const formData = {
-        category: vehicleData.category || "Carro",
-        vehicleType: vehicleData.vehicleType || "",
-        vehicleBrand: vehicleData.vehicleBrand || "",
+        categoryId: vehicleData.categoryId || "",
+        typeId: vehicleData.typeId || "",
+        brandId: vehicleData.brandId || "",
         model: vehicleData.model || "",
         year: vehicleData.year?.toString() || "",
         price: parseFloat(vehicleData.price) || 0,
@@ -257,52 +269,50 @@ const EditVehicleForm = ({ vehicleId }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="flex flex-col gap-5 md:flex-row flex-wrap">
                 <div className="flex flex-col gap-5 justify-center w-[180px]">
-                  <Label htmlFor="category">Categoria</Label>
-                  <RadioGroup
-                    value={watch("category")}
+                  <Label htmlFor="categoryId">Categoria</Label>
+                  <Select
+                    value={watch("categoryId")}
                     onValueChange={(value) => {
-                      setValue("category", value);
+                      setValue("categoryId", value);
+                      setValue("brandId", "");
+                      setValue("typeId", "");
                     }}
-                    className="flex text-gray-700 mb-2"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Carro" id="car" />
-                      <Label htmlFor="car">Carro</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Moto" id="motorcycle" />
-                      <Label htmlFor="motorcycle">Moto</Label>
-                    </div>
-                  </RadioGroup>
-                  {errors.category && (
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dbCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {errors.categoryId && (
                     <span className="text-red-500 text-sm">
-                      {errors.category.message}
+                      {errors.categoryId.message}
                     </span>
                   )}
                 </div>
 
                 <div className="space-y-2 flex flex-col w-[180px]">
-                  <Label htmlFor="brand" className="mt-2">
+                  <Label htmlFor="brandId" className="mt-2">
                     Marca
                   </Label>
-                  <CustomSelect
-                    id="brand"
-                    className="space-y-3"
-                    options={
-                      watch("category") === "Carro"
-                        ? carBrandOptions
-                        : motorcycleBrandOptions
-                    }
-                    value={watch("vehicleBrand") ?? ""}
-                    onChange={(value) => {
-                      setValue("vehicleBrand", value);
-                    }}
-                    placeholder="Marca"
-                    name="vehicleBrand"
-                  />
-                  {errors.vehicleBrand && (
+                  <Select
+                    value={watch("brandId") ?? ""}
+                    onValueChange={(value) => setValue("brandId", value)}
+                    disabled={!watch("categoryId")}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Marca" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dbBrands.filter(b => b.categoryId === watch("categoryId")).map(b => (
+                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.brandId && (
                     <span className="text-red-500 text-sm">
-                      {errors.vehicleBrand.message}
+                      {errors.brandId.message}
                     </span>
                   )}
                 </div>
@@ -310,26 +320,26 @@ const EditVehicleForm = ({ vehicleId }) => {
 
               <div className="flex flex-col gap-5 md:flex-row flex-wrap">
                 <div className="space-y-2 flex flex-col w-[180px]">
-                  <Label htmlFor="type" className="mt-2">
+                  <Label htmlFor="typeId" className="mt-2">
                     Tipo
                   </Label>
-                  <CustomSelect
-                    id="type"
-                    options={
-                      watch("category") === "Carro"
-                        ? carTypeOptions
-                        : motorcycleTypeOptions
-                    }
-                    value={watch("vehicleType") ?? ""}
-                    onChange={(value) => {
-                      setValue("vehicleType", value);
-                    }}
-                    placeholder="Tipo"
-                    name="vehicleType"
-                  />
-                  {errors.vehicleType && (
+                  <Select
+                    value={watch("typeId") ?? ""}
+                    onValueChange={(value) => setValue("typeId", value)}
+                    disabled={!watch("categoryId")}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dbTypes.filter(t => t.categoryId === watch("categoryId")).map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.typeId && (
                     <span className="text-red-500 text-sm">
-                      {errors.vehicleType.message}
+                      {errors.typeId.message}
                     </span>
                   )}
                 </div>
@@ -457,17 +467,17 @@ const EditVehicleForm = ({ vehicleId }) => {
                       <SelectValue placeholder="Transmissão" />
                     </SelectTrigger>
                     <SelectContent>
-                      {watch("category") === "Carro"
+                      {(dbCategories.find(c => c.id === watch("categoryId"))?.name !== "Moto")
                         ? carTransmissionTypeOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))
                         : motorcycleTransmissionTypeOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -486,17 +496,17 @@ const EditVehicleForm = ({ vehicleId }) => {
                       <SelectValue placeholder="Combustível" />
                     </SelectTrigger>
                     <SelectContent>
-                      {watch("category") === "Carro"
+                      {(dbCategories.find(c => c.id === watch("categoryId"))?.name !== "Moto")
                         ? carFuelTypeOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))
                         : motorcycleFuelTypeOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -630,9 +640,8 @@ const EditVehicleForm = ({ vehicleId }) => {
               </Label>
               <div
                 {...getMultiImageRootProps()}
-                className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-100 transition ${
-                  imageError ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-100 transition ${imageError ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <input {...getMultiImageInputProps()} />
                 <div className="flex flex-col items-center justify-center">

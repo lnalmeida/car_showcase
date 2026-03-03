@@ -8,10 +8,10 @@ import {
 } from "../_constants/constants";
 
 export const vehicleSchema = z.object({
-  id: z.string().uuid().optional(), // geralmente gerado pelo banco
-  category: z.string().default("Carro"),
-  vehicleType: z.string().min(1, "O tipo é obrigatório"),
-  vehicleBrand: z.string().min(1, "A marca é obrigatória"),
+  id: z.string().uuid().optional(),
+  categoryId: z.string().min(1, "A categoria é obrigatória"),
+  typeId: z.string().min(1, "O tipo é obrigatório").optional().nullable(),
+  brandId: z.string().min(1, "A marca é obrigatória").optional().nullable(),
   model: z.string().min(1, "O modelo é obrigatório"),
   year: z.string().refine((value) => {
     const year = parseInt(value);
@@ -54,9 +54,9 @@ export const vehicleSchema = z.object({
 });
 
 export const vehicleDefaultValues = {
-  category: "Carro",
-  vehicleType: "",
-  vehicleBrand: "",
+  categoryId: "",
+  typeId: "",
+  brandId: "",
   model: "",
   year: "1900",
   price: 0,

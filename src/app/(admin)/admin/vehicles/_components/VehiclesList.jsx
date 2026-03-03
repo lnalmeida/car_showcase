@@ -1,16 +1,16 @@
 "use client";
 
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 
-import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import {Button} from "@/components/ui/button";
-import {Label} from "@/components/ui/label";
-import {Card, CardContent} from "@/components/ui/card";
-import {Input} from "@/components/ui/input";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import {
     ChevronDown,
@@ -22,7 +22,7 @@ import {
     ChevronRight
 } from "lucide-react";
 
-import {DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import {
     Dialog,
@@ -49,17 +49,25 @@ import {
     PaginationLink
 } from "@/components/ui/pagination";
 
-import {toast} from "sonner";
+import { toast } from "sonner";
 
-import {useReactTable, getCoreRowModel} from "@tanstack/react-table";
-import {getVehicles, removeVehicle, updateVehicle} from "@/actions/vehicles";
-import {DataTable} from "@/components/DataTable";
-import {getColumns} from "../_schemas/listVehicleTableColumnDef";
-import {ClerkLoaded} from "@clerk/nextjs";
-import {getPaginationRange} from "@/lib/helpers";
+import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
+import { getVehicles, removeVehicle, updateVehicle } from "@/actions/vehicles";
+import { DataTable } from "@/components/DataTable";
+import { getColumns } from "../_schemas/listVehicleTableColumnDef";
+import { ClerkLoaded } from "@clerk/nextjs";
+import { getPaginationRange } from "@/lib/helpers";
+import { getCategories } from "@/actions/categories";
 
 const VehiclesList = () => {
     const [search, setSearch] = useState("");
+    const [dbCategories, setDbCategories] = useState([]);
+
+    useEffect(() => {
+        getCategories().then(res => {
+            if (res.success) setDbCategories(res.data);
+        });
+    }, []);
 
     const router = useRouter();
 
@@ -86,7 +94,7 @@ const VehiclesList = () => {
         sorting,
     ];
 
-    const {isLoading: loadingVehicles, data: responseData, error} = useQuery({
+    const { isLoading: loadingVehicles, data: responseData, error } = useQuery({
         queryKey,
         queryFn: async () => {
             const params = {
@@ -107,8 +115,8 @@ const VehiclesList = () => {
         setPageIndex(0);
     }, [search, filterValue]);
 
-    const vehiclesData = responseData ?. data ?? [];
-    const totalCount = responseData ?. totalCount ?? 0;
+    const vehiclesData = responseData?.data ?? [];
+    const totalCount = responseData?.totalCount ?? 0;
 
     console.log("🔄 COMPONENTE RENDERIZADO - Estado atual de vehiclesData:", vehiclesData);
 
@@ -122,7 +130,7 @@ const VehiclesList = () => {
         },
         onSuccess: () => {
             toast.success("Destaque do veículo atualizado.");
-            queryClient.invalidateQueries({queryKey: ["vehicles"]});
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] });
         },
         onError: () => {
             toast.error("Erro ao atualizar destaque do veículo.");
@@ -131,11 +139,11 @@ const VehiclesList = () => {
 
     const updateStatusMutation = useMutation({
         mutationFn: async (
-            {vehicle, newStatus}
+            { vehicle, newStatus }
         ) => {
-            if (vehicle.status === newStatus) 
+            if (vehicle.status === newStatus)
                 return;
-            
+
             console.log("feita a veirificação de status \n / veiculo: " + vehicle + "\n / status: " + newStatus);
             const toggleFeatured = newStatus === "Vendido" ? false : vehicle.featured;
             const res = await updateVehicle(vehicle.id, {
@@ -147,10 +155,9 @@ const VehiclesList = () => {
                 console.log("passamos na mutation");
             }
 
-            if (! res.success) {
-                throw new Error(`Erro ao atualizar status do veículo: ${
-                    res.error.message
-                }`);
+            if (!res.success) {
+                throw new Error(`Erro ao atualizar status do veículo: ${res.error.message
+                    }`);
             }
 
             console.log("passamos na mutation");
@@ -158,12 +165,11 @@ const VehiclesList = () => {
         },
         onSuccess: () => {
             toast.success("Status do veículo atualizado.");
-            queryClient.invalidateQueries({queryKey: queryKey});
+            queryClient.invalidateQueries({ queryKey: queryKey });
         },
         onError: () => {
-            toast.error(`Erro ao atualizar status do veículo: ${
-                error.message
-            }`);
+            toast.error(`Erro ao atualizar status do veículo: ${error.message
+                }`);
         }
     });
 
@@ -171,7 +177,7 @@ const VehiclesList = () => {
         mutationFn: (vehicleId) => removeVehicle(vehicleId),
         onSuccess: () => {
             toast.success("Veículo excluído com sucesso!");
-            queryClient.invalidateQueries({queryKey: ["vehicles"]});
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] });
             setDeleteDialogOpen(false);
             setVehicleToDelete(null);
         },
@@ -191,17 +197,17 @@ const VehiclesList = () => {
 
     const handleUpdateStatus = async (vehicle, newStatus) => {
         console.log("Chama a função handleUpdateStatus no front", vehicle, newStatus);
-        if (vehicle.status === newStatus) 
+        if (vehicle.status === newStatus)
             return;
-        
-        updateStatusMutation.mutate({vehicle, newStatus});
+
+        updateStatusMutation.mutate({ vehicle, newStatus });
     };
 
     const handleConfirmDelete = async () => {
         console.log("Chama a função handleConfirmDelete no front");
-        if (!vehicleToDelete) 
+        if (!vehicleToDelete)
             return;
-        
+
         deleteVehicleMutation.mutate(vehicleToDelete.id);
     };
 
@@ -234,7 +240,7 @@ const VehiclesList = () => {
         },
 
         onPaginationChange: (updater) => {
-            const next = typeof updater === "function" ? updater({pageIndex, pageSize}) : updater;
+            const next = typeof updater === "function" ? updater({ pageIndex, pageSize }) : updater;
             setPageIndex(next.pageIndex);
             setPageSize(next.pageSize);
         },
@@ -262,22 +268,22 @@ const VehiclesList = () => {
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <Button onClick={
-                        () => router.push("/admin/vehicles/create")
-                    }
+                    () => router.push("/admin/vehicles/create")
+                }
                     className="flex items-center">
-                    <Plus className="h-4 w-4mr-2"/>
+                    <Plus className="h-4 w-4mr-2" />
                     Adicionar veículo
                 </Button>
                 <form onSubmit={handleSearchSubmit}
                     className="flex w-full sm:w-auto">
                     <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"/>
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input className="pl-9 w-full sm:w-60" placeholder="Buscar veículos..."
                             value={search}
                             onChange={
                                 (e) => setSearch(e.target.value)
                             }
-                            type="search"/>
+                            type="search" />
                     </div>
                 </form>
             </div>
@@ -291,43 +297,41 @@ const VehiclesList = () => {
                         className="flex flex-wrap items-center gap-4">
                         <Label>Filtrar por tipo:</Label>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="all" id="all"/>
+                            <RadioGroupItem value="all" id="all" />
                             <Label htmlFor="all">Todos</Label>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Carro" id="car"/>
-                            <Label htmlFor="car">Carros</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Moto" id="motorcycle"/>
-                            <Label htmlFor="motorcycle">Motos</Label>
-                        </div>
+                        {dbCategories.map(cat => (
+                            <div className="flex items-center space-x-2" key={cat.id}>
+                                <RadioGroupItem value={cat.id} id={cat.id} />
+                                <Label htmlFor={cat.id}>{cat.name}</Label>
+                            </div>
+                        ))}
                     </RadioGroup>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="ml-auto">
                                 Colunas
-                                <ChevronDown className="ml-2 h-4 w-4"/>
+                                <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             {
-                            table.getAllColumns().filter((column) => column.getCanHide()).map((column) => (
-                                <DropdownMenuCheckboxItem key={
+                                table.getAllColumns().filter((column) => column.getCanHide()).map((column) => (
+                                    <DropdownMenuCheckboxItem key={
                                         column.id
                                     }
-                                    className="capitalize"
-                                    checked={
-                                        column.getIsVisible()
-                                    }
-                                    onCheckedChange={
-                                        (value) => column.toggleVisibility(!!value)
-                                }>
-                                    {
-                                    column.columnDef.displayName || column.id
-                                } </DropdownMenuCheckboxItem>
-                            ))
-                        } </DropdownMenuContent>
+                                        className="capitalize"
+                                        checked={
+                                            column.getIsVisible()
+                                        }
+                                        onCheckedChange={
+                                            (value) => column.toggleVisibility(!!value)
+                                        }>
+                                        {
+                                            column.columnDef.displayName || column.id
+                                        } </DropdownMenuCheckboxItem>
+                                ))
+                            } </DropdownMenuContent>
                     </DropdownMenu>
                 </CardContent>
             </Card>
@@ -336,142 +340,140 @@ const VehiclesList = () => {
 
             <Card className="mb-1 overflow-scroll-y">
                 <CardContent>
-                        <DataTable table={table}
-                            loading={loadingVehicles}/>
+                    <DataTable table={table}
+                        loading={loadingVehicles} />
                 </CardContent>
             </Card>
 
             {/* Pagination */}
 
             {
-            totalCount > 0 && (
-                <div className="flex items-center justify-between space-x-2 py-4">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                        {numberOfRecordsLabel} </div>
+                totalCount > 0 && (
+                    <div className="flex items-center justify-between space-x-2 py-4">
+                        <div className="flex-1 text-sm text-muted-foreground">
+                            {numberOfRecordsLabel} </div>
 
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium">Registros por página</p>
-                            <Select value={
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center space-x-2">
+                                <p className="text-sm font-medium">Registros por página</p>
+                                <Select value={
                                     `${pageSize}`
                                 }
-                                onValueChange={
-                                    (value) => {
-                                        setPageSize(Number(value));
-                                        setPageIndex(0);
-                                    }
-                            }>
-                                <SelectTrigger className="h-8 w-[70px]">
-                                    <SelectValue placeholder={pageSize}/>
-                                </SelectTrigger>
-                                <SelectContent side="top">
-                                    {
-                                    [
-                                        10,
-                                        20,
-                                        30,
-                                        40,
-                                        50
-                                    ].map((size) => (
-                                        <SelectItem key={size}
-                                            value={
-                                                `${size}`
-                                        }>
-                                            {size} </SelectItem>
-                                    ))
-                                } </SelectContent>
-                            </Select>
-                        </div>
-
-                        <Pagination className=" mx-4 w-auto ">
-                            <PaginationContent className="flex items-center gap-1 mr-4">
-                                <PaginationItem>
-                                    <Button href="#" variant="outline"
-                                        className={
-                                            `mx-1 ${
-                                                pageIndex === 0 ? "cursor-not-allowed" : "cursor-pointer"
-                                            }`
+                                    onValueChange={
+                                        (value) => {
+                                            setPageSize(Number(value));
+                                            setPageIndex(0);
                                         }
-                                        onClick={
-                                            (e) => {
-                                                e.preventDefault();
-                                                setPageIndex(pageIndex - 1);
-                                            }
-                                        }
-                                        disabled={
-                                            pageIndex === 0
-                                        }
-                                        aria-disabled={
-                                            pageIndex === 0
                                     }>
-                                        <ChevronLeft className="h-4 w-4 mr-1"/>
-                                    </Button>
-                                </PaginationItem>
+                                    <SelectTrigger className="h-8 w-[70px]">
+                                        <SelectValue placeholder={pageSize} />
+                                    </SelectTrigger>
+                                    <SelectContent side="top">
+                                        {
+                                            [
+                                                10,
+                                                20,
+                                                30,
+                                                40,
+                                                50
+                                            ].map((size) => (
+                                                <SelectItem key={size}
+                                                    value={
+                                                        `${size}`
+                                                    }>
+                                                    {size} </SelectItem>
+                                            ))
+                                        } </SelectContent>
+                                </Select>
+                            </div>
 
-                                {
-                                paginationRange.map((pageNumber, index) => {
-                                    if (pageNumber === "...") {
-                                        return (
-                                            <PaginationItem key={
-                                                `ellipsis-${index}`
+                            <Pagination className=" mx-4 w-auto ">
+                                <PaginationContent className="flex items-center gap-1 mr-4">
+                                    <PaginationItem>
+                                        <Button href="#" variant="outline"
+                                            className={
+                                                `mx-1 ${pageIndex === 0 ? "cursor-not-allowed" : "cursor-pointer"
+                                                }`
+                                            }
+                                            onClick={
+                                                (e) => {
+                                                    e.preventDefault();
+                                                    setPageIndex(pageIndex - 1);
+                                                }
+                                            }
+                                            disabled={
+                                                pageIndex === 0
+                                            }
+                                            aria-disabled={
+                                                pageIndex === 0
                                             }>
-                                                <PaginationEllipsis/>
-                                            </PaginationItem>
-                                        );
+                                            <ChevronLeft className="h-4 w-4 mr-1" />
+                                        </Button>
+                                    </PaginationItem>
+
+                                    {
+                                        paginationRange.map((pageNumber, index) => {
+                                            if (pageNumber === "...") {
+                                                return (
+                                                    <PaginationItem key={
+                                                        `ellipsis-${index}`
+                                                    }>
+                                                        <PaginationEllipsis />
+                                                    </PaginationItem>
+                                                );
+                                            }
+
+                                            const isActive = pageIndex + 1 === pageNumber;
+                                            return (
+                                                <PaginationItem key={pageNumber}
+                                                    className="cursor-pointer mx-1">
+                                                    <div className="flex items-center space-x-1">
+                                                        <PaginationLink href="#"
+                                                            onClick={
+                                                                (e) => {
+                                                                    e.preventDefault();
+                                                                    setPageIndex(pageNumber - 1);
+                                                                }
+                                                            }
+                                                            isActive={isActive}
+                                                            className={
+                                                                isActive ? "border-gray-500 bg-gray-200" : ""
+                                                            }>
+                                                            {pageNumber} </PaginationLink>
+                                                    </div>
+                                                </PaginationItem>
+                                            );
+                                        })
                                     }
 
-                                    const isActive = pageIndex + 1 === pageNumber;
-                                    return (
-                                        <PaginationItem key={pageNumber}
-                                            className="cursor-pointer mx-1">
-                                            <div className="flex items-center space-x-1">
-                                                <PaginationLink href="#"
-                                                    onClick={
-                                                        (e) => {
-                                                            e.preventDefault();
-                                                            setPageIndex(pageNumber - 1);
-                                                        }
-                                                    }
-                                                    isActive={isActive}
-                                                    className={
-                                                        isActive ? "border-gray-500 bg-gray-200" : ""
-                                                }>
-                                                    {pageNumber} </PaginationLink>
-                                            </div>
-                                        </PaginationItem>
-                                    );
-                                })
-                            }
-
-                                <PaginationItem>
-                                    <Button href="#"
-                                        className={
-                                            `mx-1 ${
-                                                pageIndex + 1 >= totalPages ? "cursor-not-allowed" : "cursor-pointer"
-                                            }`
-                                        }
-                                        variant="outline"
-                                        onClick={
-                                            (e) => {
-                                                e.preventDefault();
-                                                setPageIndex(pageIndex + 1);
+                                    <PaginationItem>
+                                        <Button href="#"
+                                            className={
+                                                `mx-1 ${pageIndex + 1 >= totalPages ? "cursor-not-allowed" : "cursor-pointer"
+                                                }`
                                             }
-                                        }
-                                        disabled={
-                                            pageIndex + 1 >= totalPages
-                                        }
-                                        aria-disabled={
-                                            pageIndex + 1 >= totalPages
-                                    }>
-                                        <ChevronRight className="h-4 w-4 ml-1"/>
-                                    </Button>
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
+                                            variant="outline"
+                                            onClick={
+                                                (e) => {
+                                                    e.preventDefault();
+                                                    setPageIndex(pageIndex + 1);
+                                                }
+                                            }
+                                            disabled={
+                                                pageIndex + 1 >= totalPages
+                                            }
+                                            aria-disabled={
+                                                pageIndex + 1 >= totalPages
+                                            }>
+                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
                     </div>
-                </div>
-            )
-        }
+                )
+            }
 
             {/* Confirm deletion dialog */}
 
@@ -483,11 +485,11 @@ const VehiclesList = () => {
                         <DialogDescription>
                             Tem certeza que deseja excluir o veículo{" "}
                             <strong> {
-                                vehicleToDelete ?. vehicleBrand
+                                vehicleToDelete?.vehicleBrand
                             }
                                 {
-                                vehicleToDelete ?. model
-                            } </strong>
+                                    vehicleToDelete?.model
+                                } </strong>
                             ? Esta ação não pode ser desfeita.
                         </DialogDescription>
                     </DialogHeader>
@@ -501,20 +503,20 @@ const VehiclesList = () => {
                             onClick={handleConfirmDelete}
                             disabled={
                                 deleteVehicleMutation.isPending
-                        }>
+                            }>
                             {
-                            deleteVehicleMutation.isPending ? (
-                                <>
-                                    <Loader2 className="mr-2 animate-spin"/>
-                                    <span>Excluindo...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Trash className="mr-2"/>
-                                    <span>Excluir</span>
-                                </>
-                            )
-                        } </Button>
+                                deleteVehicleMutation.isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 animate-spin" />
+                                        <span>Excluindo...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash className="mr-2" />
+                                        <span>Excluir</span>
+                                    </>
+                                )
+                            } </Button>
                     </div>
                 </DialogContent>
             </Dialog>
