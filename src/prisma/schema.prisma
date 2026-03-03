@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -64,7 +64,13 @@ model UserSavedVehicle {
 
 model Vehicle {
   id           String             @id @default(uuid())
-  category     String             @default("Carro")
+  categoryId   String?
+  category     Category?          @relation(fields: [categoryId], references: [id])
+  brandId      String?
+  brand        Brand?             @relation(fields: [brandId], references: [id])
+  typeId       String?
+  type         VehicleType?       @relation(fields: [typeId], references: [id])
+  
   model        String
   year         Int
   price        Decimal            @db.Decimal(10, 2)
@@ -82,19 +88,17 @@ model Vehicle {
   status       String             @default("Disponível")
   fuelType     String             @default("Gasolina")
   transmission String             @default("Manual")
-  vehicleBrand String?
-  vehicleType  String?
   savedBy      UserSavedVehicle[]
   visits       VisitBooking[]
 
   @@index([status])
-  @@index([category])
+  @@index([categoryId])
   @@index([featured])
   @@index([price])
-  @@index([category, vehicleType, vehicleBrand])
-  @@index([status, category])
-  @@index([featured, category])
-  @@index([vehicleBrand, model])
+  @@index([categoryId, typeId, brandId])
+  @@index([status, categoryId])
+  @@index([featured, categoryId])
+  @@index([brandId, model])
   @@index([model])
   @@index([year])
   @@index([fuelType])
@@ -104,8 +108,8 @@ model Vehicle {
   @@index([color])
   @@index([createdAt])
   @@index([status, price])
-  @@index([category, year, price])
-  @@index([featured, status, category])
+  @@index([categoryId, year, price])
+  @@index([featured, status, categoryId])
   @@map("vehicles")
 }
 
@@ -171,4 +175,47 @@ enum DayOfWeek {
   FRIDAY
   SATURDAY
   SUNDAY
+}
+
+model Category {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  imageUrl  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  brands    Brand[]
+  types     VehicleType[]
+  vehicles  Vehicle[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id         String      @id @default(uuid())
+  name       String
+  imageUrl   String?
+  categoryId String
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  vehicles   Vehicle[]
+
+  @@unique([name, categoryId])
+  @@index([categoryId])
+  @@map("brands")
+}
+
+model VehicleType {
+  id         String      @id @default(uuid())
+  name       String
+  imageUrl   String?
+  categoryId String
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  vehicles   Vehicle[]
+
+  @@unique([name, categoryId])
+  @@index([categoryId])
+  @@map("vehicle_types")
 }
