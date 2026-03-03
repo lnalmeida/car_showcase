@@ -30,6 +30,11 @@ const routes = [
     icon: Users,
     href: "/admin/users",
   },
+  {
+    label: "Configurações",
+    icon: Cog,
+    href: "/admin/settings",
+  },
 ];
 const Sidebar = () => {
   const pathname = usePathname();
