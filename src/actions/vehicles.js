@@ -26,7 +26,7 @@ export const processVehicleImageWithAI = async (file) => {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const base64Image = await fileToBase64(file);
 
@@ -194,9 +194,9 @@ export const addVehicle = async (params) => {
 
     const vehicle = await db.vehicle.create({
       data: {
-        category: vehicleData.category,
-        vehicleType: vehicleData.vehicleType ?? null,
-        vehicleBrand: vehicleData.vehicleBrand ?? null,
+        categoryId: vehicleData.categoryId,
+        typeId: vehicleData.typeId ?? null,
+        brandId: vehicleData.brandId ?? null,
         model: vehicleData.model,
         year: parseInt(vehicleData.year),
         price: parseFloat(vehicleData.price) ?? 0,
@@ -241,43 +241,25 @@ export const getVehicles = async (params = {}) => {
     let where = {};
 
     if (filter) {
-      where.category = {
-        equals: filter,
-        mode: "insensitive",
-      };
+      where.categoryId = filter;
     }
 
     if (search) {
       where.OR = [
         {
-          category: {
-            contains: search,
-            mode: "insensitive",
-          },
+          category: { name: { contains: search, mode: "insensitive" } },
         },
         {
-          vehicleType: {
-            contains: search,
-            mode: "insensitive",
-          },
+          type: { name: { contains: search, mode: "insensitive" } },
         },
         {
-          vehicleBrand: {
-            contains: search,
-            mode: "insensitive",
-          },
+          brand: { name: { contains: search, mode: "insensitive" } },
         },
         {
-          status: {
-            contains: search,
-            mode: "insensitive",
-          },
+          status: { contains: search, mode: "insensitive" },
         },
         {
-          model: {
-            contains: search,
-            mode: "insensitive",
-          },
+          model: { contains: search, mode: "insensitive" },
         },
       ];
     }
@@ -287,6 +269,7 @@ export const getVehicles = async (params = {}) => {
     const [vehicles, totalCount] = await Promise.all([
       db.vehicle.findMany({
         where,
+        include: { category: true, brand: true, type: true },
         orderBy: orderByClause,
         skip: page * limit,
         take: limit,
@@ -329,6 +312,7 @@ export const getVehicle = async (id) => {
 
     const vehicle = await db.vehicle.findUnique({
       where: { id },
+      include: { category: true, brand: true, type: true },
     });
 
     const result = serializeVehicleData(vehicle);
@@ -365,10 +349,12 @@ export const updateVehicle = async (id, vehicleData) => {
 
     const dataForDB = {};
 
-    if (vehicleData.vehicleType !== undefined)
-      dataForDB.vehicleType = vehicleData.vehicleType;
-    if (vehicleData.vehicleBrand !== undefined)
-      dataForDB.vehicleBrand = vehicleData.vehicleBrand;
+    if (vehicleData.typeId !== undefined)
+      dataForDB.typeId = vehicleData.typeId;
+    if (vehicleData.brandId !== undefined)
+      dataForDB.brandId = vehicleData.brandId;
+    if (vehicleData.categoryId !== undefined)
+      dataForDB.categoryId = vehicleData.categoryId;
     if (vehicleData.model !== undefined) dataForDB.model = vehicleData.model;
     if (vehicleData.year !== undefined)
       dataForDB.year = parseInt(vehicleData.year);
@@ -450,10 +436,10 @@ export const updateVehicleComplete = async (params) => {
 
     // Processar novas imagens (base64)
     const newImages = images.filter(img => img.startsWith("data:image/"));
-    
+
     if (newImages.length > 0) {
       console.log("🔄 Processando novas imagens...");
-      
+
       for (let i = 0; i < newImages.length; i++) {
         const base64Data = newImages[i];
 
@@ -470,7 +456,7 @@ export const updateVehicleComplete = async (params) => {
         });
 
         const publicUrl = uploadResult.secure_url;
-        
+
         // Substituir a imagem base64 pela URL do Cloudinary
         const index = imageUrls.indexOf(base64Data);
         if (index !== -1) {
@@ -483,9 +469,9 @@ export const updateVehicleComplete = async (params) => {
     const updatedVehicle = await db.vehicle.update({
       where: { id: vehicleId },
       data: {
-        category: vehicleData.category,
-        vehicleType: vehicleData.vehicleType ?? null,
-        vehicleBrand: vehicleData.vehicleBrand ?? null,
+        categoryId: vehicleData.categoryId,
+        typeId: vehicleData.typeId ?? null,
+        brandId: vehicleData.brandId ?? null,
         model: vehicleData.model,
         year: parseInt(vehicleData.year),
         price: parseFloat(vehicleData.price) ?? 0,

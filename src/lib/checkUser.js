@@ -1,11 +1,15 @@
 "use server";
-import {auth, currentUser} from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "./prisma";
 
 export const checkUser = async () => {
-  const user =  await currentUser();
-
-  // console.log("id: "+user.id);
+  let user;
+  try {
+    user = await currentUser();
+  } catch (err) {
+    console.error("Clerk current user error:", err);
+    return null;
+  }
 
   if (!user) return null;
 

@@ -5,6 +5,7 @@ import { serializeVehicleData } from "@/lib/helpers";
 export const getAllVehicles = async () => {
   try {
     const vehicles = await db.vehicle.findMany({
+      include: { category: true, brand: true, type: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -32,50 +33,29 @@ export const getSearchedVehicles = async (params = {}) => {
     let where = {};
 
     if (filter) {
-      where.category = {
-        equals: filter,
-        mode: "insensitive",
-      };
+      where.categoryId = filter;
     }
 
     if (category) {
-      where.category = {
-        equals: category,
-        mode: "insensitive",
-      };
+      where.categoryId = category;
     }
 
     if (search) {
       where.OR = [
         {
-          category: {
-            contains: search,
-            mode: "insensitive",
-          },
+          category: { name: { contains: search, mode: "insensitive" } },
         },
         {
-          vehicleType: {
-            contains: search,
-            mode: "insensitive",
-          },
+          type: { name: { contains: search, mode: "insensitive" } },
         },
         {
-          vehicleBrand: {
-            contains: search,
-            mode: "insensitive",
-          },
+          brand: { name: { contains: search, mode: "insensitive" } },
         },
         {
-          status: {
-            contains: search,
-            mode: "insensitive",
-          },
+          status: { contains: search, mode: "insensitive" },
         },
         {
-          model: {
-            contains: search,
-            mode: "insensitive",
-          },
+          model: { contains: search, mode: "insensitive" },
         },
       ];
     }
@@ -85,6 +65,7 @@ export const getSearchedVehicles = async (params = {}) => {
     const [vehicles, totalCount] = await Promise.all([
       db.vehicle.findMany({
         where,
+        include: { category: true, brand: true, type: true },
         orderBy: orderByClause,
         skip: page * limit,
         take: limit,
@@ -118,9 +99,10 @@ export const getRelatedVehicles = async (type) => {
   try {
     const relatedVehicles = await db.vehicle.findMany({
       where: {
-        vehicleType: type,
+        typeId: type,
         status: "Disponível",
       },
+      include: { category: true, brand: true, type: true },
       orderBy: {
         createdAt: "desc",
       },
@@ -146,9 +128,9 @@ export const getRelatedVehicles = async (type) => {
 };
 
 export const saveUserVehicles = async (userId, vehicleId) => {
-  if(!userId || !vehicleId) return {success: false};
+  if (!userId || !vehicleId) return { success: false };
   console.log("🔄 Tentando salvar veículo:", { userId, vehicleId });
-  
+
   try {
     // Verificar se já existe para evitar duplicatas
     const existingRecord = await db.userSavedVehicle.findUnique({
@@ -173,7 +155,7 @@ export const saveUserVehicles = async (userId, vehicleId) => {
     });
 
     console.log("✅ SUCESSO: Veículo salvo no banco de dados.");
-    return {success: true};
+    return { success: true };
 
   } catch (error) {
     console.error("❌ Erro ao salvar veículo:", error.message);
@@ -184,7 +166,7 @@ export const saveUserVehicles = async (userId, vehicleId) => {
 };
 
 export const unsaveUserVehicles = async (userId, vehicleId) => {
-  if(!userId || !vehicleId) return {success: false};
+  if (!userId || !vehicleId) return { success: false };
   console.log("🔄 Tentando remover veículo:", { userId, vehicleId });
 
   try {
@@ -215,7 +197,7 @@ export const unsaveUserVehicles = async (userId, vehicleId) => {
     });
 
     console.log("✅ SUCESSO: Veículo removido do banco de dados.");
-    return {success: true};
+    return { success: true };
 
   } catch (error) {
     console.error("❌ Erro ao remover veículo:", error.message);
@@ -226,7 +208,7 @@ export const unsaveUserVehicles = async (userId, vehicleId) => {
 };
 
 export const getUserSavedVehicles = async (userId) => {
-  if(!userId) return {success: false};
+  if (!userId) return { success: false };
 
   try {
     const savedVehicles = await db.userSavedVehicle.findMany({
@@ -243,7 +225,7 @@ export const getUserSavedVehicles = async (userId) => {
     );
 
     console.log("SUCESSO: Veículos salvos do usuário recuperados.");
-    return {success: true, data: serializedSavedVehicles};
+    return { success: true, data: serializedSavedVehicles };
 
   } catch (error) {
     console.error("❌ Erro ao recuperar veículos salvos do usuário:", error.message);
