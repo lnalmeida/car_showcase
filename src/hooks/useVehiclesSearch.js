@@ -33,11 +33,12 @@ export function useVehicleSearch() {
     queryFn: async () => {
       const response = await getAllVehicles();
       if (!response.success) {
+        const errorMsg = response.error || response.message || "Erro desconhecido";
         toast.error(
-          "Erro ao buscar veículos: GetAllVehicles: " + response.message
+          "Erro ao buscar veículos: GetAllVehicles: " + errorMsg
         );
-        console.error("Erro ao buscar veículos:", response.message);
-        throw new Error(response.message || "Erro ao buscar veículos");
+        console.error("Erro ao buscar veículos:", errorMsg);
+        throw new Error(errorMsg);
       }
       return response.data;
     },
@@ -57,7 +58,7 @@ export function useVehicleSearch() {
     queryKey: ["savedVehicles", currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
-      
+
       const response = await getUserSavedVehicles(currentUser.id);
       if (!response.success) {
         console.error("Erro ao buscar veículos salvos:", response.message);
@@ -77,17 +78,17 @@ export function useVehicleSearch() {
   // Combinar dados dos veículos com informações de salvos
   const vehiclesWithSavedStatus = useMemo(() => {
     if (!vehicleData) return [];
-    
+
     const savedVehicleIds = new Set(
       savedVehiclesData?.map(sv => sv.id) || []
     );
-    
+
     console.log("🔄 Sincronizando status de favoritos:", {
       totalVehicles: vehicleData.length,
       savedVehicleIds: Array.from(savedVehicleIds),
       loadingSavedVehicles
     });
-    
+
     return vehicleData.map(vehicle => ({
       ...vehicle,
       wishListed: savedVehicleIds.has(vehicle.id)

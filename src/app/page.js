@@ -6,11 +6,14 @@ import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import HomeSearch from "@/components/HomeSearch";
 import VehicleCard from "@/components/VehicleCard";
 import VehicleTypesCarousel from "@/components/VehicleTypesCarousel";
-import { carBodyTypes, motorcycleBodyTypes, carMakes } from "@/lib/data";
 import Link from "next/link";
 import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
 import { useFeaturedVehicles } from "@/hooks/useFeaturedVehicles";
+import { useState, useEffect } from "react";
+import { getCategories } from "@/actions/categories";
+import { getBrands } from "@/actions/brands";
+import { getVehicleTypes } from "@/actions/vehicleTypes";
 
 export default function Home() {
   const {
@@ -18,6 +21,37 @@ export default function Home() {
     loadingFeaturedVehicles,
     featuredVehiclesError,
   } = useFeaturedVehicles(8);
+
+  const [carMakes, setCarMakes] = useState([]);
+  const [carBodyTypes, setCarBodyTypes] = useState([]);
+  const [motorcycleBodyTypes, setMotorcycleBodyTypes] = useState([]);
+  const [carCategoryId, setCarCategoryId] = useState("");
+  const [motoCategoryId, setMotoCategoryId] = useState("");
+
+  useEffect(() => {
+    async function loadData() {
+      const [catsRes, brandsRes, typesRes] = await Promise.all([
+        getCategories(), getBrands(), getVehicleTypes()
+      ]);
+
+      if (catsRes.success && brandsRes.success && typesRes.success) {
+        const categories = catsRes.data;
+        const carCategory = categories.find(c => c.name.toLowerCase() === "carro");
+        const motoCategory = categories.find(c => c.name.toLowerCase() === "moto");
+
+        if (carCategory) {
+          setCarCategoryId(carCategory.id);
+          setCarMakes(brandsRes.data.filter(b => b.categoryId === carCategory.id));
+          setCarBodyTypes(typesRes.data.filter(t => t.categoryId === carCategory.id));
+        }
+        if (motoCategory) {
+          setMotoCategoryId(motoCategory.id);
+          setMotorcycleBodyTypes(typesRes.data.filter(t => t.categoryId === motoCategory.id));
+        }
+      }
+    }
+    loadData();
+  }, []);
 
   return (
     <div className="pt-20 flex flex-col">
@@ -89,17 +123,21 @@ export default function Home() {
             {carMakes.map((make) => {
               return (
                 <Link
-                  key={make.name}
+                  key={make.id || make.name}
                   href={`/vehicles/?brand=${make.name}`}
                   className="bg-white rounded-lg shadow p-4 text-center hover:shadow-md transition cursor-pointer"
                 >
-                  <div className="h-16 w-auto mx-auto mb-2 relative">
-                    <Image
-                      src={make.image}
-                      alt={make.name}
-                      fill
-                      style={{ objectFit: "contain" }}
-                    />
+                  <div className="h-16 w-auto mx-auto mb-2 relative flex items-center justify-center bg-gray-50 rounded-md">
+                    {make.imageUrl && make.imageUrl.trim() !== "" ? (
+                      <Image
+                        src={make.imageUrl}
+                        alt={make.name}
+                        fill
+                        style={{ objectFit: "contain" }}
+                      />
+                    ) : (
+                      <span className="text-gray-400 font-bold">{make.name.charAt(0)}</span>
+                    )}
                   </div>
                   <h3 className="font-medium">{make.name}</h3>
                 </Link>
@@ -156,7 +194,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">Carros</h2>
             <Button variant="ghost" className="flex items-center" asChild>
-              <Link href="/vehicles?category=carro">
+              <Link href={`/vehicles?category=carro`}>
                 Ver Todos <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
@@ -170,7 +208,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">Motos</h2>
             <Button variant="ghost" className="flex items-center" asChild>
-              <Link href="/vehicles?category=moto">
+              <Link href={`/vehicles?category=moto`}>
                 Ver Todas <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
@@ -178,7 +216,7 @@ export default function Home() {
           <VehicleTypesCarousel bodyTypes={motorcycleBodyTypes} />
         </div>
       </section>
-  
+
 
       <section className="py-16 dotted-background text-white">
         <div className="container mx-auto px-4 text-center">

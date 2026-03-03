@@ -3,13 +3,13 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import  Link  from 'next/link';
+import Link from 'next/link';
 import Image from 'next/image';
 // import { bodyTypes, carMakes, featuredCars } from "@/lib/data";
 
 import { Navigation, Pagination } from 'swiper/modules';
 
-const VehicleTypesCarousel = ({ bodyTypes }) =>  {
+const VehicleTypesCarousel = ({ bodyTypes }) => {
   return (
     <Swiper
       modules={[Navigation, Pagination]}
@@ -32,16 +32,20 @@ const VehicleTypesCarousel = ({ bodyTypes }) =>  {
       {bodyTypes.map((type) => (
         <SwiperSlide key={type.id}>
           <Link
-            href={`/vehicles/?type=${type.name}`}
+            href={`/vehicles/?type=${type.id || type.name}`}
             className="relative group cursor-pointer"
           >
-            <div className="overflow-hidden rounded-lg flex justify-end h-28 mb-4 relative">
-              <Image
-                src={type.image}
-                alt={type.name}
-                fill
-                className="object-cover group-hover:scale-105 transition duration-300"
-              />
+            <div className="overflow-hidden rounded-lg flex justify-center items-center bg-gray-200 h-28 mb-4 relative">
+              {(type.imageUrl || type.image) ? (
+                <Image
+                  src={type.imageUrl || type.image}
+                  alt={type.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition duration-300"
+                />
+              ) : (
+                <span className="text-gray-400 font-bold text-xl">{type.name.charAt(0)}</span>
+              )}
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-lg flex items-end">
               <h3 className="text-white font-bold pl-4 pb-2">

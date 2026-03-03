@@ -84,6 +84,20 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
       };
     }
 
+    // Gera opções dinâmicas pra filtros
+    const dynamicBrands = { carros: [], motos: [] };
+    const dynamicTypes = { carros: [], motos: [] };
+
+    data.forEach(v => {
+      const cat = v.category === "Carro" ? "carros" : "motos";
+      if (cat && v.vehicleBrand && !dynamicBrands[cat].includes(v.vehicleBrand)) {
+        dynamicBrands[cat].push(v.vehicleBrand);
+      }
+      if (cat && v.vehicleType && !dynamicTypes[cat].includes(v.vehicleType)) {
+        dynamicTypes[cat].push(v.vehicleType);
+      }
+    });
+
     // Gera modelos por marca (dinâmico)
     const models = {};
     [...new Set(data.map((v) => v.vehicleBrand))].forEach((brand) => {
@@ -108,6 +122,8 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
 
     return {
       ...STATIC_DATA,
+      brands: dynamicBrands,
+      vehicleTypes: dynamicTypes,
       models,
       engines,
       priceRange: {
@@ -1116,7 +1132,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
             "hidden lg:block lg:w-[25%] lg:max-w-[320px] lg:min-w-[280px] bg-white border border-gray-200 rounded-lg shadow-sm lg:sticky lg:top-4 h-fit",
             //Mobile overlay aberto
             isMobileMenuOpen &&
-              "fixed top-0 left-0 right-0 bottom-0 z-50 block bg-white overflow-y-auto",
+            "fixed top-0 left-0 right-0 bottom-0 z-50 block bg-white overflow-y-auto",
             className
           )}
         >
@@ -1242,7 +1258,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         {category === filterConfig.categories[0]
                           ? "Todos"
                           : category.charAt(0).toUpperCase() +
-                            category.slice(1)}
+                          category.slice(1)}
                       </button>
                     ))}
                   </div>
@@ -1256,7 +1272,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                     className={cn(
                       "text-base font-medium",
                       hasActiveFilter("vehicle-type") &&
-                        "text-blue-600 font-semibold"
+                      "text-blue-600 font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -1312,7 +1328,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   className={cn(
                     "text-base font-medium",
                     hasActiveFilter("price-range") &&
-                      "text-blue-600 font-semibold"
+                    "text-blue-600 font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -1363,7 +1379,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   className={cn(
                     "text-base font-medium",
                     hasActiveFilter("year-range") &&
-                      "text-blue-600 font-semibold"
+                    "text-blue-600 font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -1408,7 +1424,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   className={cn(
                     "text-base font-medium",
                     hasActiveFilter("odometer-range") &&
-                      "text-blue-600 font-semibold"
+                    "text-blue-600 font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -1623,7 +1639,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                     className={cn(
                       "text-base font-medium",
                       hasActiveFilter("transmission") &&
-                        "text-blue-600 font-semibold"
+                      "text-blue-600 font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
