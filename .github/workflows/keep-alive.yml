@@ -1,0 +1,19 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs at 12:00 UTC every 3 days.
+    - cron: '0 12 */3 * *'
+  # Allows manual testing of the workflow
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping public API route to awake Supabase
+        # We ping a known page on the production site that queries the database. 
+        # By querying the database, Supabase resets its 7-day inactivity timer.
+        # Replace the URL below with your actual production site URL if you have one.
+        run: |
+          curl -s -f https://car-showcase.app/ || echo "Ping falhou ou retornou um erro não-200. Certifique-se de substituir a URL."
