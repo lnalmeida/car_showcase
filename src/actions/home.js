@@ -13,7 +13,7 @@ export const getFeaturedVehicles = async (limit = 3, userId = null) => {
     const featuredVehicles = await db.vehicle.findMany({
       where: {
         featured: true,
-        status: "Disponível",
+        status: { not: "Vendido" },
       },
       take: limit,
       include: {

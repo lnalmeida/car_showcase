@@ -5,6 +5,7 @@ import { serializeVehicleData } from "@/lib/helpers";
 export const getAllVehicles = async () => {
   try {
     const vehicles = await db.vehicle.findMany({
+      where: { status: { not: "Vendido" } },
       include: { category: true, brand: true, type: true },
       orderBy: { createdAt: "desc" },
     });
@@ -30,7 +31,7 @@ export const getSearchedVehicles = async (params = {}) => {
   try {
     const { search, page = 0, limit = 10, filter, category, sortBy, order } = params;
 
-    let where = {};
+    let where = { status: { not: "Vendido" } };
 
     if (filter) {
       where.categoryId = filter;
@@ -100,7 +101,7 @@ export const getRelatedVehicles = async (type) => {
     const relatedVehicles = await db.vehicle.findMany({
       where: {
         typeId: type,
-        status: "Disponível",
+        status: { not: "Vendido" },
       },
       include: { category: true, brand: true, type: true },
       orderBy: {
@@ -232,4 +233,42 @@ export const getUserSavedVehicles = async (userId) => {
     throw new Error(`Failed to retrieve saved vehicles: ${error.message}.`);
   }
 
+};
+
+export const getSoldVehicles = async (params = {}) => {
+  try {
+    const { page = 0, limit = 10, sortBy = "createdAt", order = "desc" } = params;
+
+    let where = { status: "Vendido" };
+    const orderByClause = { [sortBy]: order };
+
+    const [vehicles, totalCount] = await Promise.all([
+      db.vehicle.findMany({
+        where,
+        include: { category: true, brand: true, type: true },
+        orderBy: orderByClause,
+        skip: page * limit,
+        take: limit,
+      }),
+      db.vehicle.count({
+        where,
+      }),
+    ]);
+
+    const result = await Promise.all(
+      vehicles.map((v) => serializeVehicleData(v))
+    );
+
+    return {
+      success: true,
+      data: result,
+      totalCount,
+    };
+  } catch (error) {
+    console.error("❌ Error getting sold vehicles:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 };
