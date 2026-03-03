@@ -7,25 +7,26 @@ import CarList, { VehiclesList } from "./_components/VehiclesList"; // O Client 
 
 export default async function CarsPage({ searchParams }) {
   // 1. Parseia os parâmetros de busca da URL
-  const { search, brand, category, type, color } = await searchParams;
+  const params = await searchParams;
+  const { search, brand, category, type, color, fromImage, ...restParams } = params;
 
   // 2. Prepara o objeto de filtro para a Server Action
-  // Não incluímos aqui o `sortBy` ou `order` se não vierem da HomeSearch
   const filters = {
-    search: search || "", // Garante que é uma string, mesmo se undefined
+    search: search || "",
     brand: brand || "",
     category: category || "",
     type: type || "",
   };
 
+  const hasFilters = Boolean(search || brand || category || type || color || fromImage || Object.keys(restParams).length > 0);
+
   // 3. Renderiza o Client Component, passando os filtros como props
-  // O CarList será responsável por usar TanStack Query para a busca
   return (
     <>
       <section className="relative py-4 md:py-7 dotted-background">
         <div className="px-12 py-8">
           <h1 className="text-5xl text-white font-bold text-center mb-2">
-            Resultados da Busca
+            {hasFilters ? "Resultados da Busca" : "Conheça nosso estoque"}
           </h1>
         </div>
       </section>
