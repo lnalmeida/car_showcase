@@ -11,5 +11,6 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - name: Ping Supabase app
         run: |
           curl -s -f https://car-showcase-peach-xi.vercel.app/ || echo "Ping falhou ou retornou um erro não-200. Certifique-se de verificar o log."
