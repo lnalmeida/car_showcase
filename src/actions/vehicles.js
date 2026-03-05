@@ -236,12 +236,20 @@ export const getVehicles = async (params = {}) => {
 
     if (!user) throw new Error("User not found");
 
-    const { search, page = 0, limit = 10, filter, sortBy, order } = params;
+    const { search, page = 0, limit = 10, filter, sortBy, order, status } = params;
 
     let where = {};
 
     if (filter) {
       where.categoryId = filter;
+    }
+
+    if (status) {
+      if (status === "Vendido") {
+        where.status = "Vendido";
+      } else if (status === "Estoque") {
+        where.status = { not: "Vendido" };
+      }
     }
 
     if (search) {

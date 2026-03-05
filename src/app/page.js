@@ -6,6 +6,7 @@ import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import HomeSearch from "@/components/HomeSearch";
 import VehicleCard from "@/components/VehicleCard";
 import VehicleTypesCarousel from "@/components/VehicleTypesCarousel";
+import BrandsCarousel from "@/components/BrandsCarousel";
 import Link from "next/link";
 import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
@@ -119,31 +120,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-6">
-            {carMakes.map((make) => {
-              return (
-                <Link
-                  key={make.id || make.name}
-                  href={`/vehicles/?brand=${make.name}`}
-                  className="bg-white rounded-lg shadow p-4 text-center hover:shadow-md transition cursor-pointer"
-                >
-                  <div className="h-16 w-auto mx-auto mb-2 relative flex items-center justify-center bg-gray-50 rounded-md">
-                    {make.imageUrl && make.imageUrl.trim() !== "" ? (
-                      <Image
-                        src={make.imageUrl}
-                        alt={make.name}
-                        fill
-                        style={{ objectFit: "contain" }}
-                      />
-                    ) : (
-                      <span className="text-gray-400 font-bold">{make.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <h3 className="font-medium">{make.name}</h3>
-                </Link>
-              );
-            })}
-          </div>
+          <BrandsCarousel brands={carMakes} />
         </div>
       </section>
 

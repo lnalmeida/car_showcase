@@ -64,12 +64,6 @@ const Header = async ({ isAdminPage = false }) => {
           >
             Lojas
           </Link>
-          <Link
-            className="text-muted-foreground font-semibold hover:text-blue-600 transition-colors "
-            href="/sold-vehicles"
-          >
-            Vendidos
-          </Link>
         </nav>
 
         <div className="flex items-center space-x-4">

@@ -49,6 +49,8 @@ import {
     PaginationLink
 } from "@/components/ui/pagination";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { toast } from "sonner";
 
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
@@ -75,6 +77,7 @@ const VehiclesList = () => {
     const [pageSize, setPageSize] = useState(10);
     const [sorting, setSorting] = useState([]);
     const [filterValue, setFilterValue] = useState("all");
+    const [activeTab, setActiveTab] = useState("Estoque");
 
     const [vehicleToDelete, setVehicleToDelete] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -92,6 +95,7 @@ const VehiclesList = () => {
         pageSize,
         filterValue,
         sorting,
+        activeTab
     ];
 
     const { isLoading: loadingVehicles, data: responseData, error } = useQuery({
@@ -103,7 +107,8 @@ const VehiclesList = () => {
                 limit: pageSize,
                 filter: filterValue === "all" ? null : filterValue,
                 sortBy: sorting.length > 0 ? sorting[0].id : null,
-                order: sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : null
+                order: sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : null,
+                status: activeTab
             };
             const res = await getVehicles(params);
             return res;
@@ -265,27 +270,33 @@ const VehiclesList = () => {
     })();
 
     return (
-        <div className="space-y-4">
+        <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setPageIndex(0); }} className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <Button onClick={
-                    () => router.push("/admin/vehicles/create")
-                }
-                    className="flex items-center">
-                    <Plus className="h-4 w-4mr-2" />
-                    Adicionar veículo
-                </Button>
-                <form onSubmit={handleSearchSubmit}
-                    className="flex w-full sm:w-auto">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input className="pl-9 w-full sm:w-60" placeholder="Buscar veículos..."
-                            value={search}
-                            onChange={
-                                (e) => setSearch(e.target.value)
-                            }
-                            type="search" />
-                    </div>
-                </form>
+                <TabsList>
+                    <TabsTrigger value="Estoque">Estoque Ativo</TabsTrigger>
+                    <TabsTrigger value="Vendido">Veículos Vendidos</TabsTrigger>
+                </TabsList>
+                <div className="flex gap-4 items-center">
+                    <Button onClick={
+                        () => router.push("/admin/vehicles/create")
+                    }
+                        className="flex items-center">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar
+                    </Button>
+                    <form onSubmit={handleSearchSubmit}
+                        className="flex w-full sm:w-auto">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input className="pl-9 w-full sm:w-60" placeholder="Buscar veículos..."
+                                value={search}
+                                onChange={
+                                    (e) => setSearch(e.target.value)
+                                }
+                                type="search" />
+                        </div>
+                    </form>
+                </div>
             </div>
 
             {/* Filters */}
@@ -520,7 +531,7 @@ const VehiclesList = () => {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </Tabs>
     );
 };
 

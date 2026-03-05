@@ -131,3 +131,24 @@
     @apply gradient font-extrabold tracking-tighter pr-2 pb-2 text-transparent bg-clip-text;
   }
 }
+
+/* Swiper Carousel Custom Navigation Arrows */
+.swiper-button-next,
+.swiper-button-prev {
+  background-color: white !important;
+  color: #2563eb !important; /* Tailwind blue-600 */
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 18px !important;
+  font-weight: bold !important;
+}
+
+.swiper-button-disabled {
+  opacity: 0 !important;
+}
