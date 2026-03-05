@@ -28,6 +28,7 @@ const VehicleTypesCarousel = ({ bodyTypes }) => {
       navigation
       // Habilita a paginação (pontinhos na parte de baixo)
       pagination={{ clickable: true }}
+      className="pb-10 pt-4 px-2 sm:px-12"
     >
       {bodyTypes.map((type) => (
         <SwiperSlide key={type.id}>

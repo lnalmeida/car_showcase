@@ -54,6 +54,7 @@
 
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 0 0% 3.9%;
 
@@ -109,6 +110,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -116,10 +118,8 @@
 
 .dotted-background {
   background-color: #16223c;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.28) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(rgba(255, 255, 255, 0.28) 1px,
+      transparent 1px);
   background-size: 30px 30px;
 }
 
@@ -127,20 +127,33 @@
   .gradient {
     @apply bg-gradient-to-br from-blue-500 to-green-500;
   }
+
   .gradient-title {
     @apply gradient font-extrabold tracking-tighter pr-2 pb-2 text-transparent bg-clip-text;
   }
 }
 
-/* Swiper Carousel Custom Navigation Arrows */
+/* Swiper Carousel Custom Navigation Arrows & Pagination */
 .swiper-button-next,
 .swiper-button-prev {
   background-color: white !important;
-  color: #2563eb !important; /* Tailwind blue-600 */
+  color: #2563eb !important;
+  /* Tailwind blue-600 */
   width: 40px !important;
   height: 40px !important;
   border-radius: 50% !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  margin-top: -20px !important;
+  /* Adjust vertical alignment */
+}
+
+/* Ensure arrows sit within the side padding we will add */
+.swiper-button-prev {
+  left: 4px !important;
+}
+
+.swiper-button-next {
+  right: 4px !important;
 }
 
 .swiper-button-next::after,
@@ -151,4 +164,12 @@
 
 .swiper-button-disabled {
   opacity: 0 !important;
+}
+
+.swiper-pagination {
+  bottom: 0 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #2563eb !important;
 }

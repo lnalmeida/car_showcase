@@ -22,7 +22,7 @@ const BrandsCarousel = ({ brands }) => {
             }}
             navigation
             pagination={{ clickable: true }}
-            className="pb-12"
+            className="pb-10 pt-4 px-2 sm:px-12"
         >
             {brands.map((make) => (
                 <SwiperSlide key={make.id || make.name}>
