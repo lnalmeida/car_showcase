@@ -162,12 +162,13 @@
   font-weight: bold !important;
 }
 
-.swiper-button-disabled {
-  opacity: 0 !important;
+/* Ensure the main Swiper container has enough bottom padding for the dots */
+.swiper {
+  padding-bottom: 50px !important;
 }
 
 .swiper-pagination {
-  bottom: 0 !important;
+  bottom: 0px !important;
 }
 
 .swiper-pagination-bullet-active {
