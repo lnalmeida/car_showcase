@@ -98,7 +98,7 @@ export default function VehicleDetail({ id }) {
     const getRelatedVehiclesData = async () => {
       if (vehicle) {
         try {
-          const result = await getRelatedVehicles(vehicle.vehicleType);
+          const result = await getRelatedVehicles(vehicle.typeId, vehicle.id);
           if (result.success && result.data) {
             const parsedData = result.data;
             setRelatedVehicles(parsedData);
@@ -127,8 +127,8 @@ export default function VehicleDetail({ id }) {
       vehicle && vehicle.images && vehicle.images.length
         ? vehicle.images
         : [
-            `https://via.placeholder.com/800x450/e2e8f0/64748b?text=${vehicle?.vehicleBrand}+${vehicle?.model}`,
-          ],
+          `https://via.placeholder.com/800x450/e2e8f0/64748b?text=${vehicle?.vehicleBrand}+${vehicle?.model}`,
+        ],
     [vehicle]
   );
 
@@ -238,9 +238,8 @@ export default function VehicleDetail({ id }) {
                           <button
                             key={idx}
                             aria-label={`Ir para imagem ${idx + 1}`}
-                            className={`h-2.5 w-2.5 rounded-full ${
-                              idx === currentIndex ? "bg-white" : "bg-white/60"
-                            }`}
+                            className={`h-2.5 w-2.5 rounded-full ${idx === currentIndex ? "bg-white" : "bg-white/60"
+                              }`}
                             onClick={() => setCurrentIndex(idx)}
                           />
                         ))}
@@ -253,9 +252,8 @@ export default function VehicleDetail({ id }) {
                     {images.map((src, idx) => (
                       <button
                         key={idx}
-                        className={`shrink-0 border rounded-md overflow-hidden ${
-                          idx === currentIndex ? "ring-2 ring-blue-500" : ""
-                        }`}
+                        className={`shrink-0 border rounded-md overflow-hidden ${idx === currentIndex ? "ring-2 ring-blue-500" : ""
+                          }`}
                         onClick={() => setCurrentIndex(idx)}
                       >
                         <img
@@ -547,9 +545,8 @@ export default function VehicleDetail({ id }) {
                   <button
                     key={idx}
                     aria-label={`Ir para imagem ${idx + 1}`}
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      idx === currentIndex ? "bg-white" : "bg-white/60"
-                    }`}
+                    className={`h-2.5 w-2.5 rounded-full ${idx === currentIndex ? "bg-white" : "bg-white/60"
+                      }`}
                     onClick={() => setCurrentIndex(idx)}
                   />
                 ))}

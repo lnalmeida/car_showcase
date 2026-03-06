@@ -96,11 +96,12 @@ export const getSearchedVehicles = async (params = {}) => {
   }
 };
 
-export const getRelatedVehicles = async (type) => {
+export const getRelatedVehicles = async (typeId, currentVehicleId) => {
   try {
     const relatedVehicles = await db.vehicle.findMany({
       where: {
-        typeId: type,
+        typeId: typeId,
+        id: currentVehicleId ? { not: currentVehicleId } : undefined,
         status: { not: "Vendido" },
       },
       include: { category: true, brand: true, type: true },
