@@ -1,5 +1,4 @@
-"use client";
-
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 
@@ -8,56 +7,43 @@ import VehicleCard from "@/components/VehicleCard";
 import VehicleTypesCarousel from "@/components/VehicleTypesCarousel";
 import BrandsCarousel from "@/components/BrandsCarousel";
 import Link from "next/link";
-import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
-import { useFeaturedVehicles } from "@/hooks/useFeaturedVehicles";
-import { useState, useEffect } from "react";
+
+// Fetch Actions
 import { getCategories } from "@/actions/categories";
 import { getBrands } from "@/actions/brands";
 import { getVehicleTypes } from "@/actions/vehicleTypes";
+import { getFeaturedVehicles } from "@/actions/home";
+import { checkUser } from "@/lib/checkUser";
 
-export default function Home() {
-  const {
-    featuredVehicles,
-    loadingFeaturedVehicles,
-    featuredVehiclesError,
-  } = useFeaturedVehicles(8);
+export default async function Home() {
+  // SSR Data Fetching
+  const [catsRes, brandsRes, typesRes] = await Promise.all([
+    getCategories(),
+    getBrands(),
+    getVehicleTypes(),
+  ]);
 
-  const [carMakes, setCarMakes] = useState([]);
-  const [carBodyTypes, setCarBodyTypes] = useState([]);
-  const [motorcycleBodyTypes, setMotorcycleBodyTypes] = useState([]);
-  const [carCategoryId, setCarCategoryId] = useState("");
-  const [motoCategoryId, setMotoCategoryId] = useState("");
+  let carMakes = [];
+  let carBodyTypes = [];
+  let motorcycleBodyTypes = [];
 
-  useEffect(() => {
-    async function loadData() {
-      const [catsRes, brandsRes, typesRes] = await Promise.all([
-        getCategories(), getBrands(), getVehicleTypes()
-      ]);
+  if (catsRes.success && brandsRes.success && typesRes.success) {
+    const categories = catsRes.data;
+    const carCategory = categories.find((c) => c.name.toLowerCase() === "carro");
+    const motoCategory = categories.find((c) => c.name.toLowerCase() === "moto");
 
-      if (catsRes.success && brandsRes.success && typesRes.success) {
-        const categories = catsRes.data;
-        const carCategory = categories.find(c => c.name.toLowerCase() === "carro");
-        const motoCategory = categories.find(c => c.name.toLowerCase() === "moto");
-
-        if (carCategory) {
-          setCarCategoryId(carCategory.id);
-          setCarMakes(brandsRes.data.filter(b => b.categoryId === carCategory.id));
-          setCarBodyTypes(typesRes.data.filter(t => t.categoryId === carCategory.id));
-        }
-        if (motoCategory) {
-          setMotoCategoryId(motoCategory.id);
-          setMotorcycleBodyTypes(typesRes.data.filter(t => t.categoryId === motoCategory.id));
-        }
-      }
+    if (carCategory) {
+      carMakes = brandsRes.data.filter((b) => b.categoryId === carCategory.id);
+      carBodyTypes = typesRes.data.filter((t) => t.categoryId === carCategory.id);
     }
-    loadData();
-  }, []);
+    if (motoCategory) {
+      motorcycleBodyTypes = typesRes.data.filter((t) => t.categoryId === motoCategory.id);
+    }
+  }
 
   return (
     <div className="pt-20 flex flex-col">
-      {/*<Hero />*/}
-
       <section className="relative py-16 md:py-28 dotted-background">
         <div className="max-w-4xl mx-auto text-center px-4">
           <div className="mb-8">
@@ -84,10 +70,9 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
-            {loadingFeaturedVehicles ? (
-              // Loading skeleton
-              Array.from({ length: 4 }).map((_, index) => (
+          <React.Suspense fallback={
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
+              {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="bg-white rounded-lg shadow-md border animate-pulse">
                   <div className="aspect-video bg-gray-200"></div>
                   <div className="p-4">
@@ -99,13 +84,11 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              featuredVehicles?.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          }>
+            <FeaturedSection />
+          </React.Suspense>
         </div>
       </section>
 
@@ -216,6 +199,22 @@ export default function Home() {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+// Extracted Server Component to prevent blocking the entire page with auth() checks
+async function FeaturedSection() {
+  const user = await checkUser();
+  const userId = user?.id || null;
+  const featuredVehRes = await getFeaturedVehicles(8, userId);
+  const featuredVehicles = featuredVehRes.success ? (featuredVehRes.data || []) : [];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
+      {featuredVehicles.map((vehicle) => (
+        <VehicleCard key={vehicle.id} vehicle={vehicle} />
+      ))}
     </div>
   );
 }

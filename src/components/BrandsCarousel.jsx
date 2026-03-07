@@ -1,3 +1,4 @@
+"use client";
 // Importe os componentes e estilos necessários do Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
