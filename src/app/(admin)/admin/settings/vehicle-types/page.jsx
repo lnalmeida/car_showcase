@@ -7,6 +7,8 @@ export const metadata = {
     title: "Gerenciar Tipos | Admin",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function VehicleTypesSettingsPage() {
     const [typesRes, categoriesRes] = await Promise.all([
         getVehicleTypes(),

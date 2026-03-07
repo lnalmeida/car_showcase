@@ -7,6 +7,8 @@ export const metadata = {
     title: "Gerenciar Marcas | Admin",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function BrandsSettingsPage() {
     // 1. Fetch initial data on the Server
     const [brandsRes, categoriesRes] = await Promise.all([

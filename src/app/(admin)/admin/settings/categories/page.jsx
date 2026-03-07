@@ -6,6 +6,8 @@ export const metadata = {
     title: "Gerenciar Categorias | Admin",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function CategoriesSettingsPage() {
     const categoriesRes = await getCategories();
     const initialCategories = categoriesRes.success ? categoriesRes.data : [];
