@@ -34,7 +34,7 @@ const VehicleTypesCarousel = ({ bodyTypes }) => {
       {bodyTypes.map((type) => (
         <SwiperSlide key={type.id}>
           <Link
-            href={`/vehicles/?type=${type.id || type.name}`}
+            href={`/vehicles/?type=${encodeURIComponent(type.name)}`}
             className="relative group cursor-pointer"
           >
             <div className="overflow-hidden rounded-lg flex justify-center items-center bg-gray-200 h-28 mb-4 relative">
