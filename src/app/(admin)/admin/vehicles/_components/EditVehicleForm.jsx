@@ -70,6 +70,7 @@ const EditVehicleForm = ({ vehicleId }) => {
       if (catRes.success) setDbCategories(catRes.data);
       if (brandRes.success) setDbBrands(brandRes.data);
       if (typeRes.success) setDbTypes(typeRes.data);
+      setIsLoading(false);
     }
     fetchOptions();
   }, []);
@@ -99,7 +100,9 @@ const EditVehicleForm = ({ vehicleId }) => {
   } = useQuery({
     queryKey: ["vehicle", vehicleId],
     queryFn: async () => {
+      console.log("Fetching vehicle data for edit:", vehicleId);
       const result = await getVehicle(vehicleId);
+      console.log("Fetch result in edit form:", result);
       if (!result.success) {
         throw new Error(result.error);
       }

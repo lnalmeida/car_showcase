@@ -34,14 +34,14 @@ export function SalesTrendChart({ data, period }) {
   };
 
   const tickFormatter = (value) => {
-    const date = new Date(value);
     switch (period) {
       case "yearly":
-        return date.toLocaleDateString("pt-BR", { month: "short" });
+        return value; // already formatted as 'jan', 'fev' by the backend
       case "weekly":
-        return date.toLocaleDateString("pt-BR", { weekday: "short" });
+        return new Date(value + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short" });
       default:
-        return date.toLocaleDateString("pt-BR", {
+        // Ex: "2024-03-05" -> "5 de mar."
+        return new Date(value + "T12:00:00").toLocaleDateString("pt-BR", {
           month: "short",
           day: "numeric",
         });

@@ -75,11 +75,10 @@ export default function VehicleDetail({ id }) {
     const getVehicleData = async () => {
       if (id) {
         const result = await getVehicle(id);
-        if (result.success && result.data?.value) {
+        if (result.success && result.data) {
           try {
-            const parsedData = JSON.parse(result.data.value);
-            setVehicle(parsedData);
-            console.log("veículo: ", vehicle);
+            setVehicle(result.data);
+            console.log("veículo: ", result.data);
           } catch (error) {
             toast.error("Ops, algo deu errado!.");
             console.error("❌ Erro ao parsear os dados:", error);
