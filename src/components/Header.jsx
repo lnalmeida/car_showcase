@@ -39,32 +39,6 @@ const Header = async ({ isAdminPage = false }) => {
           )}
         </Link>
 
-        <nav className="flex w-full mx-40 py-2 justify-evenly">
-          <Link
-            className="text-muted-foreground font-semibold hover:text-blue-600 transition-colors"
-            href=""
-          >
-            FIPE
-          </Link>
-          <Link
-            className="text-muted-foreground font-semibold hover:text-blue-600 transition-colors "
-            href=""
-          >
-            Financiamento
-          </Link>
-          <Link
-            className="text-muted-foreground font-semibold hover:text-blue-600 transition-colors "
-            href=""
-          >
-            Pós Venda
-          </Link>
-          <Link
-            className="text-muted-foreground font-semibold hover:text-blue-600 transition-colors "
-            href=""
-          >
-            Lojas
-          </Link>
-        </nav>
 
         <div className="flex items-center space-x-4">
           {isAdminPage ? (
