@@ -8,7 +8,7 @@ const SignInPage = () => {
       <div className="p-6 rounded-2xl shadow-xl bg-white max-w-md w-full">
         <div className="flex justify-center mb-6">
           <img
-            src="/logo.png"
+            src="/jf_logo.webp"
             alt="Logo da empresa"
             className="h-12 object-contain"
           />
