@@ -23,7 +23,7 @@ const routes = [
   {
     label: "Vendas",
     icon: CheckCircle,
-    href: "/sold-vehicles",
+    href: "/admin/sales",
   },
   {
     label: "Agendamentos",

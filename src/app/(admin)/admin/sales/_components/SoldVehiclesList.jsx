@@ -54,12 +54,12 @@ import { toast } from "sonner";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import { getVehicles, removeVehicle, updateVehicle } from "@/actions/vehicles";
 import { DataTable } from "@/components/DataTable";
-import { getColumns } from "../_schemas/listVehicleTableColumnDef";
+import { getColumns } from "../_schemas/soldVehicleTableColumnDef";
 import { ClerkLoaded } from "@clerk/nextjs";
 import { getPaginationRange } from "@/lib/helpers";
 import { getCategories } from "@/actions/categories";
 
-const VehiclesList = () => {
+const SoldVehiclesList = () => {
     const [search, setSearch] = useState("");
     const [dbCategories, setDbCategories] = useState([]);
 
@@ -104,7 +104,7 @@ const VehiclesList = () => {
                 filter: filterValue === "all" ? null : filterValue,
                 sortBy: sorting.length > 0 ? sorting[0].id : null,
                 order: sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : null,
-                status: "Estoque"
+                status: "Vendido"
             };
             const res = await getVehicles(params);
             return res;
@@ -268,14 +268,7 @@ const VehiclesList = () => {
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex gap-4 items-center w-full justify-between sm:justify-end">
-                    <Button onClick={
-                        () => router.push("/admin/vehicles/create")
-                    }
-                        className="flex items-center">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar
-                    </Button>
+                <div className="flex gap-4 items-center w-full justify-end">
                     <form onSubmit={handleSearchSubmit}
                         className="flex w-full sm:w-auto">
                         <div className="relative flex-1">
@@ -294,22 +287,7 @@ const VehiclesList = () => {
             {/* Filters */}
 
             <Card className="flex items-center">
-                <CardContent className="flex flex-wrap w-full items-center justify-between space-x-4 py-2">
-                    <RadioGroup value={filterValue}
-                        onValueChange={setFilterValue}
-                        className="flex flex-wrap items-center gap-4">
-                        <Label>Filtrar por tipo:</Label>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="all" id="all" />
-                            <Label htmlFor="all">Todos</Label>
-                        </div>
-                        {dbCategories.map(cat => (
-                            <div className="flex items-center space-x-2" key={cat.id}>
-                                <RadioGroupItem value={cat.id} id={cat.id} />
-                                <Label htmlFor={cat.id}>{cat.name}</Label>
-                            </div>
-                        ))}
-                    </RadioGroup>
+                <CardContent className="flex flex-wrap w-full items-center justify-end space-x-4 py-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="ml-auto">
@@ -527,4 +505,4 @@ const VehiclesList = () => {
     );
 };
 
-export default VehiclesList;
+export default SoldVehiclesList;

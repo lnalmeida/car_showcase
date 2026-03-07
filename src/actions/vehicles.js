@@ -323,7 +323,7 @@ export const getVehicle = async (id) => {
       include: { category: true, brand: true, type: true },
     });
 
-    const result = serializeVehicleData(vehicle);
+    const result = await serializeVehicleData(vehicle);
 
     if (!vehicle) throw new Error("Vehicle not found");
 
