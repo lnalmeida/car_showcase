@@ -40,7 +40,7 @@ const HomeSearch = () => {
 
   const handleImageSearch = async (e) => {
     e.preventDefault();
-    console.log("🚀 Iniciando busca por imagem");
+    void("🚀 Iniciando busca por imagem");
     if (!imageFile) {
       toast.error("Por favor, selecione uma imagem");
       return;
@@ -48,7 +48,7 @@ const HomeSearch = () => {
 
     searchByImage(imageFile, {
       onSuccess: (data) => {
-        console.log("🎨 Dados da IA no HomeSearch onSuccess:", data); // Debug
+        void("🎨 Dados da IA no HomeSearch onSuccess:", data); // Debug
 
         const queryParams = new URLSearchParams();
 
@@ -58,10 +58,10 @@ const HomeSearch = () => {
         if (data.type) queryParams.append("type", data.type);
         if (data.brand) queryParams.append("brand", data.brand); // brand, não vehicleBrand
 
-        console.log("dados: " + data);
+        void("dados: " + data);
 
         const queryString = queryParams.toString();
-        console.log("🔗 Query string:", queryString); // Debug
+        void("🔗 Query string:", queryString); // Debug
 
         if (queryString) {
           router.push(`/vehicles?${queryString}`);

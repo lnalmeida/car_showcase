@@ -209,6 +209,7 @@ export const addVehicle = async (params) => {
         fuelType: vehicleData.fuelType,
         transmission: vehicleData.transmission,
         description: vehicleData.description,
+        plate: vehicleData.plate,
         optionals: vehicleData.optionals,
         images: imageUrls,
       },
@@ -295,7 +296,7 @@ export const getVehicles = async (params = {}) => {
 
     return {
       success: true,
-      data: result,
+      data: JSON.parse(JSON.stringify(result)),
       totalCount,
     };
   } catch (error) {
@@ -320,7 +321,7 @@ export const getVehicle = async (id) => {
 
     const vehicle = await db.vehicle.findUnique({
       where: { id },
-      include: { category: true, brand: true, type: true },
+      include: { category: true, brand: true, type: true, sale: true },
     });
 
     const result = await serializeVehicleData(vehicle);
@@ -329,7 +330,7 @@ export const getVehicle = async (id) => {
 
     return {
       success: true,
-      data: result,
+      data: JSON.parse(JSON.stringify(result)),
     };
   } catch (error) {
     console.error("❌ Erro ao buscar veículo:", error);
@@ -374,6 +375,8 @@ export const updateVehicle = async (id, vehicleData) => {
       dataForDB.mileage = parseInt(vehicleData.mileage);
     if (vehicleData.fuelType !== undefined)
       dataForDB.fuelType = vehicleData.fuelType;
+    if (vehicleData.plate !== undefined)
+      dataForDB.plate = vehicleData.plate;
     if (vehicleData.optionals !== undefined)
       dataForDB.optionals = vehicleData.optionals;
 

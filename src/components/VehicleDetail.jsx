@@ -19,10 +19,11 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 import { removeVehicle, getVehicle } from "@/actions/vehicles";
 import { getRelatedVehicles } from "@/actions/vehicleCatalog";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { checkUser } from "@/lib/checkUser";
 import {
   ManualTransmissions,
@@ -78,14 +79,16 @@ export default function VehicleDetail({ id }) {
         if (result.success && result.data) {
           try {
             setVehicle(result.data);
-            console.log("veículo: ", result.data);
+            void ("veículo: ", result.data);
           } catch (error) {
             toast.error("Ops, algo deu errado!.");
             console.error("❌ Erro ao parsear os dados:", error);
+            setVehicle(null);
           }
         } else {
           toast.error("Erro ao buscar dados do veículo.");
           console.error("❌ Erro so buscar dados do veículo:", result.error);
+          setVehicle(null);
         }
       }
     };
@@ -98,15 +101,13 @@ export default function VehicleDetail({ id }) {
       if (vehicle) {
         try {
           const result = await getRelatedVehicles(vehicle.typeId, vehicle.id);
-          if (result.success && result.data) {
-            const parsedData = result.data;
+          if (result.success) {
+            const parsedData = result.data || [];
             setRelatedVehicles(parsedData);
-            console.log("relatedVehiclesList: ", parsedData);
           } else {
-            toast.error("Erro ao buscar dados dos veículos.");
             console.error(
               "❌ Erro ao buscar dados dos veículos:",
-              result.error
+              result.error || result.message
             );
           }
         } catch (error) {
@@ -174,7 +175,7 @@ export default function VehicleDetail({ id }) {
           <nav className="text-sm text-gray-500 mb-4">
             <button
               className="hover:underline"
-              onClick={() => router.push("/")}
+              onClick={() => router.back()}
             >
               Início
             </button>
@@ -337,9 +338,21 @@ export default function VehicleDetail({ id }) {
                   <MotorizationEngine className="h-5 w-5 mx-2 text-gray-500" />
                   <p>{vehicle.engineSize}</p>
                 </div>
-                <div className="text-3xl font-bold text-blue-600 mb-6">
+                <div className="text-3xl font-bold text-blue-600 mb-2">
                   R$ {parseFloat(vehicle.price).toLocaleString("pt-BR")}
                 </div>
+                {vehicle.sale && (
+                  <div className="bg-red-50 border border-red-100 rounded-lg p-3 mb-4">
+                    <p className="text-red-700 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
+                      <ChevronLast className="h-4 w-4" />
+                      {vehicle.sale.deliveryDate
+                        ? `Veículo entregue em ${new Date(vehicle.sale.deliveryDate).toLocaleDateString('pt-BR')}`
+                        : `Veículo vendido em ${new Date(vehicle.sale.saleDate).toLocaleDateString('pt-BR')}`
+                      }
+                    </p>
+                    <p className="text-xs text-red-500 mt-1">Este veículo não está mais disponível para venda.</p>
+                  </div>
+                )}
               </div>
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h1 className="text-xl font-bold text-gray-900 mb-1 text-center">
@@ -369,7 +382,7 @@ export default function VehicleDetail({ id }) {
                 ) : (
                   <Button
                     className="flex-1 py-6 bg-green-600 text-white text-xl"
-                    onClick={() => alert("manda pro zap da empresa")}
+                    onClick={() => toast.info("Em breve: Integração com WhatsApp do Vendedor!")}
                   >
                     <Whatsapp className="!h-8 !w-8 mr-0 transition-all duration-300" />
                     Fale agora com um vendedor
@@ -584,9 +597,16 @@ export default function VehicleDetail({ id }) {
     );
   }
 
-  if (!vehicle) {
-    return;
-    setTimeout(
+  if (vehicle === undefined) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500 text-lg font-semibold animate-pulse">Carregando veículo...</p>
+      </div>
+    );
+  }
+
+  if (vehicle === null) {
+    return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -600,15 +620,15 @@ export default function VehicleDetail({ id }) {
           </div>
         </header>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="bg-white border rounded-lg p-8 text-center">
-            <p className="text-gray-700">Veículo não encontrado.</p>
+          <div className="bg-white border rounded-lg p-8 text-center bg-gray-50/50">
+            <p className="text-gray-700 text-lg mb-4">Veículo não encontrado ou não está mais disponível.</p>
             <div className="mt-4">
-              <Button onClick={() => router.push("/")}>Voltar</Button>
+              <Button onClick={() => router.back()} className="bg-blue-600 hover:bg-blue-700">Voltar</Button>
             </div>
           </div>
         </div>
-      </div>,
-      1000
+      </div>
     );
   }
 }
+

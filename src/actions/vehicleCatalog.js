@@ -6,7 +6,7 @@ export const getAllVehicles = async () => {
   try {
     const vehicles = await db.vehicle.findMany({
       where: { status: { not: "Vendido" } },
-      include: { category: true, brand: true, type: true },
+      include: { category: true, brand: true, type: true, sale: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -66,7 +66,7 @@ export const getSearchedVehicles = async (params = {}) => {
     const [vehicles, totalCount] = await Promise.all([
       db.vehicle.findMany({
         where,
-        include: { category: true, brand: true, type: true },
+        include: { category: true, brand: true, type: true, sale: true },
         orderBy: orderByClause,
         skip: page * limit,
         take: limit,
@@ -104,14 +104,14 @@ export const getRelatedVehicles = async (typeId, currentVehicleId) => {
         id: currentVehicleId ? { not: currentVehicleId } : undefined,
         status: { not: "Vendido" },
       },
-      include: { category: true, brand: true, type: true },
+      include: { category: true, brand: true, type: true, sale: true },
       orderBy: {
         createdAt: "desc",
       },
     });
 
     if (!relatedVehicles.length) {
-      return { success: false, message: "Não há veículos em destaque" };
+      return { success: true, data: [] };
     }
 
     const serializedRelatedVehicles = await Promise.all(
@@ -218,7 +218,9 @@ export const getUserSavedVehicles = async (userId) => {
         userId,
       },
       include: {
-        vehicle: true, // Incluir todos os dados do veículo
+        vehicle: {
+          include: { category: true, brand: true, type: true, sale: true }
+        },
       },
     });
 
@@ -246,7 +248,7 @@ export const getSoldVehicles = async (params = {}) => {
     const [vehicles, totalCount] = await Promise.all([
       db.vehicle.findMany({
         where,
-        include: { category: true, brand: true, type: true },
+        include: { category: true, brand: true, type: true, sale: true },
         orderBy: orderByClause,
         skip: page * limit,
         take: limit,

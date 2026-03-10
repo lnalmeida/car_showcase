@@ -24,7 +24,7 @@ export default async function Home() {
     getVehicleTypes(),
   ]);
 
-  let carMakes = [];
+  let allMakes = [];
   let carBodyTypes = [];
   let motorcycleBodyTypes = [];
 
@@ -33,8 +33,10 @@ export default async function Home() {
     const carCategory = categories.find((c) => c.name.toLowerCase() === "carro");
     const motoCategory = categories.find((c) => c.name.toLowerCase() === "moto");
 
+    const categoryIds = [carCategory?.id, motoCategory?.id].filter(Boolean);
+    allMakes = brandsRes.data.filter((b) => categoryIds.includes(b.categoryId));
+
     if (carCategory) {
-      carMakes = brandsRes.data.filter((b) => b.categoryId === carCategory.id);
       carBodyTypes = typesRes.data.filter((t) => t.categoryId === carCategory.id);
     }
     if (motoCategory) {
@@ -103,7 +105,7 @@ export default async function Home() {
             </Button>
           </div>
 
-          <BrandsCarousel brands={carMakes} />
+          <BrandsCarousel brands={allMakes} />
         </div>
       </section>
 

@@ -2,6 +2,7 @@
 
 import { db as prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -27,6 +28,11 @@ export async function getVehicleTypes(categoryId) {
 
 export async function createVehicleType(data) {
     try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        const user = await prisma.user.findUnique({ where: { clerkUserId: userId } });
+        if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+
         let imageUrl = data.imageUrl;
         if (data.imageBase64) {
             const uploadResult = await cloudinary.uploader.upload(data.imageBase64, {
@@ -53,6 +59,11 @@ export async function createVehicleType(data) {
 
 export async function updateVehicleType(id, data) {
     try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        const user = await prisma.user.findUnique({ where: { clerkUserId: userId } });
+        if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+
         let imageUrl = data.imageUrl;
         if (data.imageBase64) {
             const uploadResult = await cloudinary.uploader.upload(data.imageBase64, {
@@ -80,6 +91,11 @@ export async function updateVehicleType(id, data) {
 
 export async function deleteVehicleType(id) {
     try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        const user = await prisma.user.findUnique({ where: { clerkUserId: userId } });
+        if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+
         await prisma.vehicleType.delete({
             where: { id },
         });

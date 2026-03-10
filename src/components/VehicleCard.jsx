@@ -30,7 +30,7 @@ const VehicleCard = ({ vehicle }) => {
     gcTime: 0,
     mutationFn: async ({ idUser, idVehicle }) => {
       const res = await saveUserVehicles(idUser, idVehicle);
-      console.log(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
+      void(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
     },
     onSuccess: (data) => {
@@ -56,7 +56,7 @@ const VehicleCard = ({ vehicle }) => {
     gcTime: 0,
     mutationFn: async ({ idUser, idVehicle }) => {
       const res = await unsaveUserVehicles(idUser, idVehicle);
-      console.log(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
+      void(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
     },
     onSuccess: (data) => {
@@ -133,9 +133,19 @@ const VehicleCard = ({ vehicle }) => {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 pointer-events-none">
           {isSold ? (
-            <Badge className="bg-red-600 text-white hover:bg-red-700 text-xs font-bold px-2 py-1 uppercase tracking-wider shadow-md">
-              Vendido
-            </Badge>
+            <div className="flex flex-col gap-1 items-start">
+              <Badge className="bg-red-600 text-white hover:bg-red-700 text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-md">
+                Vendido
+              </Badge>
+              {vehicle.sale?.saleDate && (
+                <Badge className="bg-gray-800/80 text-white text-[9px] px-2 py-0.5 backdrop-blur-sm border-0">
+                  {vehicle.sale.deliveryDate
+                    ? `Entregue em ${new Date(vehicle.sale.deliveryDate).toLocaleDateString('pt-BR')}`
+                    : `Vendido em ${new Date(vehicle.sale.saleDate).toLocaleDateString('pt-BR')}`
+                  }
+                </Badge>
+              )}
+            </div>
           ) : (
             vehicle.featured && (
               <Badge className="text-yellow-700 text-xs font-medium bg-yellow-100/90 backdrop-blur-sm hover:bg-yellow-200 shadow-sm border-0">
