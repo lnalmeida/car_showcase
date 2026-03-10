@@ -57,6 +57,7 @@ export const getDashboardStats = async (period = "monthly") => {
     const soldVehicles =
       vehicleCounts.find((v) => v.status === "Vendido")?._count.status || 0;
 
+    // --- Test Drives Stats ---
     const testDriveCounts = await db.visitBooking.groupBy({
       by: ["status"],
       _count: { status: true },
@@ -65,30 +66,49 @@ export const getDashboardStats = async (period = "monthly") => {
       (acc, curr) => acc + curr._count.status,
       0
     );
-    // ... (other test drive stats can be calculated here if needed)
+
+    // Buscar agendamentos recentes (Hoje e amanhã) para o widget do Dashboard
+    const recentBookings = await db.visitBooking.findMany({
+      where: {
+        status: { in: ['PENDING', 'CONFIRMED'] },
+        visitDate: {
+          gte: startOfMonth(new Date()), // Busca do inicio do mes para ter volume no dashboard inicial
+        }
+      },
+      include: {
+        Vehicle: {
+          include: { brand: true }
+        },
+        user: true
+      },
+      orderBy: { visitDate: 'asc' },
+      take: 5
+    });
 
     // --- Sales Trend Data (Period-dependent) ---
-    const salesData = await db.vehicle.findMany({
+    // Agora usando a nova tabela 'Sale' para dados reais/histórico de CRM
+    const salesData = await db.sale.findMany({
       where: {
-        status: "Vendido",
-        updatedAt: {
+        saleDate: {
           gte: startDate,
           lte: endDate,
         },
       },
       select: {
-        updatedAt: true,
+        saleDate: true,
+        saleValue: true,
       },
       orderBy: {
-        updatedAt: "asc",
+        saleDate: "asc",
       },
     });
 
     let salesTrend;
     if (period === "yearly") {
       const salesByMonth = salesData.reduce((acc, sale) => {
-        const month = format(sale.updatedAt, "yyyy-MM");
-        acc[month] = (acc[month] || 0) + 1;
+        const month = format(sale.saleDate, "yyyy-MM");
+        // Somar os Reais
+        acc[month] = (acc[month] || 0) + Number(sale.saleValue || 0);
         return acc;
       }, {});
 
@@ -103,8 +123,9 @@ export const getDashboardStats = async (period = "monthly") => {
       );
     } else {
       const salesByDay = salesData.reduce((acc, sale) => {
-        const day = format(sale.updatedAt, "yyyy-MM-dd");
-        acc[day] = (acc[day] || 0) + 1;
+        const day = format(sale.saleDate, "yyyy-MM-dd");
+        // Somar os Reais
+        acc[day] = (acc[day] || 0) + Number(sale.saleValue || 0);
         return acc;
       }, {});
 
@@ -139,19 +160,28 @@ export const getDashboardStats = async (period = "monthly") => {
         totalTestDrives > 0
           ? parseFloat(((soldVehicles / totalTestDrives) * 100).toFixed(1))
           : 0,
+      recentBookings: recentBookings.map(b => ({
+        ...b,
+        visitDate: b.visitDate.toISOString()
+      }))
+    };
+
+    const payload = {
+      cars: {
+        total: totalVehicles,
+        available: availableVehicles,
+        sold: soldVehicles,
+      },
+      testDrives,
+      salesTrend: salesTrend.map(item => ({
+        ...item,
+        sales: Number(item.sales)
+      })),
     };
 
     return {
       success: true,
-      data: {
-        cars: {
-          total: totalVehicles,
-          available: availableVehicles,
-          sold: soldVehicles,
-        },
-        testDrives,
-        salesTrend,
-      },
+      data: JSON.parse(JSON.stringify(payload)),
     };
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);

@@ -15,6 +15,8 @@ import {
   XCircle,
   DollarSign,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { SalesTrendChart } from "./SalesTrendChart";
 import { PeriodSelector } from "./PeriodSelector";
 
@@ -68,7 +70,7 @@ export function Dashboard({ initialData }) {
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="test-drives">Test Drives</TabsTrigger>
           </TabsList>
-          
+
           {activeTab === "overview" && (
             <PeriodSelector
               selectedPeriod={selectedPeriod}
@@ -142,97 +144,135 @@ export function Dashboard({ initialData }) {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <SalesTrendChart data={salesTrend} period={selectedPeriod} />
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumo da Concessionária</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-medium text-sm mb-2">
-                        Inventário de Veículos
-                      </h3>
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div
-                            className="bg-green-600 h-2.5 rounded-full"
-                            style={{
-                              width: `${safePercentageInt(
-                                cars.available,
-                                cars.total
-                              )}%`,
-                            }}
-                          ></div>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <CardTitle className="text-lg font-bold">Próximos Agendamentos</CardTitle>
+                  <Clock className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {testDrives.recentBookings && testDrives.recentBookings.length > 0 ? (
+                      testDrives.recentBookings.map((booking) => (
+                        <div key={booking.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                              <Calendar size={20} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">{booking.clientName || booking.user?.name || "Cliente"}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {booking.Vehicle?.brand?.name} {booking.Vehicle?.model} - {booking.startTime}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant={booking.status === 'CONFIRMED' ? 'default' : 'outline'} className="text-[10px]">
+                            {booking.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
+                          </Badge>
                         </div>
-                        <span className="ml-2 text-sm">
+                      ))
+                    ) : (
+                      <p className="text-center text-muted-foreground py-4 text-sm">Nenhum agendamento para hoje.</p>
+                    )}
+                  </div>
+                  <Button variant="link" className="w-full mt-2 text-blue-600" onClick={() => setActiveTab("test-drives")}>
+                    Ver todos os agendamentos
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumo da Concessionária</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-sm mb-2">
+                          Inventário de Veículos
+                        </h3>
+                        <div className="flex items-center">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                              className="bg-green-600 h-2.5 rounded-full"
+                              style={{
+                                width: `${safePercentageInt(
+                                  cars.available,
+                                  cars.total
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="ml-2 text-sm">
+                            {safePercentageInt(cars.available, cars.total)}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Capacidade do inventário disponível
+                        </p>
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-sm mb-2">
+                          Sucesso dos Test Drives
+                        </h3>
+                        <div className="flex items-center">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                              className="bg-blue-600 h-2.5 rounded-full"
+                              style={{
+                                width: `${safePercentageInt(
+                                  testDrives.completed,
+                                  testDrives.total
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="ml-2 text-sm">
+                            {safePercentageInt(
+                              testDrives.completed,
+                              testDrives.total
+                            )}
+                            %
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Test drives concluídos
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                      <div className="text-center">
+                        <span className="text-3xl font-bold text-blue-600">
+                          {cars.sold}
+                        </span>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Veículos Vendidos
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-3xl font-bold text-amber-600">
+                          {testDrives.pending + testDrives.confirmed}
+                        </span>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Próximos Test Drives
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-3xl font-bold text-green-600">
                           {safePercentageInt(cars.available, cars.total)}%
                         </span>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Utilização do Inventário
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Capacidade do inventário disponível
-                      </p>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-medium text-sm mb-2">
-                        Sucesso dos Test Drives
-                      </h3>
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div
-                            className="bg-blue-600 h-2.5 rounded-full"
-                            style={{
-                              width: `${safePercentageInt(
-                                testDrives.completed,
-                                testDrives.total
-                              )}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="ml-2 text-sm">
-                          {safePercentageInt(
-                            testDrives.completed,
-                            testDrives.total
-                          )}
-                          %
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Test drives concluídos
-                      </p>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-3 gap-4 mt-6">
-                    <div className="text-center">
-                      <span className="text-3xl font-bold text-blue-600">
-                        {cars.sold}
-                      </span>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Veículos Vendidos
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-3xl font-bold text-amber-600">
-                        {testDrives.pending + testDrives.confirmed}
-                      </span>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Próximos Test Drives
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-3xl font-bold text-green-600">
-                        {safePercentageInt(cars.available, cars.total)}%
-                      </span>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Utilização do Inventário
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 

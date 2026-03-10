@@ -84,10 +84,18 @@ export function SalesTrendChart({ data, period }) {
               tickMargin={8}
               tickFormatter={tickFormatter}
             />
-            <YAxis allowDecimals={false} />
+            <YAxis
+              allowDecimals={false}
+              tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+            />
             <Tooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={
+                <ChartTooltipContent
+                  hideLabel
+                  formatter={(value) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)}
+                />
+              }
             />
             <Line
               dataKey="sales"

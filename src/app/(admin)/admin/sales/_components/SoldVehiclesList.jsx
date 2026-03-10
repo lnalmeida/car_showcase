@@ -53,11 +53,13 @@ import { toast } from "sonner";
 
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import { getVehicles, removeVehicle, updateVehicle } from "@/actions/vehicles";
+import { getSales } from "@/actions/sales";
 import { DataTable } from "@/components/DataTable";
 import { getColumns } from "../_schemas/soldVehicleTableColumnDef";
 import { ClerkLoaded } from "@clerk/nextjs";
 import { getPaginationRange } from "@/lib/helpers";
 import { getCategories } from "@/actions/categories";
+import { maskCPFCNPJ, maskPhone } from "@/lib/utils";
 
 const SoldVehiclesList = () => {
     const [search, setSearch] = useState("");
@@ -79,6 +81,9 @@ const SoldVehiclesList = () => {
     const [vehicleToDelete, setVehicleToDelete] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+    const [saleToView, setSaleToView] = useState(null);
+    const [viewSaleDialogOpen, setViewSaleDialogOpen] = useState(false);
+
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -86,7 +91,7 @@ const SoldVehiclesList = () => {
     }, []);
 
     const queryKey = [
-        "vehicles",
+        "sales",
         search,
         pageIndex,
         pageSize,
@@ -94,19 +99,14 @@ const SoldVehiclesList = () => {
         sorting
     ];
 
-    const { isLoading: loadingVehicles, data: responseData, error } = useQuery({
+    const { isLoading: loadingSales, data: responseData, error } = useQuery({
         queryKey,
         queryFn: async () => {
-            const params = {
+            const res = await getSales({
                 search,
                 page: pageIndex,
-                limit: pageSize,
-                filter: filterValue === "all" ? null : filterValue,
-                sortBy: sorting.length > 0 ? sorting[0].id : null,
-                order: sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : null,
-                status: "Vendido"
-            };
-            const res = await getVehicles(params);
+                limit: pageSize
+            });
             return res;
         },
         placeholderData: (previousData) => previousData
@@ -116,74 +116,21 @@ const SoldVehiclesList = () => {
         setPageIndex(0);
     }, [search, filterValue]);
 
-    const vehiclesData = responseData?.data ?? [];
+    const salesData = responseData?.data ?? [];
     const totalCount = responseData?.totalCount ?? 0;
-
-    console.log("🔄 COMPONENTE RENDERIZADO - Estado atual de vehiclesData:", vehiclesData);
 
     const queryClient = useQueryClient();
 
-    const updateFeaturedMutation = useMutation({
-        mutationFn: async (vehicle) => {
-            await updateVehicle(vehicle.id, {
-                featured: !vehicle.featured
-            });
-        },
+    const deleteSaleMutation = useMutation({
+        mutationFn: (saleId) => removeVehicle(saleId), // Ajustaremos no backend depois, ou inativar pra não excluir venda
         onSuccess: () => {
-            toast.success("Destaque do veículo atualizado.");
-            queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-        },
-        onError: () => {
-            toast.error("Erro ao atualizar destaque do veículo.");
-        }
-    });
-
-    const updateStatusMutation = useMutation({
-        mutationFn: async (
-            { vehicle, newStatus }
-        ) => {
-            if (vehicle.status === newStatus)
-                return;
-
-            console.log("feita a veirificação de status \n / veiculo: " + vehicle + "\n / status: " + newStatus);
-            const toggleFeatured = newStatus === "Vendido" ? false : vehicle.featured;
-            const res = await updateVehicle(vehicle.id, {
-                status: newStatus,
-                featured: toggleFeatured
-            });
-
-            if (res.success) {
-                console.log("passamos na mutation");
-            }
-
-            if (!res.success) {
-                throw new Error(`Erro ao atualizar status do veículo: ${res.error.message
-                    }`);
-            }
-
-            console.log("passamos na mutation");
-            return res;
-        },
-        onSuccess: () => {
-            toast.success("Status do veículo atualizado.");
-            queryClient.invalidateQueries({ queryKey: queryKey });
-        },
-        onError: () => {
-            toast.error(`Erro ao atualizar status do veículo: ${error.message
-                }`);
-        }
-    });
-
-    const deleteVehicleMutation = useMutation({
-        mutationFn: (vehicleId) => removeVehicle(vehicleId),
-        onSuccess: () => {
-            toast.success("Veículo excluído com sucesso!");
-            queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+            toast.success("Venda excluída com sucesso!");
+            queryClient.invalidateQueries({ queryKey: ["sales"] });
             setDeleteDialogOpen(false);
             setVehicleToDelete(null);
         },
         onError: () => {
-            toast.error("Erro ao excluir veículo.");
+            toast.error("Erro ao excluir registro de venda.");
         }
     });
 
@@ -191,32 +138,23 @@ const SoldVehiclesList = () => {
         e.preventDefault();
     };
 
-    const handleUpdateFeatured = async (vehicle) => {
-        console.log("Chama a função handleUpdateFeatured no front");
-        updateFeaturedMutation.mutate(vehicle);
-    };
-
-    const handleUpdateStatus = async (vehicle, newStatus) => {
-        console.log("Chama a função handleUpdateStatus no front", vehicle, newStatus);
-        if (vehicle.status === newStatus)
-            return;
-
-        updateStatusMutation.mutate({ vehicle, newStatus });
-    };
-
     const handleConfirmDelete = async () => {
         console.log("Chama a função handleConfirmDelete no front");
         if (!vehicleToDelete)
             return;
 
-        deleteVehicleMutation.mutate(vehicleToDelete.id);
+        // Se quiser deletar o carro, usar a deleteVehycleMutation
+        // Mas como mudamos pra vendas, teríamos que mudar pra deleteSale
+        // deleteSaleMutation.mutate(vehicleToDelete.id);
     };
 
     const columns = getColumns({
-        onUpdateFeatured: handleUpdateFeatured,
-        onUpdateStatus: handleUpdateStatus,
-        onDelete: (vehicle) => {
-            setVehicleToDelete(vehicle);
+        onViewDetails: (sale) => {
+            setSaleToView(sale);
+            setViewSaleDialogOpen(true);
+        },
+        onDelete: (sale) => {
+            setVehicleToDelete(sale);
             setDeleteDialogOpen(true);
         },
         isMounted
@@ -227,7 +165,7 @@ const SoldVehiclesList = () => {
     const paginationRange = getPaginationRange(totalPages, pageIndex + 1);
 
     const table = useReactTable({
-        data: vehiclesData,
+        data: salesData,
         columns,
         pageCount: totalPages,
         manualPagination: true,
@@ -322,7 +260,7 @@ const SoldVehiclesList = () => {
             <Card className="mb-1 overflow-scroll-y">
                 <CardContent>
                     <DataTable table={table}
-                        loading={loadingVehicles} />
+                        loading={loadingSales} />
                 </CardContent>
             </Card>
 
@@ -483,10 +421,10 @@ const SoldVehiclesList = () => {
                         <Button variant="destructive" className="flex items-center space-x-3"
                             onClick={handleConfirmDelete}
                             disabled={
-                                deleteVehicleMutation.isPending
+                                deleteSaleMutation.isPending
                             }>
                             {
-                                deleteVehicleMutation.isPending ? (
+                                deleteSaleMutation.isPending ? (
                                     <>
                                         <Loader2 className="mr-2 animate-spin" />
                                         <span>Excluindo...</span>
@@ -498,6 +436,141 @@ const SoldVehiclesList = () => {
                                     </>
                                 )
                             } </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de Detalhes da Venda */}
+            <Dialog open={viewSaleDialogOpen} onOpenChange={setViewSaleDialogOpen}>
+                <DialogContent className="max-w-2xl bg-white">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                                <Search className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl font-bold">
+                                    Detalhes da Venda
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Gestão pós-venda para {saleToView?.vehicle?.brand?.name} {saleToView?.vehicle?.model}
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    {saleToView && (
+                        <div className="grid grid-cols-2 gap-8 py-6 border-y border-gray-100">
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Informações do Comprador</h4>
+                                    <div className="bg-gray-50/80 p-4 rounded-xl space-y-2 border border-gray-100">
+                                        <p className="text-lg font-bold text-gray-900">{saleToView.buyerName}</p>
+                                        <div className="space-y-1 text-sm text-gray-600">
+                                            <p className="flex items-center gap-2">
+                                                <span className="font-semibold text-gray-400">CPF/CNPJ:</span> {maskCPFCNPJ(saleToView.buyerDocument || "")}
+                                            </p>
+                                            {saleToView.buyerPhone && (
+                                                <p className="flex items-center gap-2">
+                                                    <span className="font-semibold text-gray-400">Tel:</span> {maskPhone(saleToView.buyerPhone)}
+                                                </p>
+                                            )}
+                                            {saleToView.buyerEmail && (
+                                                <p className="flex items-center gap-2">
+                                                    <span className="font-semibold text-gray-400">Email:</span> {saleToView.buyerEmail}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Datas e Logística</h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Data da Venda</p>
+                                            <p className="font-bold text-gray-800">{new Date(saleToView.saleDate).toLocaleDateString('pt-BR')}</p>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Previsão Entrega</p>
+                                            <p className="font-bold text-gray-800">
+                                                {saleToView.deliveryDate ? new Date(saleToView.deliveryDate).toLocaleDateString('pt-BR') : "--/--/----"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Fechamento Financeiro</h4>
+                                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
+                                        <div className="flex justify-between items-end">
+                                            <p className="text-[10px] text-blue-500 font-bold uppercase">Valor de Venda</p>
+                                            <p className="text-xl font-black text-blue-700">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saleToView.saleValue)}
+                                            </p>
+                                        </div>
+                                        <div className="pt-3 border-t border-blue-100 space-y-1.5 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Forma Pagto:</span>
+                                                <span className="font-bold text-gray-700 uppercase">{saleToView.paymentMethod}</span>
+                                            </div>
+                                            {saleToView.downPayment > 0 && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Entrada:</span>
+                                                    <span className="font-bold text-green-600">
+                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saleToView.downPayment)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Cobertura de Garantia</h4>
+                                    <div className="bg-green-50/50 p-4 rounded-xl border border-green-100">
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-1 bg-green-200 text-green-700 p-1 rounded">
+                                                <Loader2 className="h-4 w-4" /> {/* Poderia ser um Shield ou Badge */}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-green-800">{saleToView.warrantyType}</p>
+                                                {saleToView.warrantyExpirationDate && (
+                                                    <p className="text-xs text-green-600 mt-0.5">Vencimento: {new Date(saleToView.warrantyExpirationDate).toLocaleDateString('pt-BR')}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {saleToView.observations && (
+                                <div className="col-span-2">
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Considerações e Observações</h4>
+                                    <p className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-100 text-gray-700 italic leading-relaxed">
+                                        "{saleToView.observations}"
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end items-center gap-3 pt-4">
+                        <DialogClose asChild>
+                            <Button variant="ghost" className="text-gray-500 hover:text-gray-700 font-semibold">
+                                Fechar
+                            </Button>
+                        </DialogClose>
+                        {saleToView && !saleToView.deliveryDate && (
+                            <Button
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 font-bold"
+                                onClick={() => router.push(`/admin/sales/edit/${saleToView.id}`)}
+                            >
+                                Editar Detalhes da Venda
+                            </Button>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

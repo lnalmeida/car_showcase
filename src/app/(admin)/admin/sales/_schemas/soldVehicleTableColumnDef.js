@@ -1,3 +1,14 @@
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowUpDown,
   ChevronDown,
@@ -13,185 +24,96 @@ import {
   Pencil,
   Stamp,
   PencilOff,
+  FileText,
 } from "lucide-react";
 
-import Image from "next/image";
-
-import { Button } from "@/components/ui/button";
-
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuItem,
-  DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-
-import { getVehicles, removeVehicle, updateVehicle } from "@/actions/vehicles";
-
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-
-const setBadgeStatusColor = (status) => {
-  switch (status) {
-    case "Disponível":
-      return {
-        variant: "success",
-        badgeColor: "bg-green-500 font-semibold text-white",
-      };
-    case "Vendido":
-      return {
-        variant: "danger",
-        badgeColor: "bg-red-500 font-semibold text-white",
-      };
-    case "Reservado":
-      return {
-        variant: "warning",
-        badgeColor: "bg-yellow-500 font-semibold text-white ",
-      };
-  }
-};
-
 export const getColumns = ({
+  onViewDetails,
   onEdit,
   onDelete,
   isMounted,
 }) => [
     {
-      accessorKey: "images",
-      header: "Foto",
-      displayName: "Foto",
-      cell: ({ row }) => {
-        const images = row.getValue("images");
-        const src = Array.isArray(images) && images.length > 0 ? images[0] : null;
-
-        return src ? (
-          <Image
-            src={src}
-            alt="Thumbnail"
-            width={50}
-            height={50}
-            className="h-14 w-14 rounded-lg"
-          />
-        ) : (
-          <Car className="h-14 w-14 text-gray-400" />
+      accessorKey: "saleDate",
+      displayName: "Data",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Data
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
         );
       },
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "vehicleType",
-      header: "Tipo",
-      displayName: "Tipo",
-    },
-    {
-      accessorKey: "vehicleBrand",
-      header: "Marca",
-      displayName: "Marca",
-    },
-    {
-      accessorKey: "model",
-      header: "Modelo",
-      displayName: "Modelo",
-    },
-    {
-      accessorKey: "year",
-      displayName: "Ano",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Ano
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-    },
-    {
-      accessorKey: "price",
-      displayName: "Preço",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Preço
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
       cell: ({ row }) => {
-        const value = parseFloat(row.getValue("price"));
-        return new Intl.NumberFormat("pt-BR", {
+        const date = new Date(row.getValue("saleDate"));
+        return <div className="ml-4 font-medium">{date.toLocaleDateString('pt-BR')}</div>;
+      },
+    },
+    {
+      accessorKey: "buyerName",
+      displayName: "Comprador",
+      header: "Comprador",
+    },
+    {
+      id: "vehicle_model",
+      displayName: "Veículo",
+      header: "Veículo",
+      cell: ({ row }) => {
+        const sale = row.original;
+        const vehicle = sale.vehicle;
+        return (
+          <div className="flex items-center gap-3 py-1">
+            <div className="relative h-12 w-16 overflow-hidden rounded-md border border-gray-200 bg-gray-100 flex-shrink-0">
+              {vehicle?.images && vehicle.images.length > 0 ? (
+                <Image
+                  src={vehicle.images[0]}
+                  alt={vehicle.model || "Veículo"}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-gray-400">
+                  <Car className="h-5 w-5" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-gray-900">
+                {vehicle?.brand?.name} {vehicle?.model}
+              </span>
+              <span className="text-xs text-gray-500 font-medium">
+                Placa: <span className="uppercase text-gray-700">{vehicle?.plate || "N/A"}</span>
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "saleValue",
+      displayName: "Valor",
+      header: "Valor de Venda",
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("saleValue"));
+        const formatted = new Intl.NumberFormat("pt-BR", {
           style: "currency",
           currency: "BRL",
-        }).format(value);
+        }).format(amount);
+        return <div className="font-bold text-blue-600">{formatted}</div>;
       },
     },
-    {
-      accessorKey: "color",
-      displayName: "Cor",
-      header: "Cor",
-    },
-    {
-      accessorKey: "engineSize",
-      displayName: "Motor",
-      header: "Motor",
-    },
-    {
-      accessorKey: "mileage",
-      displayName: "Odômetro",
-      header: "Odômetro",
-      cell: ({ row }) => `${row.getValue("mileage")} km`,
-    },
-    {
-      accessorKey: "fuelType",
-      displayName: "Combustível",
-      header: "Combustível",
-    },
-    {
-      accessorKey: "transmission",
-      displayName: "Câmbio",
-      header: "Câmbio",
-    },
-    {
-      accessorKey: "updatedAt",
-      displayName: "Data da Venda",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Vendido em
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const dateStr = row.getValue("updatedAt");
-        if (!dateStr) return "-";
-        return new Intl.DateTimeFormat("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric"
-        }).format(new Date(dateStr));
-      },
-    },
-
     {
       id: "actions",
       displayName: "Ações",
       header: "Ações",
       cell: ({ row }) => {
-        const vehicle = row.original;
+        const sale = row.original;
+        const vehicle = sale.vehicle;
 
-        if (!isMounted) {
-          // Pode retornar um esqueleto de botão ou simplesmente null
+        if (!isMounted || !vehicle) {
           return (
             <Button disabled variant="ghost" className="h-8 w-8 p-0">
               <MoreHorizontal className="h-4 w-4" />
@@ -210,59 +132,48 @@ export const getColumns = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel className="flex items-center gap-2 cursor-none">
-                  <Car className="h-6 w-6 mr-2" />
-                  Veículos
+                  <Stamp className="h-5 w-5 mr-2" />
+                  Gestão CRM
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-gray-300" />
 
                 <DropdownMenuItem
-                  className="cursor-pointer
-                text-gray-500
-                font-normal
-                focus:bg-gray-100
-                focus:text-gray-700
-                hover:bg-gray-100
-                hover:text-gray-700
-                hover:font-semibold"
+                  onClick={() => onViewDetails(sale)}
+                  className="cursor-pointer text-blue-600 font-medium focus:bg-blue-50 focus:text-blue-700"
                 >
-                  <Link href={`/vehicles/${vehicle.id}`}>
-                    <Eye className="h-5 w-5 mr-1 text-muted-200" />
-                    Visualizar
+                  <FileText className="h-4 w-4 mr-2" />
+                  Visualizar Venda
+                </DropdownMenuItem>
+
+                {/* Edição de Venda com Trava de Entrega */}
+                {!sale.deliveryDate ? (
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Link href={`/admin/sales/edit/${sale.id}`} className="flex items-center w-full">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Editar Venda
+                    </Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem disabled className="cursor-not-allowed opacity-50">
+                    <div className="flex items-center w-full">
+                      <PencilOff className="h-4 w-4 mr-2" />
+                      Venda Entregue (Bloqueada)
+                    </div>
+                  </DropdownMenuItem>
+                )}
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider px-2 py-1">
+                  Anúncio & Cadastro
+                </DropdownMenuLabel>
+
+                <DropdownMenuItem className="cursor-pointer">
+                  <Link href={`/vehicles/${vehicle.id}`} className="flex items-center w-full">
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver no Site
                   </Link>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  className="cursor-pointer
-                text-blue-500
-                font-normal
-                focus:bg-blue-100
-                focus:text-blue-700
-                hover:bg-blue-100
-                hover:text-blue-700
-                hover:font-semibold"
-                >
-                  <Link href={`/admin/vehicles/${vehicle.id}/edit`}>
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Editar
-                  </Link>
-                </DropdownMenuItem>
-
-
-
-                <DropdownMenuItem
-                  className="cursor-pointer
-                text-red-500
-                font-normal
-                focus:bg-red-100
-                focus:text-red-700
-                hover:bg-red-100
-                hover:text-red-700
-                hover:font-semibold "
-                  onClick={() => onDelete(vehicle)}
-                >
-                  <Trash className="h-4 w-4 mr-1" />
-                  Excluir
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
@@ -270,5 +181,3 @@ export const getColumns = ({
       },
     },
   ];
-
-// ];
