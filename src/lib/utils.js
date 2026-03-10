@@ -42,3 +42,50 @@ export const fileToBase64 = async (file) => {
   const buffer = Buffer.from(bytes);
   return buffer.toString("base64");
 };
+
+export const maskCPFCNPJ = (value) => {
+  const v = value.replace(/\D/g, "");
+  if (v.length <= 11) {
+    return v
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  } else {
+    return v
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
+};
+
+export const maskPhone = (value) => {
+  const v = value.replace(/\D/g, "");
+  if (v.length <= 10) {
+    return v
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  } else {
+    return v
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2");
+  }
+};
+
+export const unmask = (value) => {
+  return value ? value.replace(/\D/g, "") : "";
+};
+
+export const maskCurrency = (value) => {
+  const v = value.toString().replace(/\D/g, "");
+  const amount = parseFloat(v) / 100;
+  if (isNaN(amount)) return "";
+  return amount.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+};
+
+export const unmaskCurrency = (value) => {
+  return value ? parseFloat(value.replace(/\D/g, "")) / 100 : 0;
+};

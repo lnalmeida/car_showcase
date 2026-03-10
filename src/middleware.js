@@ -12,11 +12,11 @@ export default clerkMiddleware(async (auth, req) => {
   const {userId, redirectToSignIn} = authResult;
 
   if (!userId && isProtectedRoute(req)) {
-    console.log(`Redirecionando para login: ${req.nextUrl.pathname}`);
+    void(`Redirecionando para login: ${req.nextUrl.pathname}`);
     return redirectToSignIn();
   }
 
-  console.log(`Permitindo acesso: ${req.nextUrl.pathname}`);
+  void(`Permitindo acesso: ${req.nextUrl.pathname}`);
   return NextResponse.next();
 });
 

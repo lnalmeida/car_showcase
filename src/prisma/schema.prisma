@@ -40,6 +40,7 @@ model User {
   updatedAt    DateTime           @updatedAt
   savedCars    UserSavedVehicle[]
   visitBooking VisitBooking[]
+  sales        Sale[]
 
   @@index([clerkUserId])
   @@index([email])
@@ -82,6 +83,7 @@ model Vehicle {
   mileage      Int
   description  String?
   images       String[]
+  plate        String?
   optionals    String[]
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
@@ -90,6 +92,7 @@ model Vehicle {
   transmission String             @default("Manual")
   savedBy      UserSavedVehicle[]
   visits       VisitBooking[]
+  sale         Sale?
 
   @@index([status])
   @@index([categoryId])
@@ -115,24 +118,32 @@ model Vehicle {
 
 model VisitBooking {
   id               String         @id @default(uuid())
-  userId           String
-  dealershipInfoId String
+  userId           String?
+  dealershipInfoId String?
   visitDate        DateTime       @db.Date
   startTime        String
   endTime          String
   status           BookingStatus  @default(PENDING)
   notes            String?
+  
+  // Test Drive & External Leads
+  isTestDrive      Boolean        @default(false)
+  clientName       String?
+  clientPhone      String?
+  clientEmail      String?
+
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   vehicleId        String?
-  dealershipInfo   DealershipInfo @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealershipInfo   DealershipInfo? @relation(fields: [dealershipInfoId], references: [id], onDelete: Cascade)
+  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   Vehicle          Vehicle?       @relation(fields: [vehicleId], references: [id])
 
   @@index([userId])
   @@index([dealershipInfoId])
   @@index([visitDate])
   @@index([status])
+  @@index([isTestDrive])
   @@map("visit_bookings")
 }
 
@@ -218,4 +229,41 @@ model VehicleType {
   @@unique([name, categoryId])
   @@index([categoryId])
   @@map("vehicle_types")
+}
+
+model Sale {
+  id                     String    @id @default(uuid())
+  vehicleId              String    @unique
+  vehicle                Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  sellerId               String?
+  seller                 User?     @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  
+  // Buyer Details
+  buyerName              String
+  buyerPhone             String?
+  buyerEmail             String?
+  buyerDocument          String?
+  
+  // Sale Details
+  saleDate               DateTime  @default(now())
+  deliveryDate           DateTime?
+  saleValue              Decimal   @db.Decimal(10, 2)
+  paymentMethod          String
+  bank                   String?
+  installments           Int?
+  downPayment            Decimal?  @db.Decimal(10, 2)
+  tradeInVehicle         String?
+  tradeInValue           Decimal?  @db.Decimal(10, 2)
+  observations           String?   @db.Text
+  
+  // Warranty
+  warrantyType           String
+  warrantyExpirationDate DateTime?
+  
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([sellerId])
+  @@index([saleDate])
+  @@map("sales")
 }
