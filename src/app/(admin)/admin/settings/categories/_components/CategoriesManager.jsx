@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getCategories, createCategory, deleteCategory, updateCategory } from "@/actions/categories";
 
 export function CategoriesManager({ initialCategories = [] }) {
@@ -16,6 +26,7 @@ export function CategoriesManager({ initialCategories = [] }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
     const [editingCat, setEditingCat] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
@@ -83,16 +94,20 @@ export function CategoriesManager({ initialCategories = [] }) {
         setIsSubmitting(false);
     };
 
-    const handleDelete = async (id) => {
-        if (confirm("Tem certeza que deseja deletar?")) {
-            const result = await deleteCategory(id);
-            if (result.success) {
-                toast.success("Categoria deletada!");
-                refreshList();
-            } else {
-                toast.error("Erro ao deletar categoria");
-            }
+    const handleDelete = (id) => {
+        setDeletingId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingId) return;
+        const result = await deleteCategory(deletingId);
+        if (result.success) {
+            toast.success("Categoria deletada!");
+            refreshList();
+        } else {
+            toast.error("Erro ao deletar categoria");
         }
+        setDeletingId(null);
     };
 
     return (
@@ -177,6 +192,26 @@ export function CategoriesManager({ initialCategories = [] }) {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Categoria</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir esta categoria permanentemente? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={confirmDelete}
+                        >
+                            Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -28,7 +28,7 @@ const routes = [
   {
     label: "Agendamentos",
     icon: Calendar,
-    href: "/admin/visits",
+    href: "/admin/test-drives",
   },
   {
     label: "Usuários",

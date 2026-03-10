@@ -10,6 +10,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getVehicleTypes, createVehicleType, deleteVehicleType, updateVehicleType } from "@/actions/vehicleTypes";
 
 export function VehicleTypesManager({ initialTypes = [], categories = [] }) {
@@ -17,6 +27,7 @@ export function VehicleTypesManager({ initialTypes = [], categories = [] }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
     const [editingType, setEditingType] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
     const selectedCategory = watch("categoryId");
@@ -89,16 +100,20 @@ export function VehicleTypesManager({ initialTypes = [], categories = [] }) {
         setIsSubmitting(false);
     };
 
-    const handleDelete = async (id) => {
-        if (confirm("Tem certeza que deseja deletar?")) {
-            const result = await deleteVehicleType(id);
-            if (result.success) {
-                toast.success("Tipo deletado!");
-                refreshList();
-            } else {
-                toast.error("Erro ao deletar tipo");
-            }
+    const handleDelete = (id) => {
+        setDeletingId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingId) return;
+        const result = await deleteVehicleType(deletingId);
+        if (result.success) {
+            toast.success("Tipo deletado!");
+            refreshList();
+        } else {
+            toast.error("Erro ao deletar tipo");
         }
+        setDeletingId(null);
     };
 
     return (
@@ -198,6 +213,26 @@ export function VehicleTypesManager({ initialTypes = [], categories = [] }) {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Tipo</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir esta variação (tipo) de carroceria?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={confirmDelete}
+                        >
+                            Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

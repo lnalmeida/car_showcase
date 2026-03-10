@@ -21,7 +21,7 @@ const Header = async ({ isAdminPage = false }) => {
 
   // isAdminPage = isAdminPage || isAdmin;
   {
-    console.log("isAdminPage", isAdminPage);
+    void ("isAdminPage", isAdminPage);
   }
   return (
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
@@ -30,13 +30,10 @@ const Header = async ({ isAdminPage = false }) => {
           <Image
             src="/jf_logo.webp"
             alt="logo"
-            width={100}
-            height={80}
-            className="object-contains"
+            width={160}
+            height={60}
+            className="object-contain"
           />
-          {isAdminPage && (
-            <span className="text-xs font-extralight">Admin</span>
-          )}
         </Link>
 
 
