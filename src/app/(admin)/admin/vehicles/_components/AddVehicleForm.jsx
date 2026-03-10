@@ -103,7 +103,7 @@ const AddVehicleForm = () => {
   useEffect(() => {
     if (addVehicleResult?.success) {
       toast.success("Veículo cadastrado com sucesso!");
-      router.push("/admin/vehicles");
+      router.back();
     }
   }, [addVehicleResult?.success, addVehicleLoading]);
 
@@ -426,6 +426,28 @@ const AddVehicleForm = () => {
                   </div>
 
                   <div className="flex flex-col gap-5 md:flex-row flex-wrap">
+                    <div className="space-y-2 flex flex-col w-[180px]">
+                      <Label htmlFor="plate" className="mt-2">
+                        Placa
+                      </Label>
+                      <Input
+                        type="text"
+                        id="plate"
+                        {...register("plate", {
+                          onChange: (e) => {
+                            e.target.value = e.target.value.toUpperCase();
+                          }
+                        })}
+                        placeholder="Ex: ABC1234..."
+                        error={errors.plate?.message}
+                      />
+                      {errors.plate && (
+                        <span className="text-red-500 text-sm">
+                          {errors.plate.message}
+                        </span>
+                      )}
+                    </div>
+
                     <div className="space-y-2 flex flex-col w-[180px]">
                       <Label htmlFor="seats" className="mt-2">
                         Nº de Assentos

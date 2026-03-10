@@ -49,6 +49,7 @@ export const vehicleSchema = z.object({
     .string()
     .min(1, "A descrição é obrigatória")
     .max(1000, "A descrição deve ter no máximo 1000 caracteres"),
+  plate: z.string().optional(),
   optionals: z.array(z.string()).default([]).optional(),
   vehicleStatus: z.string().default("Disponível"),
 });

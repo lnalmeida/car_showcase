@@ -49,7 +49,6 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import useFetch from "@/hooks/useFetch";
 import { getVehicle, updateVehicleComplete } from "@/actions/vehicles";
-import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/actions/categories";
 import { getBrands } from "@/actions/brands";
 import { getVehicleTypes } from "@/actions/vehicleTypes";
@@ -61,6 +60,11 @@ const EditVehicleForm = ({ vehicleId }) => {
   const [dbCategories, setDbCategories] = useState([]);
   const [dbBrands, setDbBrands] = useState([]);
   const [dbTypes, setDbTypes] = useState([]);
+
+  // Estado local para os dados do veículo (substituindo react-query)
+  const [vehicleData, setVehicleData] = useState(null);
+  const [loadingVehicle, setLoadingVehicle] = useState(true);
+  const [vehicleError, setVehicleError] = useState(null);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -92,53 +96,51 @@ const EditVehicleForm = ({ vehicleId }) => {
     mode: "onChange",
   });
 
-  // Buscar dados do veículo
-  const {
-    data: vehicleData,
-    isLoading: loadingVehicle,
-    error: vehicleError,
-  } = useQuery({
-    queryKey: ["vehicle", vehicleId],
-    queryFn: async () => {
-      console.log("Fetching vehicle data for edit:", vehicleId);
-      const result = await getVehicle(vehicleId);
-      console.log("Fetch result in edit form:", result);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-      return result.data;
-    },
-    enabled: !!vehicleId,
-  });
-
-  // Pré-popular o formulário quando os dados chegarem
   useEffect(() => {
-    if (vehicleData) {
-      const formData = {
-        categoryId: vehicleData.categoryId || "",
-        typeId: vehicleData.typeId || "",
-        brandId: vehicleData.brandId || "",
-        model: vehicleData.model || "",
-        year: vehicleData.year?.toString() || "",
-        price: parseFloat(vehicleData.price) || 0,
-        color: vehicleData.color || "",
-        featured: vehicleData.featured || false,
-        seats: vehicleData.seats || 5,
-        doors: vehicleData.doors || 4,
-        engineSize: vehicleData.engineSize || "",
-        mileage: vehicleData.mileage || 0,
-        fuelType: vehicleData.fuelType || "Gasolina",
-        transmission: vehicleData.transmission || "Manual",
-        description: vehicleData.description || "",
-        optionals: vehicleData.optionals || [],
-        vehicleStatus: vehicleData.status || "Disponível",
-      };
+    async function fetchVehicle() {
+      if (!vehicleId) return;
+      try {
+        setLoadingVehicle(true);
+        console.log("Fetching vehicle data for edit:", vehicleId);
+        const result = await getVehicle(vehicleId);
+        console.log("Fetch result in edit form:", result);
+        if (!result.success) {
+          throw new Error(result.error || "Erro ao carregar veículo");
+        }
+        setVehicleData(result.data);
 
-      reset(formData);
-      setUploadedImages(vehicleData.images || []);
-      setIsLoading(false);
+        const data = result.data;
+        // Pre-populando os dados no form
+        const formData = {
+          categoryId: data.categoryId || "",
+          typeId: data.typeId || "",
+          brandId: data.brandId || "",
+          model: data.model || "",
+          year: data.year?.toString() || "",
+          price: parseFloat(data.price) || 0,
+          color: data.color || "",
+          featured: data.featured || false,
+          seats: data.seats || 5,
+          doors: data.doors || 4,
+          engineSize: data.engineSize || "",
+          mileage: data.mileage || 0,
+          fuelType: data.fuelType || "Gasolina",
+          transmission: data.transmission || "Manual",
+          description: data.description || "",
+          optionals: data.optionals || [],
+          vehicleStatus: data.status || "Disponível",
+        };
+
+        reset(formData);
+        setUploadedImages(data.images || []);
+      } catch (err) {
+        setVehicleError(err);
+      } finally {
+        setLoadingVehicle(false);
+      }
     }
-  }, [vehicleData, reset]);
+    fetchVehicle();
+  }, [vehicleId, reset]);
 
   const {
     data: updateVehicleResult,
@@ -149,7 +151,7 @@ const EditVehicleForm = ({ vehicleId }) => {
   useEffect(() => {
     if (updateVehicleResult?.success) {
       toast.success("Veículo atualizado com sucesso!");
-      router.push("/admin/vehicles");
+      router.back();
     }
   }, [updateVehicleResult?.success, updateVehicleLoading, router]);
 
@@ -237,10 +239,10 @@ const EditVehicleForm = ({ vehicleId }) => {
           <Button
             variant="outline"
             className="mt-3"
-            onClick={() => router.push("/admin/vehicles")}
+            onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para lista
+            Voltar
           </Button>
         </div>
       </div>
@@ -252,11 +254,11 @@ const EditVehicleForm = ({ vehicleId }) => {
       <div className="mb-6">
         <Button
           variant="outline"
-          onClick={() => router.push("/admin/vehicles")}
+          onClick={() => router.back()}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para lista
+          Voltar
         </Button>
       </div>
 
@@ -405,6 +407,28 @@ const EditVehicleForm = ({ vehicleId }) => {
               </div>
 
               <div className="flex flex-col gap-5 md:flex-row flex-wrap">
+                <div className="space-y-2 flex flex-col w-[180px]">
+                  <Label htmlFor="plate" className="mt-2">
+                    Placa
+                  </Label>
+                  <Input
+                    type="text"
+                    id="plate"
+                    {...register("plate", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.toUpperCase();
+                      }
+                    })}
+                    placeholder="Ex: ABC1234..."
+                    error={errors.plate?.message}
+                  />
+                  {errors.plate && (
+                    <span className="text-red-500 text-sm">
+                      {errors.plate.message}
+                    </span>
+                  )}
+                </div>
+
                 <div className="space-y-2 flex flex-col w-[180px]">
                   <Label htmlFor="seats" className="mt-2">
                     Nº de Assentos
@@ -698,7 +722,7 @@ const EditVehicleForm = ({ vehicleId }) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/admin/vehicles")}
+                onClick={() => router.back()}
                 disabled={updateVehicleLoading}
               >
                 Cancelar
