@@ -5,39 +5,53 @@ import { db } from "./prisma";
 export const checkUser = async () => {
   try {
     const { userId } = await auth();
+    console.log(`[checkUser] Iniciando checagem para o userId: ${userId || "não autenticado"}`);
+
     if (!userId) return null;
-
-    // First attempt: Get user seamlessly from DB without waking up Clerk API
-    const loggedInUser = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (loggedInUser) return loggedInUser;
 
     // Second attempt: Only if user is new, request his data from Clerk API
     let user;
     try {
       user = await currentUser();
+      // console.log(`[checkUser] Perfil Clerk recuperado para ${user?.id}`);
     } catch (apiErr) {
-      console.error("Clerk API Response error fetching new user profile:", apiErr.message);
+      console.error("[checkUser] Erro fatal na API do Clerk (currentUser):", apiErr.message);
       return null;
     }
 
-    if (!user) return null;
+    if (!user) {
+      console.warn("[checkUser] userId existe mas currentUser retornou null. Sessão pode estar expidada ou parcial.");
+      return null;
+    }
 
-    const newUser = await db.user.create({
-      data: {
-        clerkUserId: user.id,
-        name: `${user.firstName} ${user.lastName}`,
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    const userName = `${user.firstName || user.unsafeMetadata?.firstName || ""} ${user.lastName || user.unsafeMetadata?.lastName || ""}`.trim() || userEmail?.split("@")[0] || "Usuário";
+
+    // Usando upsert para evitar erros de duplicidade em requisições paralelas e garantir atualização de dados (como imagem)
+    const dbUser = await db.user.upsert({
+      where: { clerkUserId: userId },
+      update: {
+        name: userName,
         imageUrl: user.imageUrl,
-        email: user.emailAddresses[0].emailAddress,
+        email: userEmail,
+        phone: user.unsafeMetadata?.phone || null,
+      },
+      create: {
+        clerkUserId: userId,
+        name: userName,
+        imageUrl: user.imageUrl,
+        email: userEmail,
+        phone: user.unsafeMetadata?.phone || null,
       },
     });
 
-    console.log("New User Created in DB:", newUser);
-    return newUser;
+    console.log(`[checkUser] Sincronização concluída para: ${dbUser.email} (Role: ${dbUser.role})`);
+    return dbUser;
   } catch (error) {
-    console.error("checkUser error:", error.message);
+    console.error("[checkUser] Erro crítico de sincronização:", error.message);
+    if (error.code === 'P2002') {
+      console.error("[checkUser] Erro de unicidade no Prisma. Verifique se o e-mail ou clerkUserId já existe em outro registro.");
+    }
     return null;
   }
 };
