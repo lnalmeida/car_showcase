@@ -10,18 +10,34 @@ import { Facebook, Instagram } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "Car Showcase",
-  description: "A simple car showcase to improve my NextJS skills",
-};
+export async function generateMetadata() {
+  const { getDealershipInfo } = await import("@/actions/dealership");
+  const storeInfo = await getDealershipInfo();
 
-export default function RootLayout({ children }) {
+  const siteName = storeInfo.success && storeInfo.data?.name ? storeInfo.data.name : "Car Showcase";
+  const siteDesc = storeInfo.success && storeInfo.data?.description ? storeInfo.data.description : "A simple car showcase to improve my NextJS skills";
+  const logo = storeInfo.success && storeInfo.data?.logoUrl ? storeInfo.data.logoUrl : "/favicon.ico";
+
+  return {
+    title: siteName,
+    description: siteDesc,
+    icons: {
+      icon: logo,
+    },
+  };
+}
+
+export default async function RootLayout({ children }) {
+  const { getDealershipInfo } = await import("@/actions/dealership");
+  const storeInfo = await getDealershipInfo();
+  const logoUrl = storeInfo.success && storeInfo.data?.logoUrl ? storeInfo.data.logoUrl : null;
+
   return (
     <ClerkProvider localization={ptBR}>
       <html lang="pt-BR" suppressHydrationWarning>
         <body className={`${inter.className}`}>
           <ClerkLoaded>
-            <Header isAdminPage={false} />
+            <Header isAdminPage={false} logoUrl={logoUrl} />
           </ClerkLoaded>
           <main className="min-h-screen">
             <QueryProvider>{children}</QueryProvider>

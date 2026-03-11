@@ -15,10 +15,14 @@ const AdminLayout = async ({ children }) => {
     return notFound();
   }
 
+  const { getDealershipInfo } = await import("@/actions/dealership");
+  const storeInfo = await getDealershipInfo();
+  const logoUrl = storeInfo.success && storeInfo.data?.logoUrl ? storeInfo.data.logoUrl : null;
+
   return (
     <div className="h-full">
       <ClerkLoaded>
-        <Header isAdminPage={true} />
+        <Header isAdminPage={true} logoUrl={logoUrl} />
       </ClerkLoaded>
       <div className="flex h-full w-56 flex-col top-24 mt-2 fixed inset-y-0 z-50">
         <Sidebar />

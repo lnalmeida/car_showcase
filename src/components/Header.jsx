@@ -14,7 +14,7 @@ import { Button } from "./ui/button";
 import { ArrowLeft, CarFront, Heart, Layout } from "lucide-react";
 import { checkUser } from "@/lib/checkUser";
 
-const Header = async ({ isAdminPage = false }) => {
+const Header = async ({ isAdminPage = false, logoUrl = null }) => {
   const user = await checkUser();
 
   const isAdmin = user?.role === "ADMIN";
@@ -27,13 +27,15 @@ const Header = async ({ isAdminPage = false }) => {
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
       <nav className="mx-auto px-4 py-4 flex items-center justify-between">
         <Link href={isAdminPage ? "/admin" : "/"}>
-          <Image
-            src="/jf_logo.webp"
-            alt="logo"
-            width={160}
-            height={60}
-            className="object-contain"
-          />
+          <div className="relative h-12 w-32 sm:h-14 sm:w-40">
+            <Image
+              src={logoUrl || "/jf_logo.webp"}
+              alt="Brand Logo"
+              fill
+              className="object-contain object-left"
+              priority
+            />
+          </div>
         </Link>
 
 
