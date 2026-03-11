@@ -49,7 +49,7 @@ export async function getBookings({
 
         return deepSerialize({ success: true, data, totalCount });
     } catch (error) {
-        console.error("Erro ao buscar agendamentos:", error);
+        console.error("Erro ao buscar agendamentos");
         return { success: false, error: "Falha ao carregar agendamentos" };
     }
 }
@@ -134,7 +134,7 @@ export async function upsertBooking(data) {
         revalidatePath("/admin"); // Painel de controle
         return deepSerialize({ success: true, data: result });
     } catch (error) {
-        console.error("Erro ao salvar agendamento:", error);
+        console.error("Erro ao salvar agendamento");
         return { success: false, error: "Ocorreu um erro ao salvar o agendamento" };
     }
 }
@@ -188,7 +188,6 @@ export async function getAvailableVehiclesForBooking(date, startTime, endTime) {
         const visitDateStr = date.includes("T") ? date : `${date}T00:00:00.000Z`;
         const visitDateObj = new Date(visitDateStr);
 
-        console.log(`Buscando veículos livres para: ${date} das ${startTime} às ${endTime}`);
 
         // Verifica se há agendamentos que caem no mesmo dia e intercedem no horário
         const occupiedBookings = await prisma.visitBooking.findMany({
@@ -205,7 +204,6 @@ export async function getAvailableVehiclesForBooking(date, startTime, endTime) {
             return startTime < b.endTime && endTime > b.startTime;
         }).map(b => b.vehicleId).filter(Boolean);
 
-        console.log(`IDs conflitantes encontrados:`, conflictingIds);
 
         // Buscar veículos disponíveis (não vendidos e não no array de ocupados)
         const availableVehicles = await prisma.vehicle.findMany({
@@ -223,7 +221,7 @@ export async function getAvailableVehiclesForBooking(date, startTime, endTime) {
 
         return deepSerialize({ success: true, data: availableVehicles });
     } catch (error) {
-        console.error("Erro ao buscar veículos livres:", error);
+        console.error("Erro ao buscar veículos livres");
         return { success: false, error: "Falha ao buscar veículos livres" };
     }
 }

@@ -41,7 +41,7 @@ export async function createSale(data) {
 
         return deepSerialize({ success: true, sale: result });
     } catch (error) {
-        console.error("Erro ao registrar venda:", error);
+        console.error("Erro ao registrar venda");
         return { success: false, error: "Falha ao registrar a venda no banco de dados." };
     }
 }
@@ -60,7 +60,7 @@ export async function getSalesStats() {
 
         return deepSerialize({ success: true, sales });
     } catch (error) {
-        console.error("Erro ao buscar histórico de vendas:", error);
+        console.error("Erro ao buscar histórico de vendas");
         return { success: false, error: "Falha ao consultar histórico de vendas." };
     }
 }
@@ -111,7 +111,7 @@ export async function getSales({ page = 0, limit = 10, search = "" }) {
         });
 
     } catch (error) {
-        console.error("Erro ao buscar vendas paginadas:", error);
+        console.error("Erro ao buscar vendas paginadas");
         return { success: false, error: "Erro ao varrer o CRM de Vendas", data: [], totalCount: 0 };
     }
 }
@@ -134,7 +134,7 @@ export async function getSale(id) {
 
         return deepSerialize({ success: true, data: sale });
     } catch (error) {
-        console.error("Erro ao buscar venda:", error);
+        console.error("Erro ao buscar venda");
         return { success: false, error: "Falha ao buscar registro de venda." };
     }
 }
@@ -164,7 +164,7 @@ export async function updateSale(id, data) {
         revalidatePath("/admin/sales");
         return deepSerialize({ success: true, sale: result });
     } catch (error) {
-        console.error("Erro ao atualizar venda:", error);
+        console.error("Erro ao atualizar venda");
         return { success: false, error: "Erro ao atualizar registro de CRM." };
     }
 }

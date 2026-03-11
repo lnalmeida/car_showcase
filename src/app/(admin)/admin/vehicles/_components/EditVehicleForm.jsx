@@ -186,7 +186,7 @@ const EditVehicleForm = ({ vehicleId }) => {
           const compressedFile = await imageCompression(file, options);
           return compressedFile;
         } catch (error) {
-          console.error("Erro na compressão de imagem:", error);
+          console.error("Erro na compressão de imagem");
           toast.error(`Falha ao comprimir a imagem ${file.name}, usando original se for menor que 5MB`);
           return file.size <= 1024 * 1024 * 5 ? file : null;
         }

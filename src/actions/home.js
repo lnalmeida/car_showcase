@@ -40,7 +40,7 @@ export const getFeaturedVehicles = async (limit = 3, userId = null) => {
         });
         savedVehicleIds = new Set(savedVehicles.map(sv => sv.vehicleId));
       } catch (error) {
-        console.error("Erro ao buscar veículos salvos:", error.message);
+        console.error("Erro ao buscar veículos salvos");
         // Continua sem os dados de salvos em caso de erro
       }
     }
@@ -51,7 +51,7 @@ export const getFeaturedVehicles = async (limit = 3, userId = null) => {
 
     return { success: true, data: serializedFeaturedVehicles };
   } catch (error) {
-    console.error("Erro ao buscar veículos em destaque:", error.message);
+    console.error("Erro ao buscar veículos em destaque");
     return { success: false, message: "Erro ao buscar veículos em destaque" };
   }
 };
@@ -68,20 +68,14 @@ export const processImageSearch = async (file) => {
     if (decision.isDenied()) {
       if (decision.reason.isRateLimit()) {
         const { remaining, reset } = decision.reason;
-        console.error({
-          code: "RATE_LIMIT_EXCEEDED",
-          details: {
-            remaining,
-            resetInSeconds: reset,
-          },
-        });
+        console.error("Rate limit excedido");
         return {
           success: false,
           message:
             "Limite de requisições excedido. Tente novamente mais tarde.",
         };
       }
-      console.error("Requisição negada:", decision.reason);
+      console.error("Requisição negada");
       return {
         success: false,
         message: "Requisição negada. Tente novamente mais tarde.",
@@ -147,37 +141,29 @@ export const processImageSearch = async (file) => {
         Responda APENAS com o objeto JSON acima, preenchido em português brasileiro. Campos não especificados podem ficar em branco.
         `;
 
-    console.log("📤 Enviando requisição para Gemini API..."); // Debug log
     const result = await model.generateContent([imagePart, prompt]);
     const response = await result.response;
     const text = response.text();
 
-    console.log("📥 Resposta bruta da API:", text); // Debug log
 
     // Limpa a resposta removendo markdown
     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
     try {
       const jsonResponse = JSON.parse(cleanedText);
-      console.log("✅ IA RESPONDEU COM:");
-      console.log("  - category:", jsonResponse.category);
-      console.log("  - brand:", jsonResponse.brand);
-      console.log("  - type:", jsonResponse.type);
-      console.log("  - confidence:", jsonResponse.confidence);
-      console.log("✅ Resposta JSON processada:", jsonResponse); // Debug log
       return {
         success: true,
         data: jsonResponse,
       };
     } catch (jsonError) {
-      console.error("Erro ao processar resposta JSON:", jsonError.message);
+      console.error("Erro ao processar resposta JSON");
       return {
         success: false,
         message: "Erro ao processar resposta da IA. Verifique o formato.",
       };
     }
   } catch (error) {
-    console.error("Erro na busca por imagem:", error.message);
+    console.error("Erro na busca por imagem");
     return {
       success: false,
       message: "Erro na busca por imagem: Erro ao processar imagem.",

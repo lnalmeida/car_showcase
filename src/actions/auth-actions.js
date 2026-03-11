@@ -18,7 +18,7 @@ export async function isUserRegistered(email) {
 
         return !!user;
     } catch (error) {
-        console.error("Error checking user registration:", error);
+        console.error("Erro ao verificar registro de usuário");
         return false;
     }
 }

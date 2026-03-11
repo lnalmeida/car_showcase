@@ -13,13 +13,12 @@ export const getAllVehicles = async () => {
     const result = await Promise.all(
       vehicles.map((v) => serializeVehicleData(v))
     );
-    // console.log("Serialized vehicles data:", result);
     return {
       success: true,
       data: result,
     };
   } catch (error) {
-    console.error("❌ Error getting vehicles:", error);
+    console.error("Erro ao buscar veículos");
     return {
       success: false,
       error: error.message,
@@ -80,7 +79,6 @@ export const getSearchedVehicles = async (params = {}) => {
       vehicles.map((v) => serializeVehicleData(v))
     );
 
-    // console.log("Serialized vehicles data:", result);
 
     return {
       success: true,
@@ -88,7 +86,7 @@ export const getSearchedVehicles = async (params = {}) => {
       totalCount,
     };
   } catch (error) {
-    console.error("❌ Error getting vehicles:", error);
+    console.error("Erro ao buscar veículos");
     return {
       success: false,
       error: error.message,
@@ -118,20 +116,18 @@ export const getRelatedVehicles = async (typeId, currentVehicleId) => {
       relatedVehicles.map((rv) => serializeVehicleData(rv))
     );
 
-    // console.log(
     //   "veículos relacionados: \n" +
     //     JSON.stringify(serializedRelatedVehicles, null, 2)
     // );
     return { success: true, data: serializedRelatedVehicles };
   } catch (error) {
-    console.error("Erro ao buscar veículos relacionados:", error.message);
+    console.error("Erro ao buscar veículos relacionados");
     return { success: false, message: "Erro ao buscar veículos relacionados" };
   }
 };
 
 export const saveUserVehicles = async (userId, vehicleId) => {
   if (!userId || !vehicleId) return { success: false };
-  console.log("🔄 Tentando salvar veículo:", { userId, vehicleId });
 
   try {
     // Verificar se já existe para evitar duplicatas
@@ -145,7 +141,6 @@ export const saveUserVehicles = async (userId, vehicleId) => {
     });
 
     if (existingRecord) {
-      console.log("⚠️ Veículo já está nos favoritos");
       return { success: true, message: "Veículo já está nos favoritos" };
     }
 
@@ -156,12 +151,10 @@ export const saveUserVehicles = async (userId, vehicleId) => {
       }
     });
 
-    console.log("✅ SUCESSO: Veículo salvo no banco de dados.");
     return { success: true };
 
   } catch (error) {
-    console.error("❌ Erro ao salvar veículo:", error.message);
-    console.error("❌ Stack trace:", error.stack);
+    console.error("Erro ao salvar veículo");
     return { success: false, error: error.message };
   }
 
@@ -169,7 +162,6 @@ export const saveUserVehicles = async (userId, vehicleId) => {
 
 export const unsaveUserVehicles = async (userId, vehicleId) => {
   if (!userId || !vehicleId) return { success: false };
-  console.log("🔄 Tentando remover veículo:", { userId, vehicleId });
 
   try {
     // Primeiro, verificar se o registro existe
@@ -183,11 +175,9 @@ export const unsaveUserVehicles = async (userId, vehicleId) => {
     });
 
     if (!existingRecord) {
-      console.log("⚠️ Registro não encontrado para remoção");
       return { success: false, error: "Veículo não está nos favoritos" };
     }
 
-    console.log("✅ Registro encontrado, removendo:", existingRecord.id);
 
     await db.userSavedVehicle.delete({
       where: {
@@ -198,12 +188,10 @@ export const unsaveUserVehicles = async (userId, vehicleId) => {
       },
     });
 
-    console.log("✅ SUCESSO: Veículo removido do banco de dados.");
     return { success: true };
 
   } catch (error) {
-    console.error("❌ Erro ao remover veículo:", error.message);
-    console.error("❌ Stack trace:", error.stack);
+    console.error("Erro ao remover veículo");
     return { success: false, error: error.message };
   }
 
@@ -228,11 +216,10 @@ export const getUserSavedVehicles = async (userId) => {
       savedVehicles.map((sv) => serializeVehicleData(sv.vehicle, true))
     );
 
-    console.log("SUCESSO: Veículos salvos do usuário recuperados.");
     return { success: true, data: serializedSavedVehicles };
 
   } catch (error) {
-    console.error("❌ Erro ao recuperar veículos salvos do usuário:", error.message);
+    console.error("Erro ao recuperar veículos salvos do usuário");
     throw new Error(`Failed to retrieve saved vehicles: ${error.message}.`);
   }
 
@@ -268,7 +255,7 @@ export const getSoldVehicles = async (params = {}) => {
       totalCount,
     };
   } catch (error) {
-    console.error("❌ Error getting sold vehicles:", error);
+    console.error("Erro ao buscar veículos vendidos");
     return {
       success: false,
       error: error.message,

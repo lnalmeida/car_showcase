@@ -66,7 +66,7 @@ export default function BookingForm() {
                 toast.error("Erro ao buscar veículos disponíveis.");
             }
         } catch (error) {
-            console.error(error); // DEBUG
+            console.error("Erro ao buscar veículos disponíveis");
             toast.error("Erro na comunicação com o servidor.");
         } finally {
             setLoadingVehicles(false);

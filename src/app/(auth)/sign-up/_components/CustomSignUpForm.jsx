@@ -70,10 +70,8 @@ const CustomSignUpForm = ({ storeName }) => {
             await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
             setPendingVerification(true);
-            console.log("Status do Registro:", signUp.status, signUp.missingFields);
             toast.success("Código de verificação enviado para o seu e-mail!");
         } catch (err) {
-            console.error("Erro detalhado no registro:", err);
 
             const firstError = err.errors?.[0];
             const errorCode = firstError?.code;
@@ -101,9 +99,6 @@ const CustomSignUpForm = ({ storeName }) => {
                 code,
             });
 
-            console.log("[SignUp] Status após verificação:", completeSignUp.status);
-            console.log("[SignUp] Missing fields:", completeSignUp.missingFields);
-            console.log("[SignUp] Session ID:", completeSignUp.createdSessionId);
 
             if (completeSignUp.status === "complete") {
                 await setActive({ session: completeSignUp.createdSessionId });
@@ -112,14 +107,14 @@ const CustomSignUpForm = ({ storeName }) => {
             } else if (completeSignUp.status === "missing_requirements") {
                 // Clerk may flag phone_number as missing, but if we have a session, proceed
                 if (completeSignUp.createdSessionId) {
-                    console.log("[SignUp] Sessão disponível apesar de requisitos pendentes. Ativando...");
+
                     await setActive({ session: completeSignUp.createdSessionId });
                     toast.success("Conta criada com sucesso!");
                     router.push("/");
                 } else {
                     // No session available yet — need to handle remaining requirements
                     const missing = completeSignUp.missingFields || [];
-                    console.warn("[SignUp] Requisitos faltantes sem sessão:", missing);
+
 
                     if (missing.includes("phone_number")) {
                         toast.warning("⚠️ Telefone é obrigatório no Clerk. Desative 'Phone number' nas configurações do Clerk Dashboard → User & Authentication → Email, Phone, Username para corrigir.");
@@ -128,11 +123,11 @@ const CustomSignUpForm = ({ storeName }) => {
                     }
                 }
             } else {
-                console.error("Falha na verificação:", completeSignUp);
+
                 toast.error("Código inválido ou expirado.");
             }
         } catch (err) {
-            console.error("Erro na verificação:", err);
+
             toast.error(err.errors?.[0]?.message || "Erro na verificação do código.");
         } finally {
             setLoading(false);

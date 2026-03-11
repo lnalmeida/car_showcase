@@ -37,7 +37,7 @@ export async function GET() {
 
         return NextResponse.json({ message: `Migração concluída! ${migrated} registros criados.`, records });
     } catch (error) {
-        console.error("Erro durante a migração:", error);
+        console.error("Erro durante a migração");
         return NextResponse.json({ error: "Erro interno", details: error.message }, { status: 500 });
     }
 }

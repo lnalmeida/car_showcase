@@ -29,7 +29,6 @@ export async function runRecovery() {
                     workingHourId: "default", // Valor temporário
                 }
             });
-            console.log("DealershipInfo criada.");
         }
 
         // 2. Garantir que o usuário atual existe no banco e é ADMIN
@@ -53,7 +52,7 @@ export async function runRecovery() {
             message: "Recuperação concluída! Você agora é ADMIN e as configurações básicas foram restauradas. Por favor, recarregue a página."
         };
     } catch (error) {
-        console.error("Erro na recuperação:", error);
+        console.error("Erro na recuperação");
         return { success: false, error: error.message };
     }
 }

@@ -154,7 +154,7 @@ export const getDashboardStats = async (period = "monthly") => {
       data: JSON.parse(JSON.stringify(payload)),
     };
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+    console.error("Erro ao carregar dados do dashboard");
     return { success: false, error: "Failed to load dashboard data" };
   }
 };

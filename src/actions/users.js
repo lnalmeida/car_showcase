@@ -49,16 +49,14 @@ export const getUsersData = async (params = {}) => {
             }),
         ]);
 
-        console.log(users);
         return {success: true, data: users, totalCount};
     } catch (error) {
-        console.error("Erro ao buscar usuários:", error.message);
+        console.error("Erro ao buscar usuários");
         return {sucess: false};
     }
 };
 
 export const updateUserRole = async ({id, role}) => {
-    console.log("Chama a função updateUserRole no backend");
     try {
         const {userId} = await auth();
         if (!userId) return {success: false, error: "Unauthorized"};
@@ -89,13 +87,12 @@ export const updateUserRole = async ({id, role}) => {
         revalidatePath("/admin/users");
         return {success: true, data: updatedUser};
     } catch (error) {
-        console.error("❌ Erro ao atualizar usuário:", error.message);
+        console.error("Erro ao atualizar usuário");
         return {success: false, error: error.message};
     }
 };
 
 export const removeUser = async (id) => {
-    console.log("clerkClient.users", clerkClient.users);
 
     try {
         const {userId} = await auth();
@@ -152,9 +149,8 @@ export const removeUser = async (id) => {
                 const errorData = await response.json();
                 return {success: false, error: errorData};
             }
-            console.log(`Usuário ${userToDelete.clerkUserId} deletado no Clerk.`);
         } catch (clerkError) {
-            console.error("❌ Erro ao deletar usuário no Clerk:", clerkError.message);
+            console.error("Erro ao deletar usuário no Clerk");
             return {
                 success: false,
                 error: `Usuário deletado do DB, mas erro ao deletar no Clerk: ${clerkError.message}`,
@@ -165,7 +161,7 @@ export const removeUser = async (id) => {
             success: true,
         };
     } catch (error) {
-        console.error("❌ Erro ao deletar usuário:", error);
+        console.error("Erro ao deletar usuário");
         return {
             success: false,
             error: error.message,

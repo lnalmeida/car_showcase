@@ -82,12 +82,12 @@ export default function VehicleDetail({ id }) {
             void ("veículo: ", result.data);
           } catch (error) {
             toast.error("Ops, algo deu errado!.");
-            console.error("❌ Erro ao parsear os dados:", error);
+            console.error("Erro ao parsear os dados");
             setVehicle(null);
           }
         } else {
           toast.error("Erro ao buscar dados do veículo.");
-          console.error("❌ Erro so buscar dados do veículo:", result.error);
+          console.error("Erro ao buscar dados do veículo");
           setVehicle(null);
         }
       }
@@ -105,14 +105,11 @@ export default function VehicleDetail({ id }) {
             const parsedData = result.data || [];
             setRelatedVehicles(parsedData);
           } else {
-            console.error(
-              "❌ Erro ao buscar dados dos veículos:",
-              result.error || result.message
-            );
+            console.error("Erro ao buscar veículos relacionados");
           }
         } catch (error) {
           toast.error("Ops, algo deu errado!.");
-          console.error("❌ Erro ao parsear os dados:", error);
+          console.error("Erro ao parsear os dados");
         }
       } else {
         // toast.error("Erro ao buscar dados dos veículos.");

@@ -48,7 +48,7 @@ const VehicleCard = ({ vehicle, priority = false }) => {
     },
     onError: (error) => {
       toast.error(`Falha ao salvar o veículo: ${error.message}`);
-      console.error("Erro ao favoritar:", error);
+      console.error("Erro ao favoritar");
       setIsSaved(false); // Reverter estado em caso de erro
     }
   });
@@ -74,7 +74,7 @@ const VehicleCard = ({ vehicle, priority = false }) => {
     },
     onError: (error) => {
       toast.error(`Falha ao remover o veículo: ${error.message}`);
-      console.error("Erro ao desfavoritar:", error);
+      console.error("Erro ao desfavoritar");
       setIsSaved(true); // Reverter estado em caso de erro
     }
   });
@@ -83,7 +83,7 @@ const VehicleCard = ({ vehicle, priority = false }) => {
     const user = await checkUser();
     if (!user) {
       toast.error("É necessário se cadastrar e autenticar para salvar seus veículos favoritos.");
-      console.error("Usuário não autenticado. Ação de salvar cancelada.");
+      console.error("Usuário não autenticado");
       return;
     }
 
