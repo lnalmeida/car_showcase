@@ -58,8 +58,8 @@ export function SalesByCategoryChart({ data }) {
             <CardHeader className="pb-2">
                 <CardTitle>Vendas por Categoria</CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px] w-full flex flex-col items-center justify-center pt-2">
-                <div className="relative" style={{ width: size, height: size }}>
+            <CardContent className="h-[300px] w-full flex flex-col items-center justify-center">
+                <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
                     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                         <g transform={`translate(${center}, ${center})`}>
                             {chartData.map((item, index) => {
@@ -132,7 +132,7 @@ export function SalesByCategoryChart({ data }) {
                 </div>
 
                 {/* Custom Legend */}
-                <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1">
+                <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-1">
                     {chartData.map((item, index) => (
                         <div key={index} className="flex items-center gap-1.5">
                             <div
