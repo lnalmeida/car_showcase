@@ -85,8 +85,7 @@ export const getDashboardStats = async (period = "monthly") => {
       take: 5
     });
 
-    // --- Sales Trend Data (Period-dependent) ---
-    // Agora usando a nova tabela 'Sale' para dados reais/histórico de CRM
+    // --- Sales By Category Data (Period-dependent) ---
     const salesData = await db.sale.findMany({
       where: {
         saleDate: {
@@ -94,51 +93,25 @@ export const getDashboardStats = async (period = "monthly") => {
           lte: endDate,
         },
       },
-      select: {
-        saleDate: true,
-        saleValue: true,
-      },
-      orderBy: {
-        saleDate: "asc",
+      include: {
+        vehicle: {
+          include: {
+            category: true,
+          },
+        },
       },
     });
 
-    let salesTrend;
-    if (period === "yearly") {
-      const salesByMonth = salesData.reduce((acc, sale) => {
-        const month = format(sale.saleDate, "yyyy-MM");
-        // Somar os Reais
-        acc[month] = (acc[month] || 0) + Number(sale.saleValue || 0);
-        return acc;
-      }, {});
+    const salesByCategoryMap = salesData.reduce((acc, sale) => {
+      const categoryName = sale.vehicle?.category?.name || "Outros";
+      acc[categoryName] = (acc[categoryName] || 0) + 1; // Contagem por volume de unidades vendidas
+      return acc;
+    }, {});
 
-      salesTrend = eachMonthOfInterval({ start: startDate, end: endDate }).map(
-        (month) => {
-          const monthKey = format(month, "yyyy-MM");
-          return {
-            date: format(month, "MMM", { locale: ptBR }),
-            sales: salesByMonth[monthKey] || 0,
-          };
-        }
-      );
-    } else {
-      const salesByDay = salesData.reduce((acc, sale) => {
-        const day = format(sale.saleDate, "yyyy-MM-dd");
-        // Somar os Reais
-        acc[day] = (acc[day] || 0) + Number(sale.saleValue || 0);
-        return acc;
-      }, {});
-
-      salesTrend = eachDayOfInterval({ start: startDate, end: endDate }).map(
-        (day) => {
-          const dayKey = format(day, "yyyy-MM-dd");
-          return {
-            date: dayKey,
-            sales: salesByDay[dayKey] || 0,
-          };
-        }
-      );
-    }
+    const salesByCategory = Object.entries(salesByCategoryMap).map(([name, value]) => ({
+      name,
+      value
+    }));
 
     // --- Final Data Structure ---
     const testDrives = {
@@ -173,10 +146,7 @@ export const getDashboardStats = async (period = "monthly") => {
         sold: soldVehicles,
       },
       testDrives,
-      salesTrend: salesTrend.map(item => ({
-        ...item,
-        sales: Number(item.sales)
-      })),
+      salesByCategory,
     };
 
     return {

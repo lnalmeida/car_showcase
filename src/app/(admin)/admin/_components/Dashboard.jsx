@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SalesTrendChart } from "./SalesTrendChart";
+import { SalesByCategoryChart } from "./SalesByCategoryChart";
 import { PeriodSelector } from "./PeriodSelector";
 
 export function Dashboard({ initialData }) {
@@ -45,7 +45,7 @@ export function Dashboard({ initialData }) {
     );
   }
 
-  const { cars, testDrives, salesTrend } = initialData.data;
+  const { cars, testDrives, salesByCategory } = initialData.data;
 
   const safePercentage = (value, total) => {
     if (!total) return "0.0";
@@ -143,7 +143,7 @@ export function Dashboard({ initialData }) {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <SalesTrendChart data={salesTrend} period={selectedPeriod} />
+            <SalesByCategoryChart data={salesByCategory} />
             <div className="space-y-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
