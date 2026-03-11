@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { SalesTrendChart } from "../../_components/SalesTrendChart";
+
 import { PeriodSelector } from "../../_components/PeriodSelector";
 import SoldVehiclesList from "./SoldVehiclesList";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -43,7 +43,7 @@ export function SalesDashboard({ initialData, period }) {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-1">
-                <SalesTrendChart data={salesTrend} period={period} />
+                {/* O gráfico de Vendas foi removido desta tela por baixa adoção. Agora vive apenas no Dashboard Principal. */}
             </div>
 
             <Card className="mt-6">
