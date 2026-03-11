@@ -16,8 +16,14 @@ export async function generateMetadata() {
 
   const siteName = storeInfo.success && storeInfo.data?.name ? storeInfo.data.name : "Car Showcase";
   const siteDesc = storeInfo.success && storeInfo.data?.description ? storeInfo.data.description : "A simple car showcase to improve my NextJS skills";
-  const logo = storeInfo.success && storeInfo.data?.logoUrl ? storeInfo.data.logoUrl : "/favicon.ico";
-
+  let logo = "/favicon.ico";
+  if (storeInfo.success && storeInfo.data?.logoUrl) {
+    logo = storeInfo.data.logoUrl;
+    if (logo.includes("res.cloudinary.com") && logo.includes("/upload/")) {
+      // Formata a imagem para favicon: 64x64, cortando/ampliando conforme necessário (c_fill) em PNG.
+      logo = logo.replace("/upload/", "/upload/w_64,h_64,c_fill,f_png/");
+    }
+  }
   return {
     title: siteName,
     description: siteDesc,

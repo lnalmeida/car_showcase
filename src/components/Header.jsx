@@ -27,15 +27,14 @@ const Header = async ({ isAdminPage = false, logoUrl = null }) => {
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
       <nav className="mx-auto px-4 py-4 flex items-center justify-between">
         <Link href={isAdminPage ? "/admin" : "/"}>
-          <div className="relative h-12 w-32 sm:h-14 sm:w-40">
-            <Image
-              src={logoUrl || "/jf_logo.webp"}
-              alt="Brand Logo"
-              fill
-              className="object-contain object-left"
-              priority
-            />
-          </div>
+          <Image
+            src={logoUrl || "/jf_logo.webp"}
+            alt="Brand Logo"
+            width={160}
+            height={60}
+            className="object-cover"
+            priority
+          />
         </Link>
 
 
