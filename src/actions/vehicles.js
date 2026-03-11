@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { serializeVehicleData } from "@/lib/helpers";
-import { fileToBase64 } from "@/lib/utils";
+import { fileToBase64, deepSerialize } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
@@ -295,11 +295,11 @@ export const getVehicles = async (params = {}) => {
 
     // console.log("Serialized vehicles data:", result);
 
-    return {
+    return deepSerialize({
       success: true,
-      data: JSON.parse(JSON.stringify(result)),
+      data: result,
       totalCount,
-    };
+    });
   } catch (error) {
     console.error("❌ Error getting vehicles:", error);
     return {
@@ -331,7 +331,7 @@ export const getVehicle = async (id) => {
 
     return {
       success: true,
-      data: JSON.parse(JSON.stringify(result)),
+      data: result,
     };
   } catch (error) {
     console.error("❌ Erro ao buscar veículo:", error);

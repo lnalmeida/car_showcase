@@ -1,5 +1,9 @@
+import { deepSerialize } from "./utils";
+
 export const serializeVehicleData = async (vehicle, wishListed = false) => {
-  return {
+  if (!vehicle) return null;
+
+  const data = {
     ...vehicle,
     category: vehicle.category?.name || vehicle.category || "N/A",
     categoryId: vehicle.categoryId || null,
@@ -8,10 +12,12 @@ export const serializeVehicleData = async (vehicle, wishListed = false) => {
     vehicleType: vehicle.type?.name || vehicle.vehicleType || "N/A",
     typeId: vehicle.typeId || null,
     price: vehicle.price ? vehicle.price.toNumber().toFixed(2) : 0,
-    createdAt: vehicle.createdAt?.toISOString(),
-    updatedAt: vehicle.updatedAt?.toISOString(),
+    createdAt: vehicle.createdAt,
+    updatedAt: vehicle.updatedAt,
     wishListed: wishListed,
   };
+
+  return deepSerialize(data);
 };
 
 // Helper para gerar o range de páginas com elipses

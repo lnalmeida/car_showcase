@@ -2,6 +2,7 @@
 
 import { db as prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { deepSerialize } from "@/lib/utils";
 
 export async function createSale(data) {
     try {
@@ -38,7 +39,7 @@ export async function createSale(data) {
         revalidatePath(`/admin/vehicles/${vehicleId}`);
         revalidatePath("/"); // Atualiza o portal público
 
-        return { success: true, sale: result };
+        return deepSerialize({ success: true, sale: result });
     } catch (error) {
         console.error("Erro ao registrar venda:", error);
         return { success: false, error: "Falha ao registrar a venda no banco de dados." };
@@ -57,15 +58,7 @@ export async function getSalesStats() {
             }
         });
 
-        // Converte Decimal para Number para serialização
-        const serializedSales = sales.map(s => ({
-            ...s,
-            saleValue: Number(s.saleValue),
-            downPayment: s.downPayment ? Number(s.downPayment) : 0,
-            tradeInValue: s.tradeInValue ? Number(s.tradeInValue) : 0,
-        }));
-
-        return { success: true, sales: serializedSales };
+        return deepSerialize({ success: true, sales });
     } catch (error) {
         console.error("Erro ao buscar histórico de vendas:", error);
         return { success: false, error: "Falha ao consultar histórico de vendas." };
@@ -111,23 +104,11 @@ export async function getSales({ page = 0, limit = 10, search = "" }) {
             prisma.sale.count({ where })
         ]);
 
-        // Converte Decimal para Number para serialização
-        const serializedData = data.map(item => ({
-            ...item,
-            saleValue: Number(item.saleValue),
-            downPayment: item.downPayment ? Number(item.downPayment) : 0,
-            tradeInValue: item.tradeInValue ? Number(item.tradeInValue) : 0,
-            vehicle: item.vehicle ? {
-                ...item.vehicle,
-                price: Number(item.vehicle.price)
-            } : null
-        }));
-
-        return {
+        return deepSerialize({
             success: true,
-            data: serializedData,
+            data,
             totalCount
-        };
+        });
 
     } catch (error) {
         console.error("Erro ao buscar vendas paginadas:", error);
@@ -151,19 +132,7 @@ export async function getSale(id) {
 
         if (!sale) return { success: false, error: "Venda não encontrada." };
 
-        // Serialização
-        const serializedSale = {
-            ...sale,
-            saleValue: Number(sale.saleValue),
-            downPayment: sale.downPayment ? Number(sale.downPayment) : 0,
-            tradeInValue: sale.tradeInValue ? Number(sale.tradeInValue) : 0,
-            vehicle: sale.vehicle ? {
-                ...sale.vehicle,
-                price: Number(sale.vehicle.price)
-            } : null
-        };
-
-        return { success: true, data: serializedSale };
+        return deepSerialize({ success: true, data: sale });
     } catch (error) {
         console.error("Erro ao buscar venda:", error);
         return { success: false, error: "Falha ao buscar registro de venda." };
@@ -193,7 +162,7 @@ export async function updateSale(id, data) {
         });
 
         revalidatePath("/admin/sales");
-        return { success: true, sale: result };
+        return deepSerialize({ success: true, sale: result });
     } catch (error) {
         console.error("Erro ao atualizar venda:", error);
         return { success: false, error: "Erro ao atualizar registro de CRM." };

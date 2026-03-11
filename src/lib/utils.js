@@ -89,3 +89,38 @@ export const maskCurrency = (value) => {
 export const unmaskCurrency = (value) => {
   return value ? parseFloat(value.replace(/\D/g, "")) / 100 : 0;
 };
+
+/**
+ * Deeply serializes an object, converting Decimal objects to Number
+ * and Date objects to ISO strings. Useful for passing Prisma data
+ * to Client Components.
+ */
+export function deepSerialize(obj) {
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+
+  // Handle Decimal.js (Prisma Decimal)
+  if (typeof obj.toNumber === "function") {
+    return obj.toNumber();
+  }
+
+  // Handle Date
+  if (obj instanceof Date) {
+    return obj.toISOString();
+  }
+
+  // Handle Array
+  if (Array.isArray(obj)) {
+    return obj.map(deepSerialize);
+  }
+
+  // Handle Object
+  const serializedObj = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      serializedObj[key] = deepSerialize(obj[key]);
+    }
+  }
+  return serializedObj;
+}

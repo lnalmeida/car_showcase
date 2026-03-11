@@ -3,6 +3,7 @@
 import { db as prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
+import { deepSerialize } from "@/lib/utils";
 
 /**
  * Busca todos os agendamentos (Test Drives e Visitas) com filtros e paginação.
@@ -46,7 +47,7 @@ export async function getBookings({
             prisma.visitBooking.count({ where })
         ]);
 
-        return { success: true, data: JSON.parse(JSON.stringify(data)), totalCount };
+        return deepSerialize({ success: true, data, totalCount });
     } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
         return { success: false, error: "Falha ao carregar agendamentos" };
@@ -70,7 +71,7 @@ export async function getBooking(id) {
             }
         });
         if (!data) return { success: false, error: "Agendamento não encontrado" };
-        return { success: true, data: JSON.parse(JSON.stringify(data)) };
+        return deepSerialize({ success: true, data });
     } catch (error) {
         return { success: false, error: "Agendamento não encontrado" };
     }
@@ -131,7 +132,7 @@ export async function upsertBooking(data) {
 
         revalidatePath("/admin/test-drives");
         revalidatePath("/admin"); // Painel de controle
-        return { success: true, data: JSON.parse(JSON.stringify(result)) };
+        return deepSerialize({ success: true, data: result });
     } catch (error) {
         console.error("Erro ao salvar agendamento:", error);
         return { success: false, error: "Ocorreu um erro ao salvar o agendamento" };
@@ -220,20 +221,7 @@ export async function getAvailableVehiclesForBooking(date, startTime, endTime) {
             }
         });
 
-        const vehiclesArray = availableVehicles.map(v => ({
-            ...v,
-            price: v.price ? v.price.toNumber().toFixed(2) : 0,
-            createdAt: v.createdAt?.toISOString(),
-            updatedAt: v.updatedAt?.toISOString(),
-            brand: v.brand ? {
-                ...v.brand,
-                createdAt: v.brand.createdAt?.toISOString(),
-                updatedAt: v.brand.updatedAt?.toISOString()
-            } : null,
-            images: v.images || []
-        }));
-
-        return { success: true, data: vehiclesArray };
+        return deepSerialize({ success: true, data: availableVehicles });
     } catch (error) {
         console.error("Erro ao buscar veículos livres:", error);
         return { success: false, error: "Falha ao buscar veículos livres" };
