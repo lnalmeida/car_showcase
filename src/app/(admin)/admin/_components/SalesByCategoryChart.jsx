@@ -52,7 +52,7 @@ export function SalesByCategoryChart({ data }) {
             <CardHeader className="pb-2">
                 <CardTitle>Vendas por Categoria</CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 w-full min-h-[300px]">
+            <CardContent className="h-[300px] w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
