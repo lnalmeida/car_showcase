@@ -7,8 +7,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-    api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export async function getBrands(categoryId) {
@@ -21,7 +21,7 @@ export async function getBrands(categoryId) {
         });
         return { success: true, data: brands };
     } catch (error) {
-        console.error("Error fetching brands:", error);
+        console.error("Erro ao buscar marcas");
         return { success: false, error: "Falha ao buscar marcas." };
     }
 }
@@ -52,7 +52,7 @@ export async function createBrand(data) {
         revalidatePath("/");
         return { success: true, data: brand };
     } catch (error) {
-        console.error("Error creating brand:", error);
+        console.error("Erro ao criar marca");
         return { success: false, error: "Falha ao criar marca." };
     }
 }
@@ -84,7 +84,7 @@ export async function updateBrand(id, data) {
         revalidatePath("/");
         return { success: true, data: brand };
     } catch (error) {
-        console.error("Error updating brand:", error);
+        console.error("Erro ao atualizar marca");
         return { success: false, error: "Falha ao atualizar marca." };
     }
 }
@@ -103,7 +103,7 @@ export async function deleteBrand(id) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("Error deleting brand:", error);
+        console.error("Erro ao deletar marca");
         return { success: false, error: "Falha ao deletar marca." };
     }
 }

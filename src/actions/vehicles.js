@@ -13,12 +13,11 @@ import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export const processVehicleImageWithAI = async (file) => {
-  console.log("🚀 Iniciando análise de imagem do veículo..."); // Debug log
 
   try {
     if (!process.env.GEMINI_API_KEY) {
@@ -75,17 +74,14 @@ export const processVehicleImageWithAI = async (file) => {
         Responda APENAS com o objeto JSON acima, preenchido em português brasileiro. Campos não especificados podem ficar em branco.
         `;
 
-    console.log("📤 Enviando requisição para Gemini API..."); // Debug log
     const result = await model.generateContent([imagePart, prompt]);
     const response = await result.response;
     const text = response.text();
 
-    console.log("📥 Resposta bruta da API:", text); // Debug log
 
     // Limpa a resposta removendo markdown
     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
-    console.log("🧹 Texto limpo:", cleanedText); // Debug log
 
     // Parse do JSON
     const vehicleDetails = JSON.parse(cleanedText);
@@ -113,21 +109,18 @@ export const processVehicleImageWithAI = async (file) => {
     );
 
     if (missingFields.length > 0) {
-      console.warn("⚠️ Campos ausentes:", missingFields); // Debug log
       throw new Error(
         `AI response missing required fields: ${missingFields.join(", ")}`
       );
     }
 
-    console.log("✅ Análise concluída com sucesso!", vehicleDetails); // Debug log
 
     return {
       success: true,
       data: vehicleDetails,
     };
   } catch (error) {
-    console.error("❌ Erro na análise da imagem:", error.message);
-    console.error("Stack trace:", error.stack); // Debug adicional
+    console.error("Erro na análise da imagem");
 
     return {
       success: false,
@@ -137,7 +130,6 @@ export const processVehicleImageWithAI = async (file) => {
 };
 
 export const addVehicle = async (formData) => {
-  console.log("🚀 Chamou função addVehicle");
 
   const vehicleData = JSON.parse(formData.get("vehicleData"));
   const images = formData.getAll("images");
@@ -166,11 +158,9 @@ export const addVehicle = async (formData) => {
 
       //skip if image data is not valid
       if (!base64Data || !base64Data.startsWith("data:image/")) {
-        console.warn("Skipping invalid image data:", base64Data);
         continue;
       }
 
-      console.log("🔄 Enviando para Cloudinary...");
 
       const uploadResult = await cloudinary.uploader.upload(base64Data, {
         folder: `vehicles/${vehicleData.category}/${vehicleId}`,
@@ -184,9 +174,7 @@ export const addVehicle = async (formData) => {
 
       const publicUrl = uploadResult.secure_url;
 
-      console.log("Public URL:", publicUrl);
       imageUrls.push(publicUrl);
-      console.log("Image URLs:", imageUrls);
     }
 
     if (imageUrls.length === 0) {
@@ -222,7 +210,7 @@ export const addVehicle = async (formData) => {
       success: true,
     };
   } catch (error) {
-    console.error("❌ Error adding vehicle:", error);
+    console.error("Erro ao adicionar veículo");
     throw new Error(`Failed to add vehicle: ${error.message}`);
   }
 };
@@ -293,7 +281,6 @@ export const getVehicles = async (params = {}) => {
       vehicles.map((v) => serializeVehicleData(v))
     );
 
-    // console.log("Serialized vehicles data:", result);
 
     return deepSerialize({
       success: true,
@@ -301,7 +288,7 @@ export const getVehicles = async (params = {}) => {
       totalCount,
     });
   } catch (error) {
-    console.error("❌ Error getting vehicles:", error);
+    console.error("Erro ao buscar veículos");
     return {
       success: false,
       error: error.message,
@@ -334,7 +321,7 @@ export const getVehicle = async (id) => {
       data: result,
     };
   } catch (error) {
-    console.error("❌ Erro ao buscar veículo:", error);
+    console.error("Erro ao buscar veículo");
     return {
       success: false,
       error: error.message,
@@ -343,7 +330,6 @@ export const getVehicle = async (id) => {
 };
 
 export const updateVehicle = async (id, vehicleData) => {
-  console.log("Chama a função updateVehicle no backend");
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
@@ -355,7 +341,6 @@ export const updateVehicle = async (id, vehicleData) => {
     if (!user) throw new Error("User not found");
     if (user.role !== "ADMIN") throw new Error("Unauthorized");
 
-    console.log("📥 [updateVehicle] Dados recebidos do cliente:", vehicleData);
 
     const dataForDB = {};
 
@@ -394,36 +379,25 @@ export const updateVehicle = async (id, vehicleData) => {
     }
 
     if (Object.keys(dataForDB).length === 0) {
-      console.log(
-        "⚠️ [updateVehicle] Objeto de dados vazio. Nenhuma atualização será feita."
-      );
-
       return { success: true, message: "Nenhuma informação foi alterada." };
     }
-
-    console.log(
-      "📦 [updateVehicle] Objeto final para o banco de dados:",
-      dataForDB
-    );
 
     const updatedVehicle = await db.vehicle.update({
       where: { id },
       data: dataForDB,
     });
 
-    console.log("✅ Veículo atualizado com sucesso no banco de dados.");
 
     revalidatePath("/admin/vehicles");
 
     return { success: true };
   } catch (error) {
-    console.error("❌ Erro ao atualizar veiculo:", error.message);
+    console.error("Erro ao atualizar veículo");
     return { success: false, error: error.message };
   }
 };
 
 export const updateVehicleComplete = async (formData) => {
-  console.log("🚀 Chamou função updateVehicleComplete");
 
   const vehicleId = formData.get("vehicleId");
   const vehicleData = JSON.parse(formData.get("vehicleData"));
@@ -452,12 +426,10 @@ export const updateVehicleComplete = async (formData) => {
     const newImages = images.filter(img => img.startsWith("data:image/"));
 
     if (newImages.length > 0) {
-      console.log("🔄 Processando novas imagens...");
 
       for (let i = 0; i < newImages.length; i++) {
         const base64Data = newImages[i];
 
-        console.log("🔄 Enviando para Cloudinary...");
 
         const uploadResult = await cloudinary.uploader.upload(base64Data, {
           folder: `vehicles/${vehicleData.category}/${vehicleId}`,
@@ -510,7 +482,7 @@ export const updateVehicleComplete = async (formData) => {
       success: true,
     };
   } catch (error) {
-    console.error("❌ Error updating vehicle:", error);
+    console.error("Erro ao atualizar veículo");
     throw new Error(`Failed to update vehicle: ${error.message}`);
   }
 };
@@ -563,15 +535,12 @@ export const removeVehicle = async (id) => {
           .from("jf-veiculos-images")
           .remove(filePaths);
         if (res.error) {
-          console.error("❌ Erro ao deletar imagens:", res.error.message);
+          console.error("Erro ao deletar imagens");
           //Caso falhe a deleção da imagem, continua o processo
         }
       }
     } catch (storageError) {
-      console.error(
-        "❌ Erro ao deletar imagens no Storage:",
-        storageError.message
-      );
+      console.error("Erro ao deletar imagens no Storage");
     }
 
     revalidatePath("/admin/vehicles");
@@ -580,7 +549,7 @@ export const removeVehicle = async (id) => {
       success: true,
     };
   } catch (error) {
-    console.error("❌ Erro ao deletar veiculo:", error);
+    console.error("Erro ao deletar veículo");
     return {
       success: false,
       error: error.message,

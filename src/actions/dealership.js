@@ -7,8 +7,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-    api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export async function getDealershipInfo() {
@@ -16,7 +16,7 @@ export async function getDealershipInfo() {
         const dealership = await prisma.dealershipInfo.findFirst();
         return { success: true, data: dealership };
     } catch (error) {
-        console.error("Error fetching dealership info:", error);
+        console.error("Erro ao buscar informações da loja");
         return { success: false, error: "Falha ao buscar informações da loja." };
     }
 }
@@ -71,7 +71,7 @@ export async function upsertDealershipInfo(data) {
         revalidatePath("/");
         return { success: true, data: result };
     } catch (error) {
-        console.error("Error updating dealership info:", error);
+        console.error("Erro ao salvar informações da loja");
         return { success: false, error: "Falha ao salvar as informações da loja." };
     }
 }

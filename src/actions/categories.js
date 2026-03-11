@@ -7,8 +7,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export async function getCategories() {
@@ -18,7 +18,7 @@ export async function getCategories() {
     });
     return { success: true, data: categories };
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("Erro ao buscar categorias");
     return { success: false, error: "Falha ao buscar categorias." };
   }
 }
@@ -48,7 +48,7 @@ export async function createCategory(data) {
     revalidatePath("/");
     return { success: true, data: category };
   } catch (error) {
-    console.error("Error creating category:", error);
+    console.error("Erro ao criar categoria");
     return { success: false, error: "Falha ao criar categoria." };
   }
 }
@@ -79,7 +79,7 @@ export async function updateCategory(id, data) {
     revalidatePath("/");
     return { success: true, data: category };
   } catch (error) {
-    console.error("Error updating category:", error);
+    console.error("Erro ao atualizar categoria");
     return { success: false, error: "Falha ao atualizar categoria." };
   }
 }
@@ -98,7 +98,7 @@ export async function deleteCategory(id) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.error("Error deleting category:", error);
+    console.error("Erro ao deletar categoria");
     return { success: false, error: "Falha ao deletar categoria." };
   }
 }
