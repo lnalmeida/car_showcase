@@ -28,7 +28,7 @@ const Header = async ({ isAdminPage = false, logoUrl = null }) => {
       <nav className="mx-auto px-4 py-4 flex items-center justify-between">
         <Link href={isAdminPage ? "/admin" : "/"}>
           <Image
-            src={logoUrl || "/jf_logo.webp"}
+            src={(logoUrl && logoUrl !== "undefined") ? logoUrl : "/jf_logo.webp"}
             alt="Brand Logo"
             width={160}
             height={60}
@@ -76,6 +76,7 @@ const Header = async ({ isAdminPage = false, logoUrl = null }) => {
               appearance={{
                 elements: {
                   avatarBox: "w-10 h-10",
+                  userButtonPopoverFooter: "hidden",
                 },
               }}
             />

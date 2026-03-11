@@ -43,7 +43,7 @@ export default async function RootLayout({ children }) {
       <html lang="pt-BR" suppressHydrationWarning>
         <body className={`${inter.className}`}>
           <ClerkLoaded>
-            <Header isAdminPage={false} logoUrl={logoUrl} />
+            <Header isAdminPage={false} logoUrl={logoUrl || "/jf_logo.webp"} />
           </ClerkLoaded>
           <main className="min-h-screen">
             <QueryProvider>{children}</QueryProvider>
