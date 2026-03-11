@@ -5,7 +5,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import Link from 'next/link';
-import Image from 'next/image';
+import { CldImage } from 'next-cloudinary';
 
 import { Navigation, Pagination } from 'swiper/modules';
 
@@ -33,10 +33,11 @@ const BrandsCarousel = ({ brands }) => {
                     >
                         <div className="h-16 w-auto mx-auto mb-2 relative flex items-center justify-center bg-gray-50 rounded-md w-full">
                             {make.imageUrl && make.imageUrl.trim() !== "" ? (
-                                <Image
+                                <CldImage
                                     src={make.imageUrl}
                                     alt={make.name}
                                     fill
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
                                     className="object-contain p-2"
                                 />
                             ) : (

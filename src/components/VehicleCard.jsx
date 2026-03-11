@@ -14,9 +14,10 @@ import Link from "next/link";
 import { checkUser } from "@/lib/checkUser";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CldImage } from "next-cloudinary";
 
 
-const VehicleCard = ({ vehicle }) => {
+const VehicleCard = ({ vehicle, priority = false }) => {
   const [isSaved, setIsSaved] = useState(vehicle.wishListed);
   const queryClient = useQueryClient();
 
@@ -30,7 +31,7 @@ const VehicleCard = ({ vehicle }) => {
     gcTime: 0,
     mutationFn: async ({ idUser, idVehicle }) => {
       const res = await saveUserVehicles(idUser, idVehicle);
-      void(`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
+      void (`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
     },
     onSuccess: (data) => {
@@ -56,7 +57,7 @@ const VehicleCard = ({ vehicle }) => {
     gcTime: 0,
     mutationFn: async ({ idUser, idVehicle }) => {
       const res = await unsaveUserVehicles(idUser, idVehicle);
-      void(`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
+      void (`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
       return res;
     },
     onSuccess: (data) => {
@@ -107,12 +108,17 @@ const VehicleCard = ({ vehicle }) => {
       {/* Imagem */}
       <div className="aspect-video bg-gray-200 relative overflow-hidden">
         <Link href={`/vehicles/${vehicle.id}`} className={isSold ? "pointer-events-none" : ""}>
-          <img
+          <CldImage
             src={
               vehicle.images?.[0] ||
               `https://via.placeholder.com/400x240/e2e8f0/64748b?text=${vehicle.vehicleBrand}+${vehicle.model}`
             }
             alt={`${vehicle.vehicleBrand} ${vehicle.model}`}
+            width={400}
+            height={240}
+            crop="fill"
+            priority={priority}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className={`w-full h-full object-cover transition-transform duration-300 ${!isSold && "group-hover:scale-105"} ${isSold && "grayscale-[50%]"}`}
           />
         </Link>

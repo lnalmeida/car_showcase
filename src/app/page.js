@@ -214,8 +214,8 @@ async function FeaturedSection() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
-      {featuredVehicles.map((vehicle) => (
-        <VehicleCard key={vehicle.id} vehicle={vehicle} />
+      {featuredVehicles.map((vehicle, index) => (
+        <VehicleCard key={vehicle.id} vehicle={vehicle} priority={index < 2} />
       ))}
     </div>
   );

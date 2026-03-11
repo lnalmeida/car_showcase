@@ -5,8 +5,8 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import Link from 'next/link';
-import Image from 'next/image';
 // import { bodyTypes, carMakes, featuredCars } from "@/lib/data";
+import { CldImage } from 'next-cloudinary';
 
 import { Navigation, Pagination } from 'swiper/modules';
 
@@ -39,10 +39,12 @@ const VehicleTypesCarousel = ({ bodyTypes }) => {
           >
             <div className="overflow-hidden rounded-lg flex justify-center items-center bg-gray-200 h-28 mb-4 relative">
               {(type.imageUrl || type.image) ? (
-                <Image
+                <CldImage
                   src={type.imageUrl || type.image}
                   alt={type.name}
                   fill
+                  crop="fill"
+                  sizes="(max-width: 768px) 33vw, 20vw"
                   className="object-cover group-hover:scale-105 transition duration-300"
                 />
               ) : (
