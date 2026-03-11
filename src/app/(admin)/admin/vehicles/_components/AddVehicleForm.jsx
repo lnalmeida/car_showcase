@@ -43,6 +43,7 @@ import { CurrencyInput } from "@/components/CurrencyInput";
 import { TagsInput } from "@/components/TagInput";
 import { vehicleDefaultValues, vehicleSchema } from "../_schemas/vehicleSchema";
 import { useDropzone } from "react-dropzone";
+import imageCompression from "browser-image-compression";
 
 import { toast } from "sonner";
 import { Upload, Trash, Loader2, Camera, Trash2 } from "lucide-react";
@@ -113,28 +114,50 @@ const AddVehicleForm = () => {
       return;
     }
 
-    const vehicleData = {
-      vehicleData: data,
-      images: uploadedImages,
-    };
-    await addVehicleFn(vehicleData);
+    const formData = new FormData();
+    formData.append("vehicleData", JSON.stringify(data));
+    uploadedImages.forEach((img) => formData.append("images", img));
+
+    await addVehicleFn(formData);
   };
 
   const onMultiImagesDrop = async (acceptedFiles) => {
-    const validFiles = acceptedFiles.filter((file) => {
-      if (file.size > 1024 * 1024 * 5) {
-        toast.error(
-          `O arquivo ${file.name} excedeu o limite de 5MB e sera descartado`
-        );
-        return false;
-      }
-
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
+    if (acceptedFiles.length === 0) return;
 
     try {
+      const options = {
+        maxSizeMB: 1, // Max file size in MB
+        maxWidthOrHeight: 1920, // Max dimension
+        useWebWorker: true, // Use multi-threading
+      };
+
+      const compressedFilesPromises = acceptedFiles.map(async (file) => {
+        try {
+          // Comprime o arquivo usando browser-image-compression
+          const compressedFile = await imageCompression(file, options);
+          return compressedFile;
+        } catch (error) {
+          console.error("Erro na compressão de imagem:", error);
+          toast.error(`Falha ao comprimir a imagem ${file.name}, usando original se for menor que 5MB`);
+          return file.size <= 1024 * 1024 * 5 ? file : null;
+        }
+      });
+
+      const processedFiles = (await Promise.all(compressedFilesPromises)).filter(Boolean);
+
+      // Verifica limite final (segurança extra)
+      const validFiles = processedFiles.filter((file) => {
+        if (file.size > 1024 * 1024 * 5) {
+          toast.error(
+            `A imagem excedeu o limite de 5MB mesmo após compressão e foi descartada.`
+          );
+          return false;
+        }
+        return true;
+      });
+
+      if (validFiles.length === 0) return;
+
       const imagePromises = validFiles.map(
         (file) =>
           new Promise((resolve, reject) => {
@@ -148,7 +171,7 @@ const AddVehicleForm = () => {
       const newImages = await Promise.all(imagePromises);
       setUploadedImages((prev) => [...prev, ...newImages]);
       setImageError("");
-      toast.success(`${newImages.length} imagem(ns) carregada(s) com sucesso!`);
+      toast.success(`${newImages.length} imagem(ns) otimizadas e carregadas com sucesso!`);
     } catch (err) {
       toast.error("Erro ao carregar uma ou mais imagens.");
     }

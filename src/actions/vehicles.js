@@ -136,10 +136,11 @@ export const processVehicleImageWithAI = async (file) => {
   }
 };
 
-export const addVehicle = async (params) => {
+export const addVehicle = async (formData) => {
   console.log("🚀 Chamou função addVehicle");
 
-  const { vehicleData, images } = params;
+  const vehicleData = JSON.parse(formData.get("vehicleData"));
+  const images = formData.getAll("images");
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
@@ -421,10 +422,12 @@ export const updateVehicle = async (id, vehicleData) => {
   }
 };
 
-export const updateVehicleComplete = async (params) => {
+export const updateVehicleComplete = async (formData) => {
   console.log("🚀 Chamou função updateVehicleComplete");
 
-  const { vehicleId, vehicleData, images } = params;
+  const vehicleId = formData.get("vehicleId");
+  const vehicleData = JSON.parse(formData.get("vehicleData"));
+  const images = formData.getAll("images");
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
