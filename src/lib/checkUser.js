@@ -3,24 +3,27 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "./prisma";
 
 export const checkUser = async () => {
-  let user;
   try {
-    user = await currentUser();
-  } catch (err) {
-    console.error("Clerk current user error:", err);
-    return null;
-  }
+    const { userId } = await auth();
+    if (!userId) return null;
 
-  if (!user) return null;
-
-  try {
+    // First attempt: Get user seamlessly from DB without waking up Clerk API
     const loggedInUser = await db.user.findUnique({
-      where: {
-        clerkUserId: user.id,
-      },
+      where: { clerkUserId: userId },
     });
 
     if (loggedInUser) return loggedInUser;
+
+    // Second attempt: Only if user is new, request his data from Clerk API
+    let user;
+    try {
+      user = await currentUser();
+    } catch (apiErr) {
+      console.error("Clerk API Response error fetching new user profile:", apiErr.message);
+      return null;
+    }
+
+    if (!user) return null;
 
     const newUser = await db.user.create({
       data: {
@@ -31,10 +34,10 @@ export const checkUser = async () => {
       },
     });
 
-    console.log(newUser);
+    console.log("New User Created in DB:", newUser);
     return newUser;
   } catch (error) {
-    console.log(error.message);
+    console.error("checkUser error:", error.message);
     return null;
   }
 };
