@@ -1,72 +1,29 @@
 import React from "react";
-import { SignIn } from "@clerk/nextjs";
 import AuthLayout from "../../AuthLayout";
+import { getDealershipInfo } from "@/actions/dealership";
+import CustomSignInForm from "../_components/CustomSignInForm";
 
-const SignInPage = () => {
+const SignInPage = async () => {
+  const storeResponse = await getDealershipInfo();
+  const storeName = storeResponse.success && storeResponse.data?.name ? storeResponse.data.name : "JF Veículos";
+  const logoUrl = storeResponse.success && storeResponse.data?.logoUrl ? storeResponse.data.logoUrl : "/jf_logo.webp";
+
   return (
     <AuthLayout>
-      <div className="p-6 rounded-2xl shadow-xl bg-white max-w-md w-full">
-        <div className="flex justify-center mb-6">
+      <div className="p-8 rounded-2xl shadow-xl bg-white max-w-md w-full border border-gray-100">
+        <div className="flex flex-col items-center mb-8 space-y-2 text-center">
           <img
-            src="/jf_logo.webp"
-            alt="Logo da empresa"
-            className="h-12 object-contain"
+            src={logoUrl}
+            alt={storeName}
+            className="h-16 object-contain"
           />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Acesse sua conta</h2>
+            <p className="text-gray-500 text-sm">Bem-vindo de volta à {storeName}</p>
+          </div>
         </div>
-        <SignIn
-          appearance={{
-            layout: {
-              socialButtonsPlacement: "bottom",
-              socialButtonsVariant: "blockButton",
-            },
-            elements: {
-              card: "p-6 shadow-none bg-transparent",
-              formButtonPrimary:
-                "bg-blue-600 hover:bg-blue-700 text-white rounded-md mt-4 p-4",
-              socialButtonsBlockButton:
-                "bg-black text-white hover:bg-blue-800 w-full mt-4 p-4",
-              footerAction: "text-sm text-gray-500 text-center mt-6",
-            },
-            variables: {
-              colorPrimary: "#2563eb", /* blue-600 */
-              colorText: "#000000",
-              colorBackground: "#ffffff",
-            },
-          }}
-          localization={{
-            socialButtonsBlockButton: "Entrar com {{provider|titleize}}",
-            start: {
-              title: "Entrar na JFCar",
-              subtitle: "Bem-vindo de volta! Acesse sua conta.",
-            },
-            formFieldLabel__emailAddress: "E-mail",
-            formFieldLabel__password: "Senha",
-            formFieldInputPlaceholder__emailAddress: "Digite seu e-mail",
-            formFieldInputPlaceholder__password: "Digite sua senha",
-            formFieldHintText__password:
-              "Sua senha deve ter pelo menos 8 caracteres.",
-            formButtonPrimary: "Entrar",
-            footerActionText: "Ainda não tem uma conta?",
-            footerActionLink: "Cadastre-se",
-            headerTitle__signIn: "Acessar conta",
-            headerSubtitle__signIn: "Use seus dados para entrar",
-            signInWithMetamask: "Entrar com Metamask",
-            backButton: "Voltar",
-            dividerText: "ou",
-            noAvailableProviders: "Nenhum provedor disponível",
-            secondFactorTitle: "Autenticação em duas etapas",
-            passwordResetRequestButton: "Enviar instruções",
-            passwordResetVerificationCodeInputPlaceholder:
-              "Código de verificação",
-            passwordResetVerificationCodeLabel: "Código recebido por e-mail",
-            passwordResetNewPasswordLabel: "Nova senha",
-            passwordResetNewPasswordPlaceholder: "Digite sua nova senha",
-            passwordResetButton: "Redefinir senha",
-            verificationCodeFormTitle: "Verifique seu e-mail",
-            verificationCodeFormSubtitle:
-              "Digite o código que enviamos para o seu e-mail.",
-          }}
-        />
+
+        <CustomSignInForm storeName={storeName} />
       </div>
     </AuthLayout>
   );
