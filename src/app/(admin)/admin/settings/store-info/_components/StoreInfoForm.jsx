@@ -199,7 +199,10 @@ export function StoreInfoForm({ initialData }) {
                                     disabled={isPending}
                                 />
                             </Label>
-                            <p className="text-xs text-slate-400 mt-2 text-center">Recomendado: 200x200px. PNG transparente.</p>
+                            <div className="mt-2 text-center flex items-center justify-center flex-col">
+                                <p className="text-xs text-slate-400">Dimensão ideal: <strong>160x60px</strong>.</p>
+                                <p className="text-xs text-slate-400">PNG transparente de até 2MB.</p>
+                            </div>
                         </div>
                     </div>
 
