@@ -16,7 +16,7 @@ export async function getDealershipInfo() {
         const dealership = await prisma.dealershipInfo.findFirst();
         return { success: true, data: dealership };
     } catch (error) {
-        console.error("Erro ao buscar informações da loja");
+        console.error("Erro ao buscar informações da loja:", error);
         return { success: false, error: "Falha ao buscar informações da loja." };
     }
 }

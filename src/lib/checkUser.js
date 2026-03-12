@@ -19,25 +19,29 @@ export const checkUser = async () => {
     const userEmail = user.emailAddresses[0]?.emailAddress;
     const userName = `${user.firstName || user.unsafeMetadata?.firstName || ""} ${user.lastName || user.unsafeMetadata?.lastName || ""}`.trim() || userEmail?.split("@")[0] || "Usuário";
 
+    // Busca usuário existente para evitar conflitos de email únicos se clerkUserId for novo mas email já existir
+    const existingByEmail = userEmail ? await db.user.findUnique({ where: { email: userEmail } }) : null;
+
     const dbUser = await db.user.upsert({
       where: { clerkUserId: userId },
       update: {
         name: userName,
         imageUrl: user.imageUrl,
-        email: userEmail,
+        email: userEmail || undefined, // Não atualiza se for nulo para evitar quebra de constraint se já houver outro nulo
         phone: user.unsafeMetadata?.phone || null,
       },
       create: {
         clerkUserId: userId,
         name: userName,
         imageUrl: user.imageUrl,
-        email: userEmail,
+        email: userEmail || `user_${userId}@placeholder.com`, // Fallback se Clerk não prover email
         phone: user.unsafeMetadata?.phone || null,
       },
     });
 
     return dbUser;
   } catch (error) {
+    console.error("Erro em checkUser:", error);
     return null;
   }
 };
