@@ -377,13 +377,24 @@ export default function VehicleDetail({ id }) {
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    className="flex-1 py-6 bg-green-600 text-white text-xl"
-                    onClick={() => toast.info("Em breve: Integração com WhatsApp do Vendedor!")}
-                  >
-                    <Whatsapp className="!h-8 !w-8 mr-0 transition-all duration-300" />
-                    Fale agora com um vendedor
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white text-lg"
+                      onClick={() => router.push(`/reservations/create?vehicleId=${vehicle.id}`)}
+                    >
+                      <Calendar className="mr-2 h-5 w-5" />
+                      Agendar Visita / Test Drive
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      className="w-full py-6 border-green-600 text-green-600 hover:bg-green-50 text-lg"
+                      onClick={() => toast.info("Em breve: Integração com WhatsApp do Vendedor!")}
+                    >
+                      <Whatsapp className="!h-6 !w-6 mr-2" />
+                      Fale agora com um vendedor
+                    </Button>
+                  </div>
                 )}
               </div>
             </aside>
