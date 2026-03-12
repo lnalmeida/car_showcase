@@ -4,6 +4,7 @@ import { db as prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { deepSerialize } from "@/lib/utils";
+import { checkUser } from "@/lib/checkUser";
 
 /**
  * Busca todos os agendamentos (Test Drives e Visitas) com filtros e paginação.
@@ -93,14 +94,13 @@ export async function upsertBooking(data) {
 
         let result;
 
-        // Validação de conflito de horário para o veículo
         if (payload.vehicleId) {
             const conflictingBookings = await prisma.visitBooking.findMany({
                 where: {
                     vehicleId: payload.vehicleId,
                     visitDate: payload.visitDate,
                     status: { notIn: ["CANCELLED", "COMPLETED"] },
-                    id: id ? { not: id } : undefined, // Ignora o próprio agendamento se for edição
+                    id: id ? { not: id } : undefined,
                     AND: [
                         { startTime: { lt: payload.endTime } },
                         { endTime: { gt: payload.startTime } }
@@ -113,20 +113,36 @@ export async function upsertBooking(data) {
             }
         }
 
+        // Limpar payload para conter apenas campos do VisitBooking
+        const dbPayload = {
+            userId: payload.userId || null,
+            dealershipInfoId: payload.dealershipInfoId || null,
+            visitDate: payload.visitDate,
+            startTime: payload.startTime,
+            endTime: payload.endTime,
+            status: payload.status || "PENDING",
+            notes: payload.notes || null,
+            isTestDrive: payload.isTestDrive || false,
+            clientName: payload.clientName || null,
+            clientPhone: payload.clientPhone || null,
+            clientEmail: payload.clientEmail || null,
+            vehicleId: payload.vehicleId || null,
+        };
+
         if (id) {
             result = await prisma.visitBooking.update({
                 where: { id },
-                data: payload
+                data: dbPayload
             });
         } else {
             // Busca o id da primeira concessionaria cadastrada
             const dealership = await prisma.dealershipInfo.findFirst();
             if (dealership) {
-                payload.dealershipInfoId = dealership.id;
+                dbPayload.dealershipInfoId = dealership.id;
             }
 
             result = await prisma.visitBooking.create({
-                data: payload
+                data: dbPayload
             });
         }
 
@@ -225,3 +241,165 @@ export async function getAvailableVehiclesForBooking(date, startTime, endTime) {
         return { success: false, error: "Falha ao buscar veículos livres" };
     }
 }
+
+/**
+ * Busca agendamentos do usuário logado.
+ */
+export async function getUserBookings() {
+    try {
+        const user = await checkUser();
+        if (!user) return { success: false, error: "Usuário não autenticado" };
+
+        const data = await prisma.visitBooking.findMany({
+            where: { userId: user.id },
+            include: {
+                Vehicle: {
+                    include: { brand: true }
+                }
+            },
+            orderBy: { visitDate: 'desc' }
+        });
+
+        return deepSerialize({ success: true, data });
+    } catch (error) {
+        console.error("Erro ao buscar reservas do usuário");
+        return { success: false, error: "Falha ao buscar suas reservas" };
+    }
+}
+
+/**
+ * Cancela um agendamento do usuário com validação de 24h.
+ */
+export async function cancelBookingByUser(id) {
+    try {
+        const user = await checkUser();
+        if (!user) return { success: false, error: "Usuário não autenticado" };
+
+        const booking = await prisma.visitBooking.findUnique({
+            where: { id, userId: user.id }
+        });
+
+        if (!booking) return { success: false, error: "Agendamento não encontrado" };
+
+        // Validação de 24h
+        const now = new Date();
+        const bookingTime = new Date(booking.visitDate);
+        const [hours, minutes] = booking.startTime.split(":");
+        bookingTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+        const diffInMs = bookingTime.getTime() - now.getTime();
+        const diffInHours = diffInMs / (1000 * 60 * 60);
+
+        if (diffInHours < 24) {
+            return { success: false, error: "Alterações e cancelamentos só são permitidos com 24h de antecedência." };
+        }
+
+        await prisma.visitBooking.update({
+            where: { id },
+            data: { status: "CANCELLED" }
+        });
+
+        revalidatePath("/reservations");
+        revalidatePath("/admin/test-drives");
+        return { success: true };
+    } catch (error) {
+        console.error("Erro ao cancelar reserva");
+        return { success: false, error: "Falha ao cancelar reserva" };
+    }
+}
+
+/**
+ * Atualiza um agendamento do usuário com validação de 24h e conflitos.
+ */
+export async function updateBookingByUser(id, data) {
+    try {
+        const user = await checkUser();
+        if (!user) return { success: false, error: "Usuário não autenticado" };
+
+        const booking = await prisma.visitBooking.findUnique({
+            where: { id, userId: user.id }
+        });
+
+        if (!booking) return { success: false, error: "Agendamento não encontrado" };
+
+        // Validação de 24h
+        const now = new Date();
+        const bookingTime = new Date(booking.visitDate);
+        const [hours, minutes] = booking.startTime.split(":");
+        bookingTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+        const diffInMs = bookingTime.getTime() - now.getTime();
+        if (diffInMs / (1000 * 60 * 60) < 24) {
+            return { success: false, error: "Alterações só são permitidas com 24h de antecedência." };
+        }
+
+        // Se mudar data/hora/veículo, validar conflitos
+        const payload = {
+            ...data,
+            visitDate: new Date(data.visitDate.includes("T") ? data.visitDate : `${data.visitDate}T00:00:00.000Z`),
+            status: "PENDING" // Sempre volta para pendente ao editar? Ou mantém se for CONFIRMED?
+            // "O usuário não pode alterar status... Sempre ao incluir um agendamento, o status é pendente."
+        };
+
+        if (payload.vehicleId) {
+            const conflicting = await prisma.visitBooking.findMany({
+                where: {
+                    vehicleId: payload.vehicleId,
+                    visitDate: payload.visitDate,
+                    status: { notIn: ["CANCELLED", "COMPLETED"] },
+                    id: { not: id },
+                    AND: [
+                        { startTime: { lt: payload.endTime } },
+                        { endTime: { gt: payload.startTime } }
+                    ]
+                }
+            });
+
+            if (conflicting.length > 0) {
+                return { success: false, error: "Este horário já está ocupado por outro cliente." };
+            }
+        }
+
+        await prisma.visitBooking.update({
+            where: { id },
+            data: payload
+        });
+
+        revalidatePath("/reservations");
+        revalidatePath("/admin/test-drives");
+        return { success: true };
+    } catch (error) {
+        console.error("Erro ao atualizar reserva");
+        return { success: false, error: "Falha ao atualizar reserva" };
+    }
+}
+
+/**
+ * Permite ao usuário confirmar um agendamento pendente.
+ */
+export async function confirmBookingByUser(id) {
+    try {
+        const user = await checkUser();
+        if (!user) return { success: false, error: "Usuário não autenticado" };
+
+        const booking = await prisma.visitBooking.findUnique({
+            where: { id, userId: user.id }
+        });
+
+        if (!booking) return { success: false, error: "Agendamento não encontrado" };
+        if (booking.status !== "PENDING") return { success: false, error: "Apenas agendamentos pendentes podem ser confirmados." };
+
+        await prisma.visitBooking.update({
+            where: { id },
+            data: { status: "CONFIRMED" }
+        });
+
+        revalidatePath("/reservations");
+        revalidatePath("/admin/test-drives");
+        return { success: true };
+    } catch (error) {
+        console.error("Erro ao confirmar reserva");
+        return { success: false, error: "Falha ao confirmar agendamento" };
+    }
+}
+
