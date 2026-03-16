@@ -1,7 +1,7 @@
 "use server";
 
 import { db as prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -11,17 +11,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function getCategories() {
-  try {
-    const categories = await prisma.category.findMany({
-      orderBy: { name: "asc" },
-    });
-    return { success: true, data: categories };
-  } catch (error) {
-    console.error("Erro ao buscar categorias");
-    return { success: false, error: "Falha ao buscar categorias." };
-  }
-}
+export const getCategories = unstable_cache(
+  async () => {
+    try {
+      const categories = await prisma.category.findMany({
+        orderBy: { name: "asc" },
+      });
+      return { success: true, data: categories };
+    } catch (error) {
+      console.error("Erro ao buscar categorias:", error);
+      return { success: false, error: "Falha ao buscar categorias." };
+    }
+  },
+  ["categories-list"],
+  { revalidate: 3600, tags: ["categories"] }
+);
 
 export async function createCategory(data) {
   try {
@@ -46,6 +50,7 @@ export async function createCategory(data) {
     });
     revalidatePath("/admin/settings/categories");
     revalidatePath("/");
+    revalidateTag("categories");
     return { success: true, data: category };
   } catch (error) {
     console.error("Erro ao criar categoria");
@@ -77,6 +82,7 @@ export async function updateCategory(id, data) {
     });
     revalidatePath("/admin/settings/categories");
     revalidatePath("/");
+    revalidateTag("categories");
     return { success: true, data: category };
   } catch (error) {
     console.error("Erro ao atualizar categoria");
@@ -96,6 +102,7 @@ export async function deleteCategory(id) {
     });
     revalidatePath("/admin/settings/categories");
     revalidatePath("/");
+    revalidateTag("categories");
     return { success: true };
   } catch (error) {
     console.error("Erro ao deletar categoria");

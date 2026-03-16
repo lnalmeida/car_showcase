@@ -1,7 +1,7 @@
 "use server";
 
 import { db as prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -11,20 +11,28 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function getVehicleTypes(categoryId) {
-    try {
-        const whereClause = categoryId ? { categoryId } : {};
-        const types = await prisma.vehicleType.findMany({
-            where: whereClause,
-            include: { category: true },
-            orderBy: { name: "asc" },
-        });
-        return { success: true, data: types };
-    } catch (error) {
-        console.error("Erro ao buscar tipos de veículos");
-        return { success: false, error: "Falha ao buscar tipos de veículos." };
-    }
-}
+export const getVehicleTypes = async (categoryId) => {
+  const getVehicleTypesCached = unstable_cache(
+    async (catId) => {
+      const whereClause = catId ? { categoryId: catId } : {};
+      return await prisma.vehicleType.findMany({
+        where: whereClause,
+        include: { category: true },
+        orderBy: { name: "asc" },
+      });
+    },
+    ["vehicle-types-list"],
+    { revalidate: 3600, tags: ["vehicle-types"] }
+  );
+
+  try {
+    const types = await getVehicleTypesCached(categoryId);
+    return { success: true, data: types };
+  } catch (error) {
+    console.error("Erro ao buscar tipos de veículos:", error);
+    return { success: false, error: "Falha ao buscar tipos de veículos." };
+  }
+};
 
 export async function createVehicleType(data) {
     try {
@@ -50,6 +58,7 @@ export async function createVehicleType(data) {
         });
         revalidatePath("/admin/settings/vehicle-types");
         revalidatePath("/");
+        revalidateTag("vehicle-types");
         return { success: true, data: type };
     } catch (error) {
         console.error("Erro ao criar tipo de veículo");
@@ -82,6 +91,7 @@ export async function updateVehicleType(id, data) {
         });
         revalidatePath("/admin/settings/vehicle-types");
         revalidatePath("/");
+        revalidateTag("vehicle-types");
         return { success: true, data: type };
     } catch (error) {
         console.error("Erro ao atualizar tipo de veículo");
@@ -101,6 +111,7 @@ export async function deleteVehicleType(id) {
         });
         revalidatePath("/admin/settings/vehicle-types");
         revalidatePath("/");
+        revalidateTag("vehicle-types");
         return { success: true };
     } catch (error) {
         console.error("Erro ao deletar tipo de veículo");

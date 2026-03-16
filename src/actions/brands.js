@@ -1,7 +1,7 @@
 "use server";
 
 import { db as prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -11,20 +11,28 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function getBrands(categoryId) {
-    try {
-        const whereClause = categoryId ? { categoryId } : {};
-        const brands = await prisma.brand.findMany({
-            where: whereClause,
-            include: { category: true },
-            orderBy: { name: "asc" },
-        });
-        return { success: true, data: brands };
-    } catch (error) {
-        console.error("Erro ao buscar marcas");
-        return { success: false, error: "Falha ao buscar marcas." };
-    }
-}
+export const getBrands = async (categoryId) => {
+  const getBrandsCached = unstable_cache(
+    async (catId) => {
+      const whereClause = catId ? { categoryId: catId } : {};
+      return await prisma.brand.findMany({
+        where: whereClause,
+        include: { category: true },
+        orderBy: { name: "asc" },
+      });
+    },
+    ["brands-list"],
+    { revalidate: 3600, tags: ["brands"] }
+  );
+
+  try {
+    const brands = await getBrandsCached(categoryId);
+    return { success: true, data: brands };
+  } catch (error) {
+    console.error("Erro ao buscar marcas:", error);
+    return { success: false, error: "Falha ao buscar marcas." };
+  }
+};
 
 export async function createBrand(data) {
     try {
@@ -50,6 +58,7 @@ export async function createBrand(data) {
         });
         revalidatePath("/admin/settings/brands");
         revalidatePath("/");
+        revalidateTag("brands");
         return { success: true, data: brand };
     } catch (error) {
         console.error("Erro ao criar marca");
@@ -82,6 +91,7 @@ export async function updateBrand(id, data) {
         });
         revalidatePath("/admin/settings/brands");
         revalidatePath("/");
+        revalidateTag("brands");
         return { success: true, data: brand };
     } catch (error) {
         console.error("Erro ao atualizar marca");
@@ -101,6 +111,7 @@ export async function deleteBrand(id) {
         });
         revalidatePath("/admin/settings/brands");
         revalidatePath("/");
+        revalidateTag("brands");
         return { success: true };
     } catch (error) {
         console.error("Erro ao deletar marca");

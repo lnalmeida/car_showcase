@@ -1,7 +1,7 @@
 "use server";
 
 import { db as prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -11,15 +11,19 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function getDealershipInfo() {
+export const getDealershipInfo = unstable_cache(
+  async () => {
     try {
-        const dealership = await prisma.dealershipInfo.findFirst();
-        return { success: true, data: dealership };
+      const dealership = await prisma.dealershipInfo.findFirst();
+      return { success: true, data: dealership };
     } catch (error) {
-        console.error("Erro ao buscar informações da loja:", error);
-        return { success: false, error: "Falha ao buscar informações da loja." };
+      console.error("Erro ao buscar informações da loja:", error);
+      return { success: false, error: "Falha ao buscar informações da loja." };
     }
-}
+  },
+  ["dealership-info"],
+  { revalidate: 3600, tags: ["dealership"] }
+);
 
 export async function upsertDealershipInfo(data) {
     try {
@@ -45,8 +49,11 @@ export async function upsertDealershipInfo(data) {
             address: data.address,
             phone: data.phone,
             email: data.email,
-            website: data.website,
-            socialMedia: data.socialMedia,
+            website: data.website || null,
+            socialMedia: data.socialMedia || null,
+            facebookUrl: data.facebookUrl || null,
+            instagramUrl: data.instagramUrl || null,
+            tiktokUrl: data.tiktokUrl || null,
             description: data.description,
             logoUrl: logoUrl,
         };
@@ -69,9 +76,11 @@ export async function upsertDealershipInfo(data) {
 
         revalidatePath("/admin/settings");
         revalidatePath("/");
+        revalidateTag("dealership");
+        
         return { success: true, data: result };
     } catch (error) {
-        console.error("Erro ao salvar informações da loja");
-        return { success: false, error: "Falha ao salvar as informações da loja." };
+        console.error("Erro ao salvar informações da loja:", error);
+        return { success: false, error: error.message || "Falha ao salvar as informações da loja." };
     }
 }

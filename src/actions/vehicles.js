@@ -7,7 +7,7 @@ import { fileToBase64, deepSerialize } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -205,6 +205,9 @@ export const addVehicle = async (formData) => {
     });
 
     revalidatePath("/admin/vehicles");
+    revalidatePath("/");
+    revalidateTag("vehicles");
+    revalidateTag("featured-vehicles");
 
     return {
       success: true,
@@ -389,6 +392,9 @@ export const updateVehicle = async (id, vehicleData) => {
 
 
     revalidatePath("/admin/vehicles");
+    revalidatePath("/");
+    revalidateTag("vehicles");
+    revalidateTag("featured-vehicles");
 
     return { success: true };
   } catch (error) {
@@ -477,6 +483,9 @@ export const updateVehicleComplete = async (formData) => {
     });
 
     revalidatePath("/admin/vehicles");
+    revalidatePath("/");
+    revalidateTag("vehicles");
+    revalidateTag("featured-vehicles");
 
     return {
       success: true,
@@ -544,6 +553,9 @@ export const removeVehicle = async (id) => {
     }
 
     revalidatePath("/admin/vehicles");
+    revalidatePath("/");
+    revalidateTag("vehicles");
+    revalidateTag("featured-vehicles");
 
     return {
       success: true,

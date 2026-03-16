@@ -1,7 +1,7 @@
 "use server";
 
 import { db as prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { deepSerialize } from "@/lib/utils";
 
 export async function createSale(data) {
@@ -38,6 +38,9 @@ export async function createSale(data) {
         revalidatePath("/admin/sales");
         revalidatePath(`/admin/vehicles/${vehicleId}`);
         revalidatePath("/"); // Atualiza o portal público
+        
+        revalidateTag("vehicles");
+        revalidateTag("featured-vehicles");
 
         return deepSerialize({ success: true, sale: result });
     } catch (error) {
