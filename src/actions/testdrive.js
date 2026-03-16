@@ -5,6 +5,23 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { deepSerialize } from "@/lib/utils";
 import { checkUser } from "@/lib/checkUser";
+import { z } from "zod";
+
+const bookingSchema = z.object({
+    id: z.string().optional(),
+    userId: z.string().nullable().optional(),
+    dealershipInfoId: z.string().nullable().optional(),
+    visitDate: z.string().min(1, "Data é obrigatória"),
+    startTime: z.string().min(1, "Horário de início é obrigatório"),
+    endTime: z.string().min(1, "Horário de término é obrigatório"),
+    status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"]).default("PENDING"),
+    notes: z.string().nullable().optional(),
+    isTestDrive: z.boolean().default(false),
+    clientName: z.string().min(1, "Nome é obrigatório"),
+    clientPhone: z.string().min(1, "Telefone é obrigatório"),
+    clientEmail: z.string().email("E-mail inválido").nullable().optional(),
+    vehicleId: z.string().nullable().optional(),
+});
 
 /**
  * Busca todos os agendamentos (Test Drives e Visitas) com filtros e paginação.
@@ -83,7 +100,8 @@ export async function getBooking(id) {
  */
 export async function upsertBooking(data) {
     try {
-        const { id, ...details } = data;
+        const validatedData = bookingSchema.parse(data);
+        const { id, ...details } = validatedData;
 
         // Limpeza de campos para o Prisma
         const payload = {
