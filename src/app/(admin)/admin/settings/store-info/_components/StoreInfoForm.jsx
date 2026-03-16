@@ -22,6 +22,9 @@ export function StoreInfoForm({ initialData }) {
         website: initialData?.website || "",
         address: initialData?.address || "",
         socialMedia: initialData?.socialMedia || "",
+        facebookUrl: initialData?.facebookUrl || "",
+        instagramUrl: initialData?.instagramUrl || "",
+        tiktokUrl: initialData?.tiktokUrl || "",
         description: initialData?.description || "",
         logoUrl: initialData?.logoUrl || "",
         imageBase64: null,
@@ -29,9 +32,25 @@ export function StoreInfoForm({ initialData }) {
 
     const [previewImage, setPreviewImage] = useState(initialData?.logoUrl || "");
 
+    const formatPhone = (value) => {
+        if (!value) return "";
+        const numbers = value.replace(/\D/g, "");
+        if (numbers.length <= 10) {
+            return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim();
+        } else {
+            return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim();
+        }
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        let finalValue = value;
+
+        if (name === "phone") {
+            finalValue = formatPhone(value);
+        }
+
+        setFormData((prev) => ({ ...prev, [name]: finalValue }));
     };
 
     const handleImageChange = (e) => {
@@ -140,26 +159,37 @@ export function StoreInfoForm({ initialData }) {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="website">Site Principal</Label>
+                            <Label htmlFor="instagramUrl">Instagram (URL)</Label>
                             <Input
-                                id="website"
-                                name="website"
-                                value={formData.website}
+                                id="instagramUrl"
+                                name="instagramUrl"
+                                value={formData.instagramUrl}
                                 onChange={handleInputChange}
-                                placeholder="https://sua-loja.com"
+                                placeholder="https://instagram.com/perfil"
                                 disabled={isPending}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="socialMedia">Instagram / Redes</Label>
+                            <Label htmlFor="facebookUrl">Facebook (URL)</Label>
                             <Input
-                                id="socialMedia"
-                                name="socialMedia"
-                                value={formData.socialMedia}
+                                id="facebookUrl"
+                                name="facebookUrl"
+                                value={formData.facebookUrl}
                                 onChange={handleInputChange}
-                                placeholder="@sualoja"
+                                placeholder="https://facebook.com/perfil"
+                                disabled={isPending}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tiktokUrl">TikTok (URL)</Label>
+                            <Input
+                                id="tiktokUrl"
+                                name="tiktokUrl"
+                                value={formData.tiktokUrl}
+                                onChange={handleInputChange}
+                                placeholder="https://tiktok.com/@perfil"
                                 disabled={isPending}
                             />
                         </div>
