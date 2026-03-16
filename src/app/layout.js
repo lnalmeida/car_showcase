@@ -33,6 +33,8 @@ export async function generateMetadata() {
   };
 }
 
+import Footer from "@/components/Footer";
+
 export default async function RootLayout({ children }) {
   const { getDealershipInfo } = await import("@/actions/dealership");
   const storeInfo = await getDealershipInfo();
@@ -49,30 +51,7 @@ export default async function RootLayout({ children }) {
             <QueryProvider>{children}</QueryProvider>
           </main>
           <Toaster richColors />
-          <footer className="p-12 flex bg-blue-50">
-            <div className="flex space-x-8 items-center text-gray-500">
-              <a
-                href="http://www.instagram.com"
-                target="_blank"
-                className="hover:text-blue-500 transition-colors duration-300"
-              >
-                <Instagram className="h-8 w-8" />
-              </a>
-              <a
-                href="http://www.facebook.com"
-                target="_blank"
-                className="hover:text-blue-500 transition-colors duration-300"
-              >
-                <Facebook className="h-8 w-8" />
-              </a>
-            </div>
-            <div className="mx-auto px-4 text-center text-gray-600">
-              <p>
-                Criado por <strong>LNDev&#174;</strong> -{" "}
-                {new Date().getFullYear()}.
-              </p>
-            </div>
-          </footer>
+          <Footer storeInfo={storeInfo} />
         </body>
       </html>
     </ClerkProvider>
