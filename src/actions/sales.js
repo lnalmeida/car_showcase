@@ -3,10 +3,29 @@
 import { db as prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { deepSerialize } from "@/lib/utils";
+import { z } from "zod";
+
+const saleSchema = z.object({
+    vehicleId: z.string().min(1, "Veículo é obrigatório"),
+    sellerId: z.string().nullable().optional(),
+    buyerName: z.string().min(1, "Nome do comprador é obrigatório"),
+    buyerEmail: z.string().email("E-mail inválido").nullable().optional(),
+    buyerPhone: z.string().min(1, "Telefone do comprador é obrigatório"),
+    buyerDocument: z.string().min(1, "Documento do comprador é obrigatório"),
+    saleDate: z.coerce.date().default(() => new Date()),
+    saleValue: z.coerce.number().min(0, "Valor da venda deve ser positivo"),
+    paymentMethod: z.string().min(1, "Método de pagamento é obrigatório"),
+    downPayment: z.coerce.number().min(0).default(0),
+    tradeInValue: z.coerce.number().min(0).default(0),
+    notes: z.string().nullable().optional(),
+    deliveryDate: z.coerce.date().nullable().optional(),
+    warrantyExpirationDate: z.coerce.date().nullable().optional(),
+});
 
 export async function createSale(data) {
     try {
-        const { vehicleId, sellerId, ...saleData } = data;
+        const validatedData = saleSchema.parse(data);
+        const { vehicleId, sellerId, ...saleData } = validatedData;
 
         // 1. Inicia uma transação para garantir que a venda crie o registro e atualize o carro
         const result = await prisma.$transaction(async (tx) => {
@@ -144,9 +163,12 @@ export async function getSale(id) {
 
 export async function updateSale(id, data) {
     try {
-        if (data.deliveryDate) {
+        const validatedData = saleSchema.partial().parse(data);
+        const dataToUpdate = { ...validatedData };
+        
+        if (dataToUpdate.deliveryDate) {
             const today = new Date();
-            if (new Date(data.deliveryDate) > today) {
+            if (new Date(dataToUpdate.deliveryDate) > today) {
                 return { success: false, error: "A data de entrega não pode ser no futuro." };
             }
         }
