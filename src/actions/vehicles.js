@@ -4,12 +4,36 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { serializeVehicleData } from "@/lib/helpers";
 import { fileToBase64, deepSerialize } from "@/lib/utils";
+import aj from "@/lib/arcjet";
+import { request } from "@arcjet/next";
 
 import { createClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { v2 as cloudinary } from "cloudinary";
+import { z } from "zod";
+
+const vehicleSchema = z.object({
+  categoryId: z.string().min(1, "Categoria é obrigatória"),
+  typeId: z.string().nullable().optional(),
+  brandId: z.string().nullable().optional(),
+  model: z.string().min(1, "Modelo é obrigatório"),
+  year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1),
+  price: z.coerce.number().min(0),
+  color: z.string().min(1, "Cor é obrigatória"),
+  featured: z.boolean().default(false),
+  seats: z.coerce.number().int().min(1).default(5),
+  doors: z.coerce.number().int().min(0).default(2),
+  engineSize: z.string().optional(),
+  mileage: z.coerce.number().int().min(0).default(0),
+  fuelType: z.string().optional(),
+  transmission: z.string().optional(),
+  description: z.string().optional(),
+  plate: z.string().optional(),
+  optionals: z.array(z.string()).optional(),
+  status: z.string().optional(),
+});
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -20,6 +44,28 @@ cloudinary.config({
 export const processVehicleImageWithAI = async (file) => {
 
   try {
+    // rate limit check com arcjet
+    const req = await request();
+
+    const decision = await aj.protect({
+      requested: 1,
+    });
+
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        console.error("Rate limit excedido na área administrativa");
+        return {
+          success: false,
+          error: "Limite de processamento de IA excedido. Tente novamente mais tarde.",
+        };
+      }
+      console.error("Requisição negada pelo Arcjet");
+      return {
+        success: false,
+        error: "Requisição negada por motivos de segurança. Tente novamente mais tarde.",
+      };
+    }
+
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("Missing GEMINI_API_KEY");
     }
@@ -131,9 +177,10 @@ export const processVehicleImageWithAI = async (file) => {
 
 export const addVehicle = async (formData) => {
 
-  const vehicleData = JSON.parse(formData.get("vehicleData"));
+  const vehicleDataRaw = JSON.parse(formData.get("vehicleData"));
   const images = formData.getAll("images");
   try {
+    const vehicleData = vehicleSchema.parse(vehicleDataRaw);
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
 
@@ -406,9 +453,10 @@ export const updateVehicle = async (id, vehicleData) => {
 export const updateVehicleComplete = async (formData) => {
 
   const vehicleId = formData.get("vehicleId");
-  const vehicleData = JSON.parse(formData.get("vehicleData"));
+  const vehicleDataRaw = JSON.parse(formData.get("vehicleData"));
   const images = formData.getAll("images");
   try {
+    const vehicleData = vehicleSchema.partial().parse(vehicleDataRaw);
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
 
