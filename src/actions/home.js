@@ -2,35 +2,45 @@
 
 import { db } from "@/lib/prisma";
 import { serializeVehicleData } from "@/lib/helpers";
+import { unstable_cache } from "next/cache"; 
 import { fileToBase64 } from "@/lib/utils";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import aj from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 
 //Busca os veículos em destaque
+//Busca os veículos em destaque com cache resiliente
 export const getFeaturedVehicles = async (limit = 3, userId = null) => {
-  try {
-    const featuredVehicles = await db.vehicle.findMany({
-      where: {
-        featured: true,
-        status: { not: "Vendido" },
-      },
-      take: limit,
-      include: {
-        category: true,
-        brand: true,
-        type: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  const getFeaturedVehiclesCached = unstable_cache(
+    async (limit) => {
+      return await db.vehicle.findMany({
+        where: {
+          featured: true,
+          status: { not: "Vendido" },
+        },
+        take: limit,
+        include: {
+          category: true,
+          brand: true,
+          type: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    },
+    ["featured-vehicles"],
+    { revalidate: 3600, tags: ["vehicles", "featured"] }
+  );
 
-    if (!featuredVehicles.length) {
+  try {
+    const featuredVehicles = await getFeaturedVehiclesCached(limit);
+
+    if (!featuredVehicles || !featuredVehicles.length) {
       return { success: false, message: "Não há veículos em destaque" };
     }
 
-    // Se há um usuário logado, buscar veículos salvos
+    // Se há um usuário logado, buscar veículos salvos (Não cacheado pois é por usuário)
     let savedVehicleIds = new Set();
     if (userId) {
       try {
@@ -41,7 +51,6 @@ export const getFeaturedVehicles = async (limit = 3, userId = null) => {
         savedVehicleIds = new Set(savedVehicles.map(sv => sv.vehicleId));
       } catch (error) {
         console.error("Erro ao buscar veículos salvos");
-        // Continua sem os dados de salvos em caso de erro
       }
     }
 
@@ -51,7 +60,7 @@ export const getFeaturedVehicles = async (limit = 3, userId = null) => {
 
     return { success: true, data: serializedFeaturedVehicles };
   } catch (error) {
-    console.error("Erro ao buscar veículos em destaque");
+    console.error("Erro ao buscar veículos em destaque:", error);
     return { success: false, message: "Erro ao buscar veículos em destaque" };
   }
 };

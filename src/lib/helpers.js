@@ -11,7 +11,7 @@ export const serializeVehicleData = async (vehicle, wishListed = false) => {
     brandId: vehicle.brandId || null,
     vehicleType: vehicle.type?.name || vehicle.vehicleType || "N/A",
     typeId: vehicle.typeId || null,
-    price: vehicle.price ? vehicle.price.toNumber().toFixed(2) : 0,
+    price: vehicle.price ? Number(vehicle.price).toFixed(2) : 0,
     createdAt: vehicle.createdAt,
     updatedAt: vehicle.updatedAt,
     wishListed: wishListed,

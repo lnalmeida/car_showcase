@@ -16,6 +16,8 @@ import { getVehicleTypes } from "@/actions/vehicleTypes";
 import { getFeaturedVehicles } from "@/actions/home";
 import { checkUser } from "@/lib/checkUser";
 
+export const revalidate = 3600; // revalidate at most every hour
+
 export default async function Home() {
   // SSR Data Fetching
   const [catsRes, brandsRes, typesRes] = await Promise.all([
