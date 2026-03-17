@@ -3,6 +3,7 @@
 import {auth, clerkClient} from "@clerk/nextjs/server";
 import {db} from "@/lib/prisma";
 import {revalidatePath} from "next/cache";
+import { logEvent } from "@/lib/logger";
 
 export const getUsersData = async (params = {}) => {
     try {
@@ -85,9 +86,16 @@ export const updateUserRole = async ({id, role}) => {
         });
 
         revalidatePath("/admin/users");
+
+        logEvent("user_role_update", { 
+          target_user_id: id, 
+          new_role: role 
+        }, user);
+
         return {success: true, data: updatedUser};
     } catch (error) {
         console.error("Erro ao atualizar usuário");
+        logEvent("user_role_update_error", { target_user_id: id, error: error.message }, user);
         return {success: false, error: error.message};
     }
 };
@@ -157,11 +165,17 @@ export const removeUser = async (id) => {
             };
         }
 
+        logEvent("user_delete", { 
+            target_user_id: id,
+            clerk_id: userToDelete.clerkUserId
+        }, user);
+
         return {
             success: true,
         };
     } catch (error) {
         console.error("Erro ao deletar usuário");
+        logEvent("user_delete_error", { target_user_id: id, error: error.message }, user);
         return {
             success: false,
             error: error.message,

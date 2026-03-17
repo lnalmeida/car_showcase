@@ -13,6 +13,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { v2 as cloudinary } from "cloudinary";
 import { z } from "zod";
+import { logEvent } from "@/lib/logger";
 
 const vehicleSchema = z.object({
   categoryId: z.string().min(1, "Categoria é obrigatória"),
@@ -168,6 +169,9 @@ export const processVehicleImageWithAI = async (file) => {
   } catch (error) {
     console.error("Erro na análise da imagem");
 
+    const { userId } = await auth();
+    logEvent("ai_vision_error", { error: error.message }, { clerkUserId: userId });
+
     return {
       success: false,
       error: `Erro na análise da imagem: ${error.message}`,
@@ -256,11 +260,21 @@ export const addVehicle = async (formData) => {
     revalidateTag("vehicles");
     revalidateTag("featured-vehicles");
 
+    logEvent("vehicle_create", { 
+      vehicle_id: vehicle.id, 
+      model: vehicle.model, 
+      category: vehicleData.category 
+    }, user);
+
     return {
       success: true,
     };
   } catch (error) {
     console.error("Erro ao adicionar veículo");
+    
+    const { userId } = await auth();
+    logEvent("vehicle_create_error", { error: error.message }, { clerkUserId: userId });
+    
     throw new Error(`Failed to add vehicle: ${error.message}`);
   }
 };
@@ -443,9 +457,15 @@ export const updateVehicle = async (id, vehicleData) => {
     revalidateTag("vehicles");
     revalidateTag("featured-vehicles");
 
+    logEvent("vehicle_update", { 
+      vehicle_id: id, 
+      changes: dataForDB 
+    }, user);
+
     return { success: true };
   } catch (error) {
     console.error("Erro ao atualizar veículo");
+    logEvent("vehicle_update_error", { vehicle_id: id, error: error.message }, user);
     return { success: false, error: error.message };
   }
 };
@@ -535,11 +555,17 @@ export const updateVehicleComplete = async (formData) => {
     revalidateTag("vehicles");
     revalidateTag("featured-vehicles");
 
+    logEvent("vehicle_update_complete", { 
+      vehicle_id: vehicleId, 
+      changes: vehicleData 
+    }, user);
+
     return {
       success: true,
     };
   } catch (error) {
     console.error("Erro ao atualizar veículo");
+    logEvent("vehicle_update_complete_error", { vehicle_id: vehicleId, error: error.message }, user);
     throw new Error(`Failed to update vehicle: ${error.message}`);
   }
 };
@@ -605,11 +631,17 @@ export const removeVehicle = async (id) => {
     revalidateTag("vehicles");
     revalidateTag("featured-vehicles");
 
+    logEvent("vehicle_delete", { 
+      vehicle_id: id,
+      images_removed: filePaths.length
+    }, user);
+
     return {
       success: true,
     };
   } catch (error) {
     console.error("Erro ao deletar veículo");
+    logEvent("vehicle_delete_error", { vehicle_id: id, error: error.message }, user);
     return {
       success: false,
       error: error.message,

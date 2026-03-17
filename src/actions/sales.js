@@ -2,6 +2,7 @@
 
 import { db as prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { logEvent } from "@/lib/logger";
 import { deepSerialize } from "@/lib/utils";
 import { z } from "zod";
 
@@ -60,10 +61,20 @@ export async function createSale(data) {
         
         revalidateTag("vehicles");
         revalidateTag("featured-vehicles");
+        revalidateTag("sales");
+
+        const { userId } = auth();
+        logEvent("vehicle_sell", {
+            vehicle_id: validatedData.vehicleId,
+            sale_price: validatedData.saleValue,
+            buyer_name: validatedData.buyerName
+        }, { clerkUserId: userId });
 
         return deepSerialize({ success: true, sale: result });
     } catch (error) {
-        console.error("Erro ao registrar venda");
+        console.error("Erro ao registrar venda", error);
+        const { userId } = auth();
+        logEvent("vehicle_sell_error", { vehicle_id: data?.vehicleId, error: error.message }, { clerkUserId: userId });
         return { success: false, error: "Falha ao registrar a venda no banco de dados." };
     }
 }
