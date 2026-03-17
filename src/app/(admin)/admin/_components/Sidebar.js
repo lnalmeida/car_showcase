@@ -5,7 +5,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-import { Calendar, Car, Cog, LayoutDashboard, Users, CheckCircle } from "lucide-react";
+import { Calendar, Car, Cog, LayoutDashboard, Users, CheckCircle, MessageSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,11 @@ const routes = [
     label: "Usuários",
     icon: Users,
     href: "/admin/users",
+  },
+  {
+    label: "Leads",
+    icon: MessageSquare,
+    href: "/admin/leads",
   },
   {
     label: "Configurações",
