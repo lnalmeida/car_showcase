@@ -3,6 +3,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 
 import { getAdmin } from "@/actions/admin";
+import { logEvent } from "@/lib/logger";
 
 import Header from "@/components/Header";
 import Sidebar from "./_components/Sidebar";
@@ -14,6 +15,12 @@ const AdminLayout = async ({ children }) => {
   if (!admin.authorized) {
     return notFound();
   }
+
+  // Registra o acesso administrativo (login no painel)
+  logEvent("administrative_access", { 
+    path: "/admin",
+    authorized: true 
+  }, admin.user);
 
   const { getDealershipInfo } = await import("@/actions/dealership");
   const storeInfo = await getDealershipInfo();
