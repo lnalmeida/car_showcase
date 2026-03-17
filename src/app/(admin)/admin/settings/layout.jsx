@@ -11,6 +11,7 @@ export default function SettingsLayout({ children }) {
                 <Link href="/admin/settings/categories" className="text-sm font-medium text-slate-500 hover:text-blue-700 transition-colors">Categorias</Link>
                 <Link href="/admin/settings/brands" className="text-sm font-medium text-slate-500 hover:text-blue-700 transition-colors">Marcas</Link>
                 <Link href="/admin/settings/vehicle-types" className="text-sm font-medium text-slate-500 hover:text-blue-700 transition-colors">Tipos de Veículos</Link>
+                <Link href="/admin/settings/integrations" className="text-sm font-medium text-slate-500 hover:text-blue-700 transition-colors">Integrações</Link>
             </div>
             {children}
         </div>

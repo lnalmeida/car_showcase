@@ -84,3 +84,32 @@ export async function upsertDealershipInfo(data) {
         return { success: false, error: error.message || "Falha ao salvar as informações da loja." };
     }
 }
+
+export async function updateIntegrationSettings(data) {
+    try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        const user = await prisma.user.findUnique({ where: { clerkUserId: userId } });
+        if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+
+        const existing = await prisma.dealershipInfo.findFirst();
+        if (!existing) throw new Error("Configurações da loja não encontradas.");
+
+        const result = await prisma.dealershipInfo.update({
+            where: { id: existing.id },
+            data: {
+                leadIntegration: data.leadIntegration,
+                leadWebhookUrl: data.leadWebhookUrl || null,
+                leadApiKey: data.leadApiKey || null,
+            }
+        });
+
+        revalidatePath("/admin/settings");
+        revalidateTag("dealership");
+
+        return { success: true, data: JSON.parse(JSON.stringify(result)) };
+    } catch (error) {
+        console.error("Erro ao salvar configurações de integração:", error);
+        return { success: false, error: error.message || "Falha ao salvar configurações." };
+    }
+}
