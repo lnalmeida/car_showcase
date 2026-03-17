@@ -30,6 +30,7 @@ import {
   MotorizationEngine,
   Whatsapp,
 } from "@/assets/icons/icons";
+import LeadForm from "./LeadForm";
 
 function Overlay({ open, onClose, children }) {
   if (!open) return null;
@@ -397,6 +398,13 @@ export default function VehicleDetail({ id }) {
                   </div>
                 )}
               </div>
+              
+              {!isAdmin && (
+                <LeadForm 
+                  vehicleName={`${vehicle.vehicleBrand} ${vehicle.model}`} 
+                  vehicleId={vehicle.id} 
+                />
+              )}
             </aside>
           </div>
 
