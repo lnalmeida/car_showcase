@@ -10,23 +10,29 @@ datasource db {
 }
 
 model DealershipInfo {
-  id            String         @id @default(uuid())
-  name          String         @default("JF Veículos")
-  address       String         @default("Av. Leonel de Moura Brizola, nº 1990, Pilar, Duque de Caxias, RJ")
-  phone         String?        @default("+55 21 98217-4174")
-  email         String?        @default("contato@jfveiculospillar.com.br")
-  website       String?        @default("https://jfveiculospillar.com.br")
-  socialMedia   String?        @default("https://www.instagram.com/jfveiculospillar/")
-  facebookUrl   String?
-  instagramUrl  String?
-  tiktokUrl     String?
-  logoUrl       String?        @default("https://jfveiculospillar.com.br/logo.png")
-  description   String?        @default("A JF Veículos é uma concessionária localizada em Pilar, Duque de Caxias, RJ, especializada na venda de carros e motos novos e seminovos. Oferecemos uma ampla gama de veículos de qualidade, com opções para todos os gostos e orçamentos. Nossa equipe está pronta para ajudar você a encontrar o veículo ideal.")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  workingHourId String
-  visitBookings VisitBooking[]
-  workingHours  WorkingHour[]
+  id               String           @id @default(uuid())
+  name             String           @default("JF Veículos")
+  address          String           @default("Av. Leonel de Moura Brizola, nº 1990, Pilar, Duque de Caxias, RJ")
+  phone            String?          @default("+55 21 98217-4174")
+  email            String?          @default("contato@jfveiculospillar.com.br")
+  website          String?          @default("https://jfveiculospillar.com.br")
+  socialMedia      String?          @default("https://www.instagram.com/jfveiculospillar/")
+  facebookUrl      String?
+  instagramUrl     String?
+  tiktokUrl        String?
+  logoUrl          String?          @default("https://jfveiculospillar.com.br/logo.png")
+  description      String?          @default("A JF Veículos é uma concessionária localizada em Pilar, Duque de Caxias, RJ, especializada na venda de carros e motos novos e seminovos. Oferecemos uma ampla gama de veículos de qualidade, com opções para todos os gostos e orçamentos. Nossa equipe está pronta para ajudar você a encontrar o veículo ideal.")
+  
+  // Lead Integration Settings
+  leadIntegration  LeadIntegration  @default(NONE)
+  leadWebhookUrl   String?
+  leadApiKey       String?          // Can be used for RD Station or other services
+  
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  workingHourId    String
+  visitBookings    VisitBooking[]
+  workingHours     WorkingHour[]
 
   @@map("dealership_info")
 }
@@ -95,6 +101,7 @@ model Vehicle {
   transmission String             @default("Manual")
   savedBy      UserSavedVehicle[]
   visits       VisitBooking[]
+  leads        Lead[]
   sale         Sale?
 
   @@index([status])
@@ -166,6 +173,20 @@ model WorkingHour {
   @@index([dayOfWeek])
   @@index([isOpen])
   @@map("working_hours")
+}
+
+enum LeadIntegration {
+  NONE
+  RDSTATION
+  WEBHOOK
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  CLOSED
+  DISCARDED
 }
 
 enum UserRole {
@@ -269,4 +290,21 @@ model Sale {
   @@index([sellerId])
   @@index([saleDate])
   @@map("sales")
+}
+
+model Lead {
+  id          String     @id @default(uuid())
+  name        String
+  phone       String
+  email       String
+  message     String     @db.Text
+  status      LeadStatus @default(NEW)
+  vehicleId   String
+  vehicle     Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+
+  @@index([vehicleId])
+  @@index([email])
+  @@index([createdAt])
+  @@map("leads")
 }
