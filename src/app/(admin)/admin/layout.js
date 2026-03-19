@@ -1,6 +1,6 @@
 import React from "react";
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { getAdmin } from "@/actions/admin";
 import { logEvent } from "@/lib/logger";
@@ -13,6 +13,11 @@ const AdminLayout = async ({ children }) => {
   const admin = await getAdmin();
 
   if (!admin.authorized) {
+    // Usuário logado mas sem permissão de admin → redireciona para página de acesso negado
+    // Usuário não logado → já é interceptado pelo middleware Clerk antes de chegar aqui
+    if (admin.reason === "not-admin") {
+      redirect("/unauthorized");
+    }
     return notFound();
   }
 
