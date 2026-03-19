@@ -75,7 +75,7 @@ export default async function Home() {
           </div>
 
           <React.Suspense fallback={
-            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="bg-white rounded-lg shadow-md border animate-pulse">
                   <div className="aspect-video bg-gray-200"></div>
@@ -215,9 +215,9 @@ async function FeaturedSection() {
   const featuredVehicles = featuredVehRes.success ? (featuredVehRes.data || []) : [];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-54 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
       {featuredVehicles.map((vehicle, index) => (
-        <VehicleCard key={vehicle.id} vehicle={vehicle} priority={index < 2} />
+        <VehicleCard key={vehicle.id} vehicle={vehicle} userId={userId} priority={index < 2} />
       ))}
     </div>
   );
