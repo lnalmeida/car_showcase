@@ -69,7 +69,7 @@ const STATIC_DATA = {
   },
 };
 
-const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
+const VehicleFilter = ({ data = [], CardComponent = null, className, userId = null }) => {
   const router = useRouter();
   // Gera configuração baseada nos dados + dados estáticos
   const filterConfig = useMemo(() => {
@@ -1061,7 +1061,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
         </h3>
 
         <div className="mb-3">
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-2xl font-bold text-black">
             R$ {parseFloat(vehicle.price).toLocaleString("pt-BR")}
           </div>
         </div>
@@ -1201,7 +1201,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                 placeholder="Buscar por nome, marca ou modelo..."
                 value={filters.searchText}
                 onChange={(e) => updateFilters({ searchText: e.target.value })}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
               />
               {filters.searchText && (
                 <button
@@ -1226,19 +1226,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                 <AccordionTrigger
                   className={cn(
                     "text-base font-medium",
-                    hasActiveFilter("category") && "text-blue-600 font-semibold"
+                    hasActiveFilter("category") && "text-black font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <Car
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("category") && "text-blue-600"
+                        hasActiveFilter("category") && "text-black"
                       )}
                     />
                     <span>Categoria</span>
                     {hasActiveFilter("category") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
@@ -1251,7 +1251,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.category === category
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1272,19 +1272,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                     className={cn(
                       "text-base font-medium",
                       hasActiveFilter("vehicle-type") &&
-                      "text-blue-600 font-semibold"
+                      "text-black font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <CarFront
                         className={cn(
                           "h-4 w-4",
-                          hasActiveFilter("vehicle-type") && "text-blue-600"
+                          hasActiveFilter("vehicle-type") && "text-black"
                         )}
                       />
                       <span>Tipo</span>
                       {hasActiveFilter("vehicle-type") && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                        <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1297,7 +1297,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.vehicleType === "all-types"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1310,7 +1310,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                           className={cn(
                             "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                             filters.vehicleType === type
-                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              ? "bg-black text-white hover:bg-zinc-800"
                               : "hover:bg-gray-100"
                           )}
                         >
@@ -1328,19 +1328,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   className={cn(
                     "text-base font-medium",
                     hasActiveFilter("price-range") &&
-                    "text-blue-600 font-semibold"
+                    "text-black font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <DollarSign
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("price-range") && "text-blue-600"
+                        hasActiveFilter("price-range") && "text-black"
                       )}
                     />
                     <span>Preço</span>
                     {hasActiveFilter("price-range") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
@@ -1379,19 +1379,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   className={cn(
                     "text-base font-medium",
                     hasActiveFilter("year-range") &&
-                    "text-blue-600 font-semibold"
+                    "text-black font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <Calendar
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("year-range") && "text-blue-600"
+                        hasActiveFilter("year-range") && "text-black"
                       )}
                     />
                     <span>Ano</span>
                     {hasActiveFilter("year-range") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
@@ -1424,19 +1424,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   className={cn(
                     "text-base font-medium",
                     hasActiveFilter("odometer-range") &&
-                    "text-blue-600 font-semibold"
+                    "text-black font-semibold"
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <MapPin
                       className={cn(
                         "h-4 w-4",
-                        hasActiveFilter("odometer-range") && "text-blue-600"
+                        hasActiveFilter("odometer-range") && "text-black"
                       )}
                     />
                     <span>Quilometragem</span>
                     {hasActiveFilter("odometer-range") && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                      <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                     )}
                   </div>
                 </AccordionTrigger>
@@ -1469,19 +1469,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   <AccordionTrigger
                     className={cn(
                       "text-base font-medium",
-                      hasActiveFilter("brand") && "text-blue-600 font-semibold"
+                      hasActiveFilter("brand") && "text-black font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <Tag
                         className={cn(
                           "h-4 w-4",
-                          hasActiveFilter("brand") && "text-blue-600"
+                          hasActiveFilter("brand") && "text-black"
                         )}
                       />
                       <span>Marca</span>
                       {hasActiveFilter("brand") && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                        <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1497,7 +1497,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.brand === "all-brands"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1512,7 +1512,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                           className={cn(
                             "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                             filters.brand === brand
-                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              ? "bg-black text-white hover:bg-zinc-800"
                               : "hover:bg-gray-100"
                           )}
                         >
@@ -1530,19 +1530,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   <AccordionTrigger
                     className={cn(
                       "text-base font-medium",
-                      hasActiveFilter("model") && "text-blue-600 font-semibold"
+                      hasActiveFilter("model") && "text-black font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <Package
                         className={cn(
                           "h-4 w-4",
-                          hasActiveFilter("model") && "text-blue-600"
+                          hasActiveFilter("model") && "text-black"
                         )}
                       />
                       <span>Modelo</span>
                       {hasActiveFilter("model") && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                        <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1553,7 +1553,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.model === "all-models"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1566,7 +1566,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                           className={cn(
                             "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                             filters.model === model
-                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              ? "bg-black text-white hover:bg-zinc-800"
                               : "hover:bg-gray-100"
                           )}
                         >
@@ -1584,19 +1584,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   <AccordionTrigger
                     className={cn(
                       "text-base font-medium",
-                      hasActiveFilter("engine") && "text-blue-600 font-semibold"
+                      hasActiveFilter("engine") && "text-black font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <MotorizationEngine
                         className={cn(
                           "h-4 w-4",
-                          hasActiveFilter("engine") && "text-blue-600"
+                          hasActiveFilter("engine") && "text-black"
                         )}
                       />
                       <span>Motorização</span>
                       {hasActiveFilter("engine") && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                        <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1607,7 +1607,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.engine === "all-engines"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1620,7 +1620,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                           className={cn(
                             "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                             filters.engine === engine
-                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              ? "bg-black text-white hover:bg-zinc-800"
                               : "hover:bg-gray-100"
                           )}
                         >
@@ -1639,19 +1639,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                     className={cn(
                       "text-base font-medium",
                       hasActiveFilter("transmission") &&
-                      "text-blue-600 font-semibold"
+                      "text-black font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <ManualTransmissions
                         className={cn(
                           "h-4 w-4",
-                          hasActiveFilter("transmission") && "text-blue-600"
+                          hasActiveFilter("transmission") && "text-black"
                         )}
                       />
                       <span>Câmbio</span>
                       {hasActiveFilter("transmission") && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                        <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1664,7 +1664,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.transmission === "all-transmissions"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1677,7 +1677,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                           className={cn(
                             "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                             filters.transmission === transmission
-                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              ? "bg-black text-white hover:bg-zinc-800"
                               : "hover:bg-gray-100"
                           )}
                         >
@@ -1695,19 +1695,19 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                   <AccordionTrigger
                     className={cn(
                       "text-base font-medium",
-                      hasActiveFilter("fuel") && "text-blue-600 font-semibold"
+                      hasActiveFilter("fuel") && "text-black font-semibold"
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <Fuel
                         className={cn(
                           "h-4 w-4",
-                          hasActiveFilter("fuel") && "text-blue-600"
+                          hasActiveFilter("fuel") && "text-black"
                         )}
                       />
                       <span>Combustível</span>
                       {hasActiveFilter("fuel") && (
-                        <div className="h-2 w-2 bg-blue-600 rounded-full ml-auto"></div>
+                        <div className="h-2 w-2 bg-black rounded-full ml-auto"></div>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1718,7 +1718,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                           filters.fuel === "all-fuels"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            ? "bg-black text-white hover:bg-zinc-800"
                             : "hover:bg-gray-100"
                         )}
                       >
@@ -1731,7 +1731,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
                           className={cn(
                             "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
                             filters.fuel === fuel
-                              ? "bg-blue-500 text-white hover:bg-blue-600"
+                              ? "bg-black text-white hover:bg-zinc-800"
                               : "hover:bg-gray-100"
                           )}
                         >
@@ -1765,7 +1765,7 @@ const VehicleFilter = ({ data = [], CardComponent = null, className }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredVehicles.map((vehicle) =>
                 CardComponent ? (
-                  <CardComponent key={vehicle.id} vehicle={vehicle} />
+                  <CardComponent key={vehicle.id} vehicle={vehicle} userId={userId} />
                 ) : (
                   <DefaultVehicleCard key={vehicle.id} vehicle={vehicle} />
                 )

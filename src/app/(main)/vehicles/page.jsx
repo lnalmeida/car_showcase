@@ -4,6 +4,7 @@
 import React from "react";
 import { getSearchedVehicles } from "@/actions/home"; // Sua Server Action para buscar veículos públicos
 import CarList, { VehiclesList } from "./_components/VehiclesList"; // O Client Component que usará TanStack Query
+import { checkUser } from "@/lib/checkUser";
 
 export default async function CarsPage({ searchParams }) {
   // 1. Parseia os parâmetros de busca da URL
@@ -20,6 +21,9 @@ export default async function CarsPage({ searchParams }) {
 
   const hasFilters = Boolean(search || brand || category || type || color || fromImage || Object.keys(restParams).length > 0);
 
+  // Fix #10: obtém userId do DB para habilitar favoritos
+  const user = await checkUser();
+
   // 3. Renderiza o Client Component, passando os filtros como props
   return (
     <>
@@ -31,7 +35,7 @@ export default async function CarsPage({ searchParams }) {
         </div>
       </section>
       <section>
-        <VehiclesList filters={filters} />
+        <VehiclesList filters={filters} userId={user?.id || null} />
       </section>
     </>
   );

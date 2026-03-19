@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import VehicleFilter from "./VehicleFilter";
 import VehicleCard from "@/components/VehicleCard";
 
-export const VehiclesList = () => {
+export const VehiclesList = ({ userId = null }) => {
   const searchParams = useSearchParams();
 
   const {
@@ -22,7 +22,7 @@ export const VehiclesList = () => {
 
   return (
     <div>
-      <VehicleFilter CardComponent={VehicleCard} data={filteredVehicles} />
+      <VehicleFilter CardComponent={VehicleCard} data={filteredVehicles} userId={userId} />
     </div>
   );
 };
