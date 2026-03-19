@@ -162,7 +162,7 @@ const CustomSignUpForm = ({ storeName }) => {
                             required
                         />
                     </div>
-                    <Button disabled={loading} className="w-full h-11 bg-blue-600 hover:bg-blue-700">
+                    <Button disabled={loading} className="w-full h-11 bg-black hover:bg-zinc-800">
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verificar Código"}
                     </Button>
                 </form>
@@ -247,7 +247,7 @@ const CustomSignUpForm = ({ storeName }) => {
                         </div>
 
                         <div className="pt-2">
-                            <Button disabled={loading} type="submit" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-lg font-semibold shadow-lg shadow-blue-100 transition-all active:scale-[0.98]">
+                            <Button disabled={loading} type="submit" className="w-full h-12 bg-black hover:bg-zinc-800 text-lg font-semibold shadow-lg transition-all active:scale-[0.98]">
                                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Criar Minha Conta"}
                             </Button>
                         </div>

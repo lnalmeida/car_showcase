@@ -23,7 +23,7 @@ export default function TestDrivesPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Link href="/admin/test-drives/create">
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Button className="bg-black hover:bg-zinc-800">
                             <Plus className="mr-2 h-4 w-4" /> Novo Agendamento
                         </Button>
                     </Link>

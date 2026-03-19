@@ -94,7 +94,7 @@ export default async function SavedCarsPage() {
                 Você ainda não salvou nenhum veículo como favorito.
               </p>
               <Link href="/vehicles">
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-black hover:bg-zinc-800">
                   Explorar Veículos
                 </Button>
               </Link>
@@ -103,7 +103,7 @@ export default async function SavedCarsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {savedVehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
+              <VehicleCard key={vehicle.id} vehicle={vehicle} userId={user.id} />
             ))}
           </div>
         )}

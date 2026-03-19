@@ -565,7 +565,7 @@ const SoldVehiclesList = () => {
                         </DialogClose>
                         {saleToView && !saleToView.deliveryDate && (
                             <Button
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 font-bold"
+                                className="bg-black hover:bg-zinc-800 text-white px-6 font-bold"
                                 onClick={() => router.push(`/admin/sales/edit/${saleToView.id}`)}
                             >
                                 Editar Detalhes da Venda

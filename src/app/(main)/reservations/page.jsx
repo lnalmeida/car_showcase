@@ -51,7 +51,7 @@ export default async function ReservationsPage() {
             </div>
           </div>
           <Link href="/reservations/create">
-            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+            <Button className="bg-black hover:bg-zinc-800 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Novo Agendamento
             </Button>
@@ -76,7 +76,7 @@ export default async function ReservationsPage() {
               Você ainda não tem agendamentos realizados. Solicite um agora mesmo para conhecer seu próximo carro!
             </p>
             <Link href="/reservations/create">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" className="bg-black hover:bg-zinc-800">
                 Criar Primeiro Agendamento
               </Button>
             </Link>

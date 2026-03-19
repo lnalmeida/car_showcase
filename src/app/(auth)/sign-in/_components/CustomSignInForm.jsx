@@ -123,7 +123,7 @@ const CustomSignInForm = ({ storeName }) => {
                             autoFocus
                         />
                     </div>
-                    <Button disabled={loading} className="w-full h-11 bg-blue-600 hover:bg-blue-700">
+                    <Button disabled={loading} className="w-full h-11 bg-black hover:bg-zinc-800">
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Entrar na Conta"}
                     </Button>
                 </form>
@@ -145,7 +145,7 @@ const CustomSignInForm = ({ storeName }) => {
                             />
                         </div>
 
-                        <Button disabled={loading} type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-semibold shadow-md shadow-blue-100 transition-all active:scale-[0.98]">
+                        <Button disabled={loading} type="submit" className="w-full h-11 bg-black hover:bg-zinc-800 font-semibold shadow-md transition-all active:scale-[0.98]">
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Receber Código de Login"}
                         </Button>
                     </form>

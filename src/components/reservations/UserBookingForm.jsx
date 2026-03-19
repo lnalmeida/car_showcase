@@ -255,7 +255,7 @@ export default function UserBookingForm({ user, initialData = null, initialVehic
 
             <div className="flex flex-col sm:flex-row gap-3">
                 <Button variant="ghost" type="button" className="flex-1" onClick={() => router.back()}>Voltar</Button>
-                <Button type="submit" disabled={loading} className="flex-[2] bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" disabled={loading} className="flex-[2] bg-black hover:bg-zinc-800">
                     {loading ? "Processando..." : (isEdit ? "Salvar Alterações" : "Solicitar Agendamento")}
                 </Button>
             </div>

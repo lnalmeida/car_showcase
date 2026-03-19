@@ -216,7 +216,7 @@ export default function BookingForm() {
                             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
                                 Preencha a data e horário acima para consultar quais veículos estão disponíveis neste momento. (Opcional - Pode manter vazio se for só uma visita padrão à loja)
                             </p>
-                            <Button type="button" onClick={handleOpenVehicleModal} className="bg-blue-600 hover:bg-blue-700">
+                            <Button type="button" onClick={handleOpenVehicleModal} className="bg-black hover:bg-zinc-800">
                                 Consultar Disponibilidade
                             </Button>
                         </div>
@@ -296,7 +296,7 @@ export default function BookingForm() {
                 <Button variant="outline" type="button" onClick={() => router.back()}>
                     Cancelar
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                <Button type="submit" className="bg-black hover:bg-zinc-800" disabled={loading}>
                     {loading ? "Cadastrando..." : "Confirmar Agendamento"}
                 </Button>
             </div>
@@ -355,7 +355,7 @@ export default function BookingForm() {
                                             </p>
                                         </div>
                                     </div>
-                                    <Button onClick={() => handleSelectVehicle(v)} className="bg-blue-600 hover:bg-blue-700">
+                                    <Button onClick={() => handleSelectVehicle(v)} className="bg-black hover:bg-zinc-800">
                                         Selecionar
                                     </Button>
                                 </div>

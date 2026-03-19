@@ -317,7 +317,7 @@ export default function SaleForm({ vehicle, sellerId, sale = null }) {
                 <Button variant="outline" type="button" onClick={() => router.back()}>
                     Cancelar
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                <Button type="submit" className="bg-black hover:bg-zinc-800" disabled={loading}>
                     {loading ? "Processando..." : (isEdit ? "Salvar Alterações na Venda" : "Fechar Venda e Baixar Estoque")}
                 </Button>
             </div>

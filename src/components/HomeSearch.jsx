@@ -40,7 +40,7 @@ const HomeSearch = () => {
 
   const handleImageSearch = async (e) => {
     e.preventDefault();
-    void("🚀 Iniciando busca por imagem");
+    // Fix #5: void() de debug removidos
     if (!imageFile) {
       toast.error("Por favor, selecione uma imagem");
       return;
@@ -48,20 +48,14 @@ const HomeSearch = () => {
 
     searchByImage(imageFile, {
       onSuccess: (data) => {
-        void("🎨 Dados da IA no HomeSearch onSuccess:", data); // Debug
-
         const queryParams = new URLSearchParams();
 
         queryParams.append("fromImage", "true");
-        // Mapear os campos corretamente
         if (data.category) queryParams.append("category", data.category);
         if (data.type) queryParams.append("type", data.type);
-        if (data.brand) queryParams.append("brand", data.brand); // brand, não vehicleBrand
-
-        void("dados: " + data);
+        if (data.brand) queryParams.append("brand", data.brand);
 
         const queryString = queryParams.toString();
-        void("🔗 Query string:", queryString); // Debug
 
         if (queryString) {
           router.push(`/vehicles?${queryString}`);
@@ -132,11 +126,11 @@ const HomeSearch = () => {
             <Camera
               size={50}
               onClick={() => setIsImageSearchActive(!isImageSearchActive)}
-              className="cursor-pointer rounded-xl p-1.5 ml-2 text-gray-400 hover:text-gray-500 transition duration-300"
-              style={{
-                background: isImageSearchActive ? "#F0F8FF" : "",
-                color: isImageSearchActive ? "black" : "",
-              }}
+              className={`cursor-pointer rounded-xl p-1.5 ml-2 transition duration-300 ${
+                isImageSearchActive
+                  ? "bg-[#F0F8FF] text-black"
+                  : "text-gray-400 hover:text-gray-500"
+              }`}
             />
           </div>
 

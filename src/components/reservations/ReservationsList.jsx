@@ -117,7 +117,7 @@ export function ReservationsList({ initialBookings }) {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogAction className="bg-blue-600">Entendido</AlertDialogAction>
+                        <AlertDialogAction className="bg-black">Entendido</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

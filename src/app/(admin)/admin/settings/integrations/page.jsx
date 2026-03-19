@@ -137,7 +137,7 @@ export default function IntegrationsSettingsPage() {
           )}
 
           <div className="pt-6 border-t flex justify-end">
-            <Button disabled={saving} onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+            <Button disabled={saving} onClick={handleSave} className="bg-black hover:bg-zinc-800">
               {saving ? (
                 <>
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />

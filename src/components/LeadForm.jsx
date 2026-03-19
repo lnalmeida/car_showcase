@@ -115,7 +115,7 @@ export default function LeadForm({ vehicleName, vehicleId }) {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg transition-all duration-200"
+          className="w-full py-6 bg-black hover:bg-zinc-800 text-white font-bold text-lg transition-all duration-200"
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">

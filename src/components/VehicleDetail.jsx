@@ -380,7 +380,7 @@ export default function VehicleDetail({ id }) {
                 ) : (
                   <div className="flex flex-col gap-3">
                     <Button
-                      className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white text-lg"
+                      className="w-full py-6 bg-black hover:bg-zinc-800 text-white text-lg"
                       onClick={() => router.push(`/reservations/create?vehicleId=${vehicle.id}`)}
                     >
                       <Calendar className="mr-2 h-5 w-5" />
@@ -639,12 +639,11 @@ export default function VehicleDetail({ id }) {
           <div className="bg-white border rounded-lg p-8 text-center bg-gray-50/50">
             <p className="text-gray-700 text-lg mb-4">Veículo não encontrado ou não está mais disponível.</p>
             <div className="mt-4">
-              <Button onClick={() => router.back()} className="bg-blue-600 hover:bg-blue-700">Voltar</Button>
-            </div>
+                <Button onClick={() => router.back()} className="bg-black hover:bg-zinc-800">Voltar</Button>
+              </div>
           </div>
         </div>
       </div>
     );
   }
 }
-
