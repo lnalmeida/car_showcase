@@ -8,51 +8,45 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import aj from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 
-//Busca os veículos em destaque
-//Busca os veículos em destaque com cache resiliente
-export const getFeaturedVehicles = async (limit = 3, userId = null) => {
-  const getFeaturedVehiclesCached = unstable_cache(
-    async (limit) => {
-      return await db.vehicle.findMany({
-        where: {
-          featured: true,
-          status: { not: "Vendido" },
-        },
-        take: limit,
-        include: {
-          category: true,
-          brand: true,
-          type: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    },
-    ["featured-vehicles"],
-    { revalidate: 3600, tags: ["vehicles", "featured"] }
-  );
+// Cache criado uma única vez no escopo de módulo (Fix #1)
+const getFeaturedVehiclesCached = unstable_cache(
+  async (limit) => {
+    return await db.vehicle.findMany({
+      where: {
+        featured: true,
+        status: { not: "Vendido" },
+      },
+      take: limit,
+      include: {
+        category: true,
+        brand: true,
+        type: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  },
+  ["featured-vehicles"],
+  { revalidate: 3600, tags: ["vehicles", "featured"] }
+);
 
+// Busca os veículos em destaque
+export const getFeaturedVehicles = async (limit = 3, userId = null) => {
   try {
-    const featuredVehicles = await getFeaturedVehiclesCached(limit);
+    // Fix #6: paralelizar busca de featured e saved quando userId presente
+    const [featuredVehicles, savedVehicles] = await Promise.all([
+      getFeaturedVehiclesCached(limit),
+      userId
+        ? db.userSavedVehicle.findMany({ where: { userId }, select: { vehicleId: true } }).catch(() => [])
+        : Promise.resolve([]),
+    ]);
 
     if (!featuredVehicles || !featuredVehicles.length) {
       return { success: false, message: "Não há veículos em destaque" };
     }
 
-    // Se há um usuário logado, buscar veículos salvos (Não cacheado pois é por usuário)
-    let savedVehicleIds = new Set();
-    if (userId) {
-      try {
-        const savedVehicles = await db.userSavedVehicle.findMany({
-          where: { userId },
-          select: { vehicleId: true }
-        });
-        savedVehicleIds = new Set(savedVehicles.map(sv => sv.vehicleId));
-      } catch (error) {
-        console.error("Erro ao buscar veículos salvos");
-      }
-    }
+    const savedVehicleIds = new Set(savedVehicles.map((sv) => sv.vehicleId));
 
     const serializedFeaturedVehicles = await Promise.all(
       featuredVehicles.map((fv) => serializeVehicleData(fv, savedVehicleIds.has(fv.id)))
