@@ -33,14 +33,34 @@ const VehicleCard = ({ vehicle, userId = null, priority = false }) => {
           : await unsaveUserVehicles(idUser, idVehicle);
       return { res, type };
     },
+    onMutate: async ({ idVehicle, type }) => {
+      if (type !== "unsave") return {};
+
+      // Cancela qualquer re-fetch em andamento para o cache não sobrescrever nosso update otimista
+      await queryClient.cancelQueries({ queryKey: ["savedVehicles"] });
+
+      // Faz snapshot do estado anterior para rollback em caso de erro
+      const previousSaved = queryClient.getQueryData(["savedVehicles"]);
+
+      // Remove o veículo do cache instantaneamente
+      queryClient.setQueryData(["savedVehicles"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: (old.data || []).filter((v) => v.id !== idVehicle),
+        };
+      });
+
+      return { previousSaved };
+    },
     onSuccess: ({ res, type }) => {
       if (res.success) {
         const saving = type === "save";
-        // Fix #4: sem mutação direta de props (vehicle.wishListed = ...)
         setIsSaved(saving);
         toast.success(
           saving ? "Veículo salvo nos favoritos!" : "Veículo removido dos favoritos!"
         );
+        // Invalida para garantir consistência com o servidor após a mutation
         queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
         queryClient.invalidateQueries({ queryKey: ["featuredVehicles"] });
       } else {
@@ -51,14 +71,22 @@ const VehicleCard = ({ vehicle, userId = null, priority = false }) => {
         toast.info(msg);
       }
     },
-    onError: (error, { type }) => {
+    onError: (error, { type }, context) => {
       toast.error(
         type === "save"
           ? `Falha ao salvar o veículo: ${error.message}`
           : `Falha ao remover o veículo: ${error.message}`
       );
-      // Reverter estado em caso de erro
+      // Reverter estado local
       setIsSaved(type !== "save");
+      // Restaurar o cache anterior (rollback otimista)
+      if (context?.previousSaved !== undefined) {
+        queryClient.setQueryData(["savedVehicles"], context.previousSaved);
+      }
+    },
+    onSettled: () => {
+      // Garante sincronização final independentemente do resultado
+      queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
     },
   });
 
