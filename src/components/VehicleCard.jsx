@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import { Calendar, Gauge, Star } from "lucide-react";
 import { MotorizationEngine } from "@/assets/icons/icons";
@@ -11,96 +11,73 @@ import { Heart } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { saveUserVehicles, unsaveUserVehicles } from "@/actions/vehicleCatalog";
 import Link from "next/link";
-import { checkUser } from "@/lib/checkUser";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CldImage } from "next-cloudinary";
 
+// Placeholder local para quando o veículo não tem imagem
+const PLACEHOLDER_IMAGE = "/placeholder-vehicle.webp";
 
-const VehicleCard = ({ vehicle, priority = false }) => {
+// Fix #7: mutation unificada para salvar/remover favoritos
+const VehicleCard = ({ vehicle, userId = null, priority = false }) => {
   const [isSaved, setIsSaved] = useState(vehicle.wishListed);
+  // Fix #8: useEffect removido — useState(vehicle.wishListed) garante sincronização no mount
   const queryClient = useQueryClient();
 
-  // Sincronizar estado local com prop quando ela mudar
-  useEffect(() => {
-    setIsSaved(vehicle.wishListed);
-  }, [vehicle.wishListed]);
-
-
-  const favoriteVehicleMutation = useMutation({
+  const toggleFavoriteMutation = useMutation({
     gcTime: 0,
-    mutationFn: async ({ idUser, idVehicle }) => {
-      const res = await saveUserVehicles(idUser, idVehicle);
-      void (`favoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
-      return res;
+    mutationFn: async ({ idUser, idVehicle, type }) => {
+      const res =
+        type === "save"
+          ? await saveUserVehicles(idUser, idVehicle)
+          : await unsaveUserVehicles(idUser, idVehicle);
+      return { res, type };
     },
-    onSuccess: (data) => {
-      if (data.success) {
-        vehicle.wishListed = true;
-        toast.success("Veículo salvo nos favoritos!");
-        setIsSaved(true);
-        // Invalidar cache dos veículos salvos e em destaque para recarregar
+    onSuccess: ({ res, type }) => {
+      if (res.success) {
+        const saving = type === "save";
+        // Fix #4: sem mutação direta de props (vehicle.wishListed = ...)
+        setIsSaved(saving);
+        toast.success(
+          saving ? "Veículo salvo nos favoritos!" : "Veículo removido dos favoritos!"
+        );
         queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
         queryClient.invalidateQueries({ queryKey: ["featuredVehicles"] });
       } else {
-        toast.info(data.message || "Veículo já está nos favoritos");
+        const msg =
+          type === "save"
+            ? res.message || "Veículo já está nos favoritos"
+            : res.error || "Veículo não estava nos favoritos";
+        toast.info(msg);
       }
     },
-    onError: (error) => {
-      toast.error(`Falha ao salvar o veículo: ${error.message}`);
-      console.error("Erro ao favoritar");
-      setIsSaved(false); // Reverter estado em caso de erro
-    }
+    onError: (error, { type }) => {
+      toast.error(
+        type === "save"
+          ? `Falha ao salvar o veículo: ${error.message}`
+          : `Falha ao remover o veículo: ${error.message}`
+      );
+      // Reverter estado em caso de erro
+      setIsSaved(type !== "save");
+    },
   });
 
-  const unfavoriteVehicleMutation = useMutation({
-    gcTime: 0,
-    mutationFn: async ({ idUser, idVehicle }) => {
-      const res = await unsaveUserVehicles(idUser, idVehicle);
-      void (`unfavoriteVehicleMutation => userID: ${idUser} / vehicleID: ${idVehicle}`, res);
-      return res;
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        vehicle.wishListed = false;
-        toast.success("Veículo removido dos favoritos!");
-        setIsSaved(false);
-        // Invalidar cache dos veículos salvos e em destaque para recarregar
-        queryClient.invalidateQueries({ queryKey: ["savedVehicles"] });
-        queryClient.invalidateQueries({ queryKey: ["featuredVehicles"] });
-      } else {
-        toast.warning(data.error || "Veículo não estava nos favoritos");
-      }
-    },
-    onError: (error) => {
-      toast.error(`Falha ao remover o veículo: ${error.message}`);
-      console.error("Erro ao desfavoritar");
-      setIsSaved(true); // Reverter estado em caso de erro
-    }
-  });
-
-  const handleToggledSaved = async () => {
-    const user = await checkUser();
-    if (!user) {
+  const handleToggledSaved = () => {
+    // Fix #2: usar userId da prop em vez de chamar checkUser() no handler
+    if (!userId) {
       toast.error("É necessário se cadastrar e autenticar para salvar seus veículos favoritos.");
-      console.error("Usuário não autenticado");
       return;
     }
 
-    // Atualizar estado otimisticamente
     const newSavedState = !isSaved;
-    setIsSaved(newSavedState);
-
-    if (newSavedState) {
-      favoriteVehicleMutation.mutate({ idUser: user.id, idVehicle: vehicle.id });
-    } else {
-      unfavoriteVehicleMutation.mutate({ idUser: user.id, idVehicle: vehicle.id });
-    };
+    setIsSaved(newSavedState); // Atualização otimista
+    toggleFavoriteMutation.mutate({
+      idUser: userId,
+      idVehicle: vehicle.id,
+      type: newSavedState ? "save" : "unsave",
+    });
   };
 
-
-
-  // Check if vehicle is sold
   const isSold = vehicle.status === "Vendido";
 
   return (
@@ -111,7 +88,7 @@ const VehicleCard = ({ vehicle, priority = false }) => {
           <CldImage
             src={
               vehicle.images?.[0] ||
-              `https://via.placeholder.com/400x240/e2e8f0/64748b?text=${vehicle.vehicleBrand}+${vehicle.model}`
+              PLACEHOLDER_IMAGE  // Fix #10: placeholder local em vez de via.placeholder.com
             }
             alt={`${vehicle.vehicleBrand} ${vehicle.model}`}
             width={400}
@@ -187,12 +164,10 @@ const VehicleCard = ({ vehicle, priority = false }) => {
             <span>{vehicle.engineSize}</span>
           </div>
 
-          {/* {vehicle.mileage > 0 && ( */}
           <div className="flex items-center text-sm text-gray-600">
             <Gauge className="h-4 w-4 mr-2" />
             <span>{vehicle.mileage.toLocaleString()} km</span>
           </div>
-          {/*   )*/}
         </div>
 
         {/* Tags */}
