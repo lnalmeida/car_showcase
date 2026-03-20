@@ -161,9 +161,9 @@ export default function VehicleDetail({ id }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex-1 flex flex-col items-center justify-center py-3">
-                <h1 className="text-2xl mt-3 font-bold text-white">
+                <p className="text-2xl mt-3 font-bold text-white">
                   JFA Veículos - Seu veículo ideal está aqui!
-                </h1>
+                </p>
               </div>
             </div>
           </div>
@@ -353,11 +353,11 @@ export default function VehicleDetail({ id }) {
                 )}
               </div>
               <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h1 className="text-xl font-bold text-gray-900 mb-1 text-center">
+                <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">
                   {isAdmin
                     ? "Administrar veículo"
                     : "Interessado? Fale com a gente"}
-                </h1>
+                </h2>
 
                 <div className="text-gray-600 mb-4 flex items-center"></div>
 
@@ -628,9 +628,9 @@ export default function VehicleDetail({ id }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex-1 flex flex-col items-center justify-center">
-                <h1 className="text-2xl font-bold text-gray-900 py-3">
+                <p className="text-2xl font-bold text-gray-900 py-3">
                   Seu veículo ideal está na JFA Veículos!
-                </h1>
+                </p>
               </div>
             </div>
           </div>
