@@ -24,11 +24,43 @@ export async function generateMetadata() {
       logo = logo.replace("/upload/", "/upload/w_64,h_64,c_fill,f_png/");
     }
   }
+  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://jfveiculospilar.com.br";
+  const ogImage = storeInfo.success && storeInfo.data?.logoUrl ? storeInfo.data.logoUrl : `${siteUrl}/jf_logo.webp`;
+
   return {
-    title: siteName,
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: siteName,
+      template: `%s | ${siteName}`,
+    },
     description: siteDesc,
     icons: {
       icon: logo,
+    },
+    openGraph: {
+      type: "website",
+      locale: "pt_BR",
+      url: siteUrl,
+      siteName: siteName,
+      title: siteName,
+      description: siteDesc,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: siteName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: siteName,
+      description: siteDesc,
+      images: [ogImage],
+    },
+    alternates: {
+      canonical: siteUrl,
     },
   };
 }
