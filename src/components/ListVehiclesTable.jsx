@@ -51,20 +51,32 @@ const ListVehiclesTable = ({ vehicles }) => {
         <TableBody>
           {vehicles.map(vehicle => (
 
-          <TableRow>
+          <TableRow key={vehicle.id}>
             <TableCell className="font-medium">
-              <img src="" alt="" className="h-20 w-20 rounded-md p-2" />
+              {vehicle.images?.[0] ? (
+                <img
+                  src={vehicle.images[0]}
+                  alt={`${vehicle.vehicleBrand || ""} ${vehicle.model || ""}`}
+                  className="h-20 w-20 rounded-md p-2 object-cover"
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                  Sem foto
+                </div>
+              )}
             </TableCell>
-            <TableCell>khkhkjhkj</TableCell>
-            <TableCell>jyjghgjhg</TableCell>
-            <TableCell className="text-left">vehicle.color</TableCell>
-            <TableCell className="text-center">vehicles.year</TableCell>
+            <TableCell>{vehicle.vehicleBrand}</TableCell>
+            <TableCell>{vehicle.model}</TableCell>
+            <TableCell className="text-left">{vehicle.color}</TableCell>
+            <TableCell className="text-center">{vehicle.year}</TableCell>
             <TableCell className="text-right">
-              formatCurrency(vehicles.price)
+              {formatCurrency(vehicle.price)}
             </TableCell>
-            <TableCell className="text-center">teste</TableCell>
+            <TableCell className="text-center">
+              {vehicle.featured ? "Sim" : "Não"}
+            </TableCell>
             <TableCell className="text-right">
-              <Badge variant="secondary">teste</Badge>
+              <Badge variant="secondary">{vehicle.status}</Badge>
             </TableCell>
           </TableRow>
           ))}
