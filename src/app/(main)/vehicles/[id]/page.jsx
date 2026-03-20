@@ -4,7 +4,7 @@ import { getVehicle } from "@/actions/vehicles";
 import { getDealershipInfo } from "@/actions/dealership";
 import Script from "next/script";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://jfveiculospilar.com.br";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://car-showcase-peach-xi.vercel.app";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;

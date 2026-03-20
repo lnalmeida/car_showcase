@@ -1,6 +1,6 @@
 import { db } from "@/lib/prisma";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://jfveiculospilar.com.br";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://car-showcase-peach-xi.vercel.app";
 
 export default async function sitemap() {
   // Páginas estáticas

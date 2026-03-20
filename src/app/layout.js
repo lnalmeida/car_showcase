@@ -24,7 +24,7 @@ export async function generateMetadata() {
       logo = logo.replace("/upload/", "/upload/w_64,h_64,c_fill,f_png/");
     }
   }
-  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://jfveiculospilar.com.br";
+  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://car-showcase-peach-xi.vercel.app";
   const ogImage = storeInfo.success && storeInfo.data?.logoUrl ? storeInfo.data.logoUrl : `${siteUrl}/jf_logo.webp`;
 
   return {
