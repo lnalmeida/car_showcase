@@ -6,6 +6,17 @@ import { getSearchedVehicles } from "@/actions/home"; // Sua Server Action para 
 import CarList, { VehiclesList } from "./_components/VehiclesList"; // O Client Component que usará TanStack Query
 import { checkUser } from "@/lib/checkUser";
 
+export function generateMetadata({ searchParams }) {
+  return {
+    title: "Veículos em Estoque",
+    description:
+      "Confira nosso estoque de veículos novos e seminovos com os melhores preços. Encontre seu carro ideal na JFA Veículos.",
+    alternates: {
+      canonical: "/vehicles",
+    },
+  };
+}
+
 export default async function CarsPage({ searchParams }) {
   // 1. Parseia os parâmetros de busca da URL
   const params = await searchParams;
