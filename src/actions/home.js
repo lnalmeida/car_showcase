@@ -62,27 +62,30 @@ export const getFeaturedVehicles = async (limit = 3, userId = null) => {
 export const processImageSearch = async (file) => {
   try {
     // rate limit check com arcjet
-    const req = await request();
+    if (aj) {
+      try {
+        const req = await request();
+        const decision = await aj.protect(req, {
+          requested: 1,
+        });
 
-    const decision = await aj.protect({
-      requested: 1,
-    });
-
-    if (decision.isDenied()) {
-      if (decision.reason.isRateLimit()) {
-        const { remaining, reset } = decision.reason;
-        console.error("Rate limit excedido");
-        return {
-          success: false,
-          message:
-            "Limite de requisições excedido. Tente novamente mais tarde.",
-        };
+        if (decision.isDenied()) {
+          if (decision.reason.isRateLimit()) {
+            console.error("Rate limit excedido");
+            return {
+              success: false,
+              message: "Limite de requisições excedido. Tente novamente mais tarde.",
+            };
+          }
+          console.error("Requisição negada");
+          return {
+            success: false,
+            message: "Requisição negada. Tente novamente mais tarde.",
+          };
+        }
+      } catch (arcjetError) {
+        console.warn("Arcjet rate limit check failed, proceeding:", arcjetError.message);
       }
-      console.error("Requisição negada");
-      return {
-        success: false,
-        message: "Requisição negada. Tente novamente mais tarde.",
-      };
     }
 
     // Processamento da imagem
