@@ -46,30 +46,32 @@ export const processVehicleImageWithAI = async (file) => {
 
   try {
     // rate limit check com arcjet
-    try {
-      const req = await request();
+    if (aj) {
+      try {
+        const req = await request();
 
-      const decision = await aj.protect(req, {
-        requested: 1,
-        userId: userId,
-      });
+        const decision = await aj.protect(req, {
+          requested: 1,
+          userId: userId,
+        });
 
-      if (decision.isDenied()) {
-        if (decision.reason.isRateLimit()) {
-          console.error("Rate limit excedido na área administrativa");
+        if (decision.isDenied()) {
+          if (decision.reason.isRateLimit()) {
+            console.error("Rate limit excedido na área administrativa");
+            return {
+              success: false,
+              error: "Limite de processamento de IA excedido. Tente novamente mais tarde.",
+            };
+          }
+          console.error("Requisição negada pelo Arcjet");
           return {
             success: false,
-            error: "Limite de processamento de IA excedido. Tente novamente mais tarde.",
+            error: "Requisição negada por motivos de segurança. Tente novamente mais tarde.",
           };
         }
-        console.error("Requisição negada pelo Arcjet");
-        return {
-          success: false,
-          error: "Requisição negada por motivos de segurança. Tente novamente mais tarde.",
-        };
+      } catch (arcjetError) {
+        console.warn("Arcjet rate limit check failed, proceeding without rate limiting:", arcjetError.message);
       }
-    } catch (arcjetError) {
-      console.warn("Arcjet rate limit check failed, proceeding without rate limiting:", arcjetError.message);
     }
 
     if (!process.env.GEMINI_API_KEY) {
