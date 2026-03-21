@@ -28,7 +28,7 @@ const BrandsCarousel = ({ brands }) => {
             {brands.map((make) => (
                 <SwiperSlide key={make.id || make.name}>
                     <Link
-                        href={`/vehicles/?brand=${make.name}`}
+                        href={`/vehicles/?brand=${encodeURIComponent(make.name)}${make.category?.name ? `&category=${encodeURIComponent(make.category.name.toLowerCase())}` : ``}`}
                         className="bg-white rounded-lg shadow p-4 text-center hover:shadow-md transition cursor-pointer flex flex-col h-full"
                     >
                         <div className="h-16 w-auto mx-auto mb-2 relative flex items-center justify-center bg-gray-50 rounded-md w-full">
