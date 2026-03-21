@@ -153,8 +153,10 @@ const EditVehicleForm = ({ vehicleId }) => {
     if (updateVehicleResult?.success) {
       toast.success("Veículo atualizado com sucesso!");
       router.back();
+    } else if (updateVehicleResult && updateVehicleResult.success === false) {
+      toast.error(updateVehicleResult.error || "Erro ao atualizar veículo.");
     }
-  }, [updateVehicleResult?.success, updateVehicleLoading, router]);
+  }, [updateVehicleResult, updateVehicleLoading, router]);
 
   const onSubmit = async (data) => {
     if (uploadedImages.length === 0) {

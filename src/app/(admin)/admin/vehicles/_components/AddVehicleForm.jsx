@@ -105,8 +105,10 @@ const AddVehicleForm = () => {
     if (addVehicleResult?.success) {
       toast.success("Veículo cadastrado com sucesso!");
       router.back();
+    } else if (addVehicleResult && addVehicleResult.success === false) {
+      toast.error(addVehicleResult.error || "Erro ao cadastrar veículo.");
     }
-  }, [addVehicleResult?.success, addVehicleLoading]);
+  }, [addVehicleResult, addVehicleLoading]);
 
   const onSubmit = async (data) => {
     if (uploadedImages.length === 0) {

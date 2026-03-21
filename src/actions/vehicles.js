@@ -48,7 +48,7 @@ export const processVehicleImageWithAI = async (file) => {
     // rate limit check com arcjet
     const req = await request();
 
-    const decision = await aj.protect({
+    const decision = await aj.protect(req, {
       requested: 1,
     });
 
@@ -270,12 +270,15 @@ export const addVehicle = async (formData) => {
       success: true,
     };
   } catch (error) {
-    console.error("Erro ao adicionar veículo");
+    console.error("Erro ao adicionar veículo:", error.message);
     
     const { userId } = await auth();
     logEvent("vehicle_create_error", { error: error.message }, { clerkUserId: userId });
     
-    throw new Error(`Failed to add vehicle: ${error.message}`);
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 };
 
@@ -564,9 +567,12 @@ export const updateVehicleComplete = async (formData) => {
       success: true,
     };
   } catch (error) {
-    console.error("Erro ao atualizar veículo");
-    logEvent("vehicle_update_complete_error", { vehicle_id: vehicleId, error: error.message }, user);
-    throw new Error(`Failed to update vehicle: ${error.message}`);
+    console.error("Erro ao atualizar veículo:", error.message);
+    logEvent("vehicle_update_complete_error", { vehicle_id: vehicleId, error: error.message }, { clerkUserId: null });
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 };
 
