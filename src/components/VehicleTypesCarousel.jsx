@@ -1,66 +1,71 @@
 "use client";
-// Importe os componentes e estilos necessários do Swiper
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import Link from 'next/link';
-// import { bodyTypes, carMakes, featuredCars } from "@/lib/data";
-import { CldImage } from 'next-cloudinary';
 
-import { Navigation, Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import Link from "next/link";
+import { CldImage } from "next-cloudinary";
+import { Navigation, Pagination } from "swiper/modules";
 
-const VehicleTypesCarousel = ({ bodyTypes }) => {
+const VehicleTypesCarousel = ({ bodyTypes = [] }) => {
+  const count = bodyTypes.length;
+
+  // Calcula quantos slides mostrar por breakpoint,
+  // nunca excedendo o total de itens disponíveis
+  const clamp = (val) => Math.min(val, count);
+
   return (
     <Swiper
       modules={[Navigation, Pagination]}
-      spaceBetween={24} // Espaçamento entre os slides
-      slidesPerView={5} // Quantos slides mostrar por vez
-      // Configuração para diferentes tamanhos de tela (responsividade)
+      spaceBetween={16}
+      slidesPerView={clamp(2)}
+      centeredSlides={count <= 3}
       breakpoints={{
-        768: {
-          slidesPerView: 4,
-        },
-        1024: {
-          slidesPerView: 5,
-        },
+        480: { slidesPerView: clamp(3), spaceBetween: 16 },
+        768: { slidesPerView: clamp(4), spaceBetween: 20, centeredSlides: count <= 4 },
+        1024: { slidesPerView: clamp(5), spaceBetween: 24, centeredSlides: count <= 5 },
+        1280: { slidesPerView: clamp(6), spaceBetween: 24, centeredSlides: count <= 6 },
       }}
-      // Habilita a navegação (setas de Próximo/Anterior)
       navigation
-      // Habilita a paginação (pontinhos na parte de baixo)
       pagination={{ clickable: true }}
-      className="pb-10 pt-4 px-2 sm:px-12"
+      className="!pb-10 !pt-4 !px-2 sm:!px-10"
     >
       {bodyTypes.map((type) => (
-        <SwiperSlide key={type.id}>
+        <SwiperSlide key={type.id} className="!h-auto">
           <Link
             href={`/vehicles/?type=${encodeURIComponent(type.name)}`}
-            className="relative group cursor-pointer"
+            className="relative group cursor-pointer block"
           >
-            <div className="overflow-hidden rounded-lg flex justify-center items-center bg-gray-200 h-28 mb-4 relative">
-              {(type.imageUrl || type.image) ? (
+            {/* Proporção fixa 4:3 que se adapta à largura do slide */}
+            <div className="relative w-full aspect-[4/3] overflow-hidden rounded-lg bg-gray-200">
+              {type.imageUrl || type.image ? (
                 <CldImage
                   src={type.imageUrl || type.image}
                   alt={type.name}
                   fill
                   crop="fill"
-                  sizes="(max-width: 768px) 33vw, 20vw"
+                  sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   className="object-cover group-hover:scale-105 transition duration-300"
                 />
               ) : (
-                <span className="text-gray-400 font-bold text-xl">{type.name.charAt(0)}</span>
+                <span className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold text-2xl">
+                  {type.name.charAt(0)}
+                </span>
               )}
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-lg flex items-end">
-              <h3 className="text-white font-bold pl-4 pb-2">
-                {type.name}
-              </h3>
+
+              {/* Gradiente + nome sempre visível */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent rounded-lg flex items-end">
+                <h3 className="text-white font-semibold text-xs sm:text-sm leading-tight px-2 pb-2 line-clamp-1">
+                  {type.name}
+                </h3>
+              </div>
             </div>
           </Link>
         </SwiperSlide>
       ))}
     </Swiper>
   );
-}
+};
 
 export default VehicleTypesCarousel;
