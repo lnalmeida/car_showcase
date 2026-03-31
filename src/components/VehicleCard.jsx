@@ -90,15 +90,19 @@ const VehicleCard = ({ vehicle, userId = null, priority = false }) => {
     },
   });
 
-  const handleToggledSaved = () => {
-    // Fix #2: usar userId da prop em vez de chamar checkUser() no handler
+  const handleToggledSaved = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!userId) {
       toast.error("É necessário se cadastrar e autenticar para salvar seus veículos favoritos.");
       return;
     }
 
+    if (toggleFavoriteMutation.isPending) return;
+
     const newSavedState = !isSaved;
-    setIsSaved(newSavedState); // Atualização otimista
+    setIsSaved(newSavedState);
     toggleFavoriteMutation.mutate({
       idUser: userId,
       idVehicle: vehicle.id,
@@ -136,6 +140,8 @@ const VehicleCard = ({ vehicle, userId = null, priority = false }) => {
               : "text-gray-400 hover:text-red-500 hover:bg-white transition-colors"
               }`}
             onClick={handleToggledSaved}
+            disabled={toggleFavoriteMutation.isPending}
+            aria-label={isSaved ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           >
             <Heart className={isSaved ? "fill-red-500" : ""} size={20} />
           </Button>
